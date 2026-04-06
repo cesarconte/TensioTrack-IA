@@ -1,0 +1,5 @@
+{
+  "name": "TensioTrack",
+  "description": "Seguimiento inteligente de la presión arterial con análisis de IA.",
+  "requestFramePermissions": []
+}

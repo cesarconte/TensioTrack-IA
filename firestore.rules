@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (matches auth.uid)
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required, email format)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: users/{userId}/readings
+    // Document ID: {readingId}
+    // Fields:
+    //   - systolic: number (required, 40-300)
+    //   - diastolic: number (required, 30-200)
+    //   - heartRate: number (optional, 30-250)
+    //   - order: number (required, 1-3)
+    //   - slot: string (required, 'morning' | 'evening')
+    //   - recordedAt: timestamp (required)
+    //   - date: string (required, YYYY-MM-DD)
+    //   - userUid: string (required, matches auth.uid)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin') ||
+          (request.auth.token.email == "yugurta@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidReading(data) {
+      return data.keys().hasAll(['systolic', 'diastolic', 'order', 'slot', 'recordedAt', 'date', 'userUid']) &&
+             data.systolic is number && data.systolic >= 40 && data.systolic <= 300 &&
+             data.diastolic is number && data.diastolic >= 30 && data.diastolic <= 200 &&
+             (!('heartRate' in data) || data.heartRate == null || (data.heartRate is number && data.heartRate >= 30 && data.heartRate <= 250)) &&
+             data.order is number && data.order >= 1 && data.order <= 3 &&
+             data.slot in ['morning', 'evening'] &&
+             data.recordedAt is timestamp &&
+             isValidDateString(data.date) &&
+             data.userUid == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Match Blocks
+    // ===============================================================
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                    request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /users/{userId}/readings/{readingId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidReading(request.resource.data);
+      allow update: if isOwner(userId) && isValidReading(request.resource.data) &&
+                    request.resource.data.recordedAt == resource.data.recordedAt;
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+  }
+}

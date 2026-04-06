@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "gender": { "type": "string", "enum": ["male", "female", "other", "prefer-not-to-say"] },
+        "age": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Reading": {
+      "title": "Blood Pressure Reading",
+      "description": "A single blood pressure measurement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "systolic": { "type": "number" },
+        "diastolic": { "type": "number" },
+        "heartRate": { "type": "number" },
+        "order": { "type": "integer" },
+        "slot": { "type": "string", "enum": ["morning", "evening"] },
+        "recordedAt": { "type": "string", "format": "date-time" },
+        "date": { "type": "string", "format": "date" },
+        "notes": { "type": "string" },
+        "userUid": { "type": "string" }
+      },
+      "required": ["systolic", "diastolic", "order", "slot", "recordedAt", "date", "userUid"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/users/{userId}/readings/{readingId}": {
+      "schema": "Reading",
+      "description": "User blood pressure readings"
+    }
+  }
+}

@@ -51,6 +51,7 @@ const queryClient = new QueryClient();
 
 import { GoogleGenAI } from "@google/genai";
 import { auth, googleProvider, signInWithPopup, onAuthStateChanged, db, doc, setDoc, getDoc, serverTimestamp } from './firebase';
+import { getClinicalStatus } from './domain/clinicalStatus';
 
 function AppContent() {
   const [user, setUser] = useState<any>(null);
@@ -128,9 +129,12 @@ function AppContent() {
   const [showProfile, setShowProfile] = useState(false);
 
   const getReadingStatus = (sys: number, dia: number) => {
-    if (sys >= 135 || dia >= 85) return { label: 'Peligro', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' };
-    if (sys >= 130 || dia >= 80) return { label: 'Elevada', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' };
-    if (sys < 100 || dia < 60) return { label: 'Baja', color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-100' };
+    const clinicalStatus = getClinicalStatus(sys, dia);
+
+    if (clinicalStatus === 'danger') return { label: 'Peligro', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' };
+    if (clinicalStatus === 'high') return { label: 'Alta', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' };
+    if (clinicalStatus === 'warning') return { label: 'Elevada', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' };
+    if (clinicalStatus === 'low') return { label: 'Baja', color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-100' };
     return { label: 'Normal', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' };
   };
 

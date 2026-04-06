@@ -1,1 +1,36 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --background: oklch(0.985 0.002 247.839);
+  --foreground: oklch(0.145 0.019 256.438);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0.019 256.438);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0.019 256.438);
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.985 0.002 247.839);
+  --secondary: oklch(0.967 0.003 264.542);
+  --secondary-foreground: oklch(0.205 0.021 255.446);
+  --muted: oklch(0.967 0.003 264.542);
+  --muted-foreground: oklch(0.552 0.016 255.885);
+  --accent: oklch(0.967 0.003 264.542);
+  --accent-foreground: oklch(0.205 0.021 255.446);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 256.317);
+  --input: oklch(0.92 0.004 256.317);
+  --ring: oklch(0.708 0.011 256.309);
+  --radius: 0.75rem;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}

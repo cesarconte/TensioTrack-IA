@@ -1,36 +1,51 @@
-# TensioTrack AI 🩺🤖
+# TensioTrack 🩺🤖
 
-**TensioTrack AI** es una aplicación web moderna y profesional diseñada para el seguimiento inteligente de la presión arterial y la salud cardiovascular, potenciada por Inteligencia Artificial.
+**TensioTrack** es una aplicación web personal para el seguimiento y análisis profesional de la presión arterial, diseñada bajo el estricto protocolo médico **AMPA** (Automedición de la Presión Arterial).
 
-## ✨ Características
+## 🚀 Características Principales
 
-- 📝 **Registro de Mediciones:** Captura de presión sistólica, diastólica y pulso con clasificación automática (Normal, Elevada, Hipertensión).
-- 📊 **Gráficos de Tendencias:** Visualización interactiva de la evolución de la salud cardiovascular mediante gráficos de áreas.
-- 🧠 **Análisis con IA (Gemini):** Generación de informes inteligentes y consejos personalizados basados en tus últimas mediciones.
-- ✏️ **Edición de Análisis:** Capacidad para modificar, regenerar o eliminar los informes generados por la IA.
-- 💾 **Persistencia Local:** Tus datos se guardan de forma segura en el navegador (`localStorage`).
-- 🎨 **Diseño Premium:** Interfaz limpia, responsiva y animada con Tailwind CSS y Framer Motion.
+- **Protocolo AMPA**: Registro guiado de 3 tomas por sesión (mañana y noche).
+- **Lógica Médica**: Cálculo automático de promedios en 4 niveles (sesión, día, período de 5 días y final).
+- **Análisis con IA**: Integración con Gemini para interpretar tendencias y ofrecer consejos de estilo de vida.
+- **Visualización Profesional**: Gráficos de evolución temporal para PAS, PAD y frecuencia cardíaca.
+- **Privacidad Total**: Persistencia local con SQLite y Prisma.
 
-## 🚀 Tecnologías Utilizadas
+## 🛠️ Stack Tecnológico
 
-- **React 19** + **Vite**
-- **TypeScript**
-- **Tailwind CSS** (Estilizado)
-- **Framer Motion** (Animaciones)
-- **Recharts** (Visualización de datos)
-- **Google Gemini API** (Inteligencia Artificial)
-- **Lucide React** (Iconografía)
+- **Frontend**: React 19 + Vite + Tailwind CSS v4 + shadcn/ui.
+- **Backend**: Node.js + Express (Full-Stack).
+- **Base de Datos**: SQLite + Prisma ORM.
+- **Validación**: Zod + React Hook Form.
+- **IA**: Google Gemini API.
 
-## 🛠️ Configuración
+## 📦 Instalación y Desarrollo
 
-Para utilizar la función de análisis con IA, necesitas una clave de API de Google Gemini:
+1. **Instalar dependencias**:
+   ```bash
+   npm install
+   ```
 
-1. Obtén tu clave en [Google AI Studio](https://aistudio.google.com/).
-2. Configura la variable de entorno `GEMINI_API_KEY`.
+2. **Configurar base de datos**:
+   ```bash
+   npx prisma migrate dev --name init
+   ```
 
-## 📄 Licencia
+3. **Iniciar servidor de desarrollo**:
+   ```bash
+   npm run dev
+   ```
 
-Este proyecto está bajo la licencia Apache-2.0.
+## 🧪 Testing
+
+- **Unitarios/Integración**: `npm run test` (Vitest).
+- **E2E**: `npm run test:e2e` (Playwright).
+
+## 📄 Documentación
+
+- [Guías Médicas (AMPA)](/docs/medical-guidelines.md)
+- [Accesibilidad (WCAG 2.2 AA)](/ACCESSIBILITY.md)
+- [Sistema de Diseño](/DESIGN_SYSTEM.md)
+- [Arquitectura (ADRs)](/docs/adr/README.md)
 
 ---
 Desarrollado con ❤️ para cuidar tu corazón.

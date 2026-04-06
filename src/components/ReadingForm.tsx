@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAddReading } from '../lib/api';
 import { cn } from '../lib/utils';
-import { getClinicalStatus } from '../domain/clinicalStatus';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Heart, 
@@ -40,7 +39,10 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
   
   const getStatus = () => {
     if (sys === 0 || dia === 0) return 'none';
-    return getClinicalStatus(sys, dia);
+    if (sys >= 135 || dia >= 85) return 'danger';
+    if (sys >= 130 || dia >= 80) return 'warning';
+    if (sys < 100 || dia < 60) return 'low';
+    return 'normal';
   };
 
   const getPulseStatus = () => {
@@ -107,7 +109,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
     <div className={cn(
       "bg-white rounded-[2rem] shadow-2xl overflow-hidden border transition-all duration-500 max-h-[90vh] flex flex-col",
       status === 'danger' ? "border-rose-200" : 
-      status === 'high' ? "border-orange-200" :
       status === 'warning' ? "border-amber-200" :
       status === 'normal' ? "border-emerald-200" :
       status === 'low' ? "border-sky-200" :
@@ -139,7 +140,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
       <div className={cn(
         "p-5 border-b transition-colors duration-500 flex items-center justify-between shrink-0",
         status === 'danger' ? "bg-rose-50/50 border-rose-100" : 
-        status === 'high' ? "bg-orange-50/50 border-orange-100" :
         status === 'warning' ? "bg-amber-50/50 border-amber-100" :
         status === 'normal' ? "bg-emerald-50/50 border-emerald-100" :
         status === 'low' ? "bg-sky-50/50 border-sky-100" :
@@ -149,7 +149,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
           <div className={cn(
             "w-9 h-9 rounded-xl flex items-center justify-center text-white transition-colors duration-500",
             status === 'danger' ? "bg-rose-600" : 
-            status === 'high' ? "bg-orange-500" :
             status === 'warning' ? "bg-amber-500" :
             status === 'normal' ? "bg-emerald-500" :
             status === 'low' ? "bg-sky-500" :
@@ -200,7 +199,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                     "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900",
                     systolic && (sys < 60 || sys > 300) ? "bg-rose-100 border-rose-500 text-rose-900 animate-pulse" :
                     status === 'danger' && sys >= 135 ? "bg-rose-50 border-rose-200 focus:border-rose-500 text-rose-700" : 
-                    (status === 'high' && sys >= 135) ? "bg-orange-50 border-orange-200 focus:border-orange-500 text-orange-700" :
                     status === 'warning' && sys >= 130 ? "bg-amber-50 border-amber-200 focus:border-amber-500 text-amber-700" :
                     status === 'normal' ? "bg-emerald-50 border-emerald-200 focus:border-emerald-500 text-emerald-700" :
                     status === 'low' && sys < 100 ? "bg-sky-50 border-sky-200 focus:border-sky-500 text-sky-700" :
@@ -215,7 +213,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                     className={cn(
                       "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
                       status === 'danger' && sys >= 135 ? "text-rose-400 hover:text-rose-600" : 
-                      status === 'high' && sys >= 135 ? "text-orange-400 hover:text-orange-600" :
                       status === 'warning' && sys >= 130 ? "text-amber-400 hover:text-amber-600" :
                       status === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
                       status === 'low' && sys < 100 ? "text-sky-400 hover:text-sky-600" :
@@ -227,7 +224,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                   <span className={cn(
                     "text-[10px] font-black uppercase tracking-tighter",
                     status === 'danger' && sys >= 135 ? "text-rose-300" : 
-                    status === 'high' && sys >= 135 ? "text-orange-300" :
                     status === 'warning' && sys >= 130 ? "text-amber-300" :
                     status === 'normal' ? "text-emerald-300" :
                     status === 'low' && sys < 100 ? "text-sky-300" :
@@ -239,7 +235,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                     className={cn(
                       "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
                       status === 'danger' && sys >= 135 ? "text-rose-400 hover:text-rose-600" : 
-                      status === 'high' && sys >= 135 ? "text-orange-400 hover:text-orange-600" :
                       status === 'warning' && sys >= 130 ? "text-amber-400 hover:text-amber-600" :
                       status === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
                       status === 'low' && sys < 100 ? "text-sky-400 hover:text-sky-600" :
@@ -263,7 +258,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                     "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900",
                     diastolic && (dia < 40 || dia > 200) ? "bg-rose-100 border-rose-500 text-rose-900 animate-pulse" :
                     status === 'danger' && dia >= 85 ? "bg-rose-50 border-rose-200 focus:border-rose-500 text-rose-700" : 
-                    status === 'high' && dia >= 85 ? "bg-orange-50 border-orange-200 focus:border-orange-500 text-orange-700" :
                     status === 'warning' && dia >= 80 ? "bg-amber-50 border-amber-200 focus:border-amber-500 text-amber-700" :
                     status === 'normal' ? "bg-emerald-50 border-emerald-200 focus:border-emerald-500 text-emerald-700" :
                     status === 'low' && dia < 60 ? "bg-sky-50 border-sky-200 focus:border-sky-500 text-sky-700" :
@@ -278,7 +272,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                     className={cn(
                       "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
                       status === 'danger' && dia >= 85 ? "text-rose-400 hover:text-rose-600" : 
-                      status === 'high' && dia >= 85 ? "text-orange-400 hover:text-orange-600" :
                       status === 'warning' && dia >= 80 ? "text-amber-400 hover:text-amber-600" :
                       status === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
                       status === 'low' && dia < 60 ? "text-sky-400 hover:text-sky-600" :
@@ -290,7 +283,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                   <span className={cn(
                     "text-[10px] font-black uppercase tracking-tighter",
                     status === 'danger' && dia >= 85 ? "text-rose-300" : 
-                    status === 'high' && dia >= 85 ? "text-orange-300" :
                     status === 'warning' && dia >= 80 ? "text-amber-300" :
                     status === 'normal' ? "text-emerald-300" :
                     status === 'low' && dia < 60 ? "text-sky-300" :
@@ -302,7 +294,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                     className={cn(
                       "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
                       status === 'danger' && dia >= 85 ? "text-rose-400 hover:text-rose-600" : 
-                      status === 'high' && dia >= 85 ? "text-orange-400 hover:text-orange-600" :
                       status === 'warning' && dia >= 80 ? "text-amber-400 hover:text-amber-600" :
                       status === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
                       status === 'low' && dia < 60 ? "text-sky-400 hover:text-sky-600" :
@@ -413,7 +404,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
               "w-full h-14 rounded-2xl font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50",
               !!validationError ? "bg-slate-200 text-slate-400 shadow-none cursor-not-allowed" :
               status === 'danger' ? "bg-rose-600 hover:bg-rose-700 text-white shadow-rose-200" : 
-              status === 'high' ? "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-200" :
               status === 'warning' ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200" :
               status === 'normal' ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200" :
               status === 'low' ? "bg-sky-600 hover:bg-sky-700 text-white shadow-sky-200" :
@@ -432,18 +422,16 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
         <div className={cn(
           "mt-6 p-3 rounded-2xl border transition-all duration-500",
           status === 'danger' || pulseStatus === 'high' ? "bg-rose-50 border-rose-100" : 
-          status === 'high' ? "bg-orange-50 border-orange-100" :
           status === 'warning' || pulseStatus === 'low' ? "bg-amber-50 border-amber-100" :
           status === 'normal' && pulseStatus === 'normal' ? "bg-emerald-50 border-emerald-100" :
           status === 'low' ? "bg-sky-50 border-sky-100" :
           "bg-amber-50 border-amber-100"
         )}>
           <div className="flex gap-2">
-            {(status === 'danger' || status === 'high' || status === 'warning' || status === 'low' || pulseStatus === 'high' || pulseStatus === 'low') ? (
+            {(status === 'danger' || status === 'warning' || status === 'low' || pulseStatus === 'high' || pulseStatus === 'low') ? (
               <AlertCircle className={cn(
                 "w-4 h-4 shrink-0 mt-0.5",
                 (status === 'danger' || pulseStatus === 'high') ? "text-rose-600" : 
-                (status === 'high') ? "text-orange-600" :
                 (status === 'warning' || pulseStatus === 'low') ? "text-amber-600" :
                 "text-sky-600"
               )} />
@@ -455,7 +443,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
             <div className={cn(
               "text-[10px] leading-relaxed space-y-1",
               (status === 'danger' || pulseStatus === 'high') ? "text-rose-800" : 
-              (status === 'high') ? "text-orange-800" :
               (status === 'warning' || pulseStatus === 'low') ? "text-amber-800" :
               (status === 'normal' && pulseStatus === 'normal') ? "text-emerald-800" :
               status === 'low' ? "text-sky-800" :
@@ -465,8 +452,6 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
               <div>
                 {status === 'danger' ? (
                   <><strong>Hipertensión (AMPA):</strong> Valores por encima del objetivo (135/85).</>
-                ) : status === 'high' ? (
-                  <><strong>Hipertensión AMPA:</strong> Valor por encima del objetivo domiciliario (&ge;135/85).</>
                 ) : status === 'warning' ? (
                   <><strong>Presión Elevada:</strong> Ligeramente por encima del rango óptimo.</>
                 ) : status === 'normal' ? (

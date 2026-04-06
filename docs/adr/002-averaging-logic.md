@@ -1,6 +1,6 @@
-# ADR-002 (LEGACY) — Lógica de Promedios
+# ADR-002 — Lógica de Promedios
 
-**Estado**: Superado por ADR-003
+**Estado**: Aceptado
 **Fecha**: 2026-04-06
 
 ## Contexto
@@ -14,6 +14,3 @@ El cálculo de promedios de tensión arterial debe seguir el protocolo AMPA de 4
 ## Consecuencias
 - Integridad total de los datos médicos.
 - El cliente solo muestra datos procesados, evitando errores de cálculo en la UI.
-
-> Nota: Este documento se mantiene por trazabilidad historica.
-> La version vigente es `docs/adr/003-averaging-logic.md`.

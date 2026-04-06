@@ -1,51 +1,57 @@
-# TensioTrack 🩺🤖
+# TensioTrack
 
-**TensioTrack** es una aplicación web personal para el seguimiento y análisis profesional de la presión arterial, diseñada bajo el estricto protocolo médico **AMPA** (Automedición de la Presión Arterial).
+Aplicacion web personal para registro y analisis de presion arterial basada en protocolo **AMPA**.
 
-## 🚀 Características Principales
+## Objetivo
 
-- **Protocolo AMPA**: Registro guiado de 3 tomas por sesión (mañana y noche).
-- **Lógica Médica**: Cálculo automático de promedios en 4 niveles (sesión, día, período de 5 días y final).
-- **Análisis con IA**: Integración con Gemini para interpretar tendencias y ofrecer consejos de estilo de vida.
-- **Visualización Profesional**: Gráficos de evolución temporal para PAS, PAD y frecuencia cardíaca.
-- **Privacidad Total**: Persistencia local con SQLite y Prisma.
+Proveer una herramienta privada y profesional para:
 
-## 🛠️ Stack Tecnológico
+- registrar lecturas de tension de forma guiada
+- calcular promedios clinicos por sesion, dia y periodo
+- visualizar tendencia y preparar informacion util para consulta medica
 
-- **Frontend**: React 19 + Vite + Tailwind CSS v4 + shadcn/ui.
-- **Backend**: Node.js + Express (Full-Stack).
-- **Base de Datos**: SQLite + Prisma ORM.
-- **Validación**: Zod + React Hook Form.
-- **IA**: Google Gemini API.
+## Requisitos previos
 
-## 📦 Instalación y Desarrollo
+- Node.js 20+
+- npm 10+
 
-1. **Instalar dependencias**:
-   ```bash
-   npm install
-   ```
+## Instalacion
 
-2. **Configurar base de datos**:
-   ```bash
-   npx prisma migrate dev --name init
-   ```
+```bash
+npm install
+```
 
-3. **Iniciar servidor de desarrollo**:
-   ```bash
-   npm run dev
-   ```
+## Arranque en desarrollo
 
-## 🧪 Testing
+```bash
+npm run dev
+```
 
-- **Unitarios/Integración**: `npm run test` (Vitest).
-- **E2E**: `npm run test:e2e` (Playwright).
+## Scripts disponibles
 
-## 📄 Documentación
+- `npm run dev` inicia entorno de desarrollo con Vite
+- `npm run build` genera build de produccion
+- `npm run test` ejecuta tests con Vitest (watch/interactive)
+- `npm run test -- --run` ejecuta tests una sola vez (CI/local)
+- `npm run lint` ejecuta type-check con TypeScript
 
-- [Guías Médicas (AMPA)](/docs/medical-guidelines.md)
-- [Accesibilidad (WCAG 2.2 AA)](/ACCESSIBILITY.md)
-- [Sistema de Diseño](/DESIGN_SYSTEM.md)
-- [Arquitectura (ADRs)](/docs/adr/README.md)
+Nota: `test:e2e` esta definido en la estrategia de proyecto y se incorporara con Playwright en la fase correspondiente.
 
----
-Desarrollado con ❤️ para cuidar tu corazón.
+## Estructura principal
+
+- `src/components`: componentes UI
+- `src/domain`: logica de negocio pura (promedios, reglas clinicas)
+- `src/lib`: capa de datos y utilidades de aplicacion
+- `docs`: guias funcionales y ADRs
+
+## Documentacion relacionada
+
+- [AGENTS](./AGENTS.md)
+- [Medical Guidelines (AMPA)](./docs/medical-guidelines.md)
+- [Accessibility Checklist](./ACCESSIBILITY.md)
+- [Design System](./DESIGN_SYSTEM.md)
+- [Testing Strategy](./TESTING.md)
+- [Security Policy](./SECURITY.md)
+- [Contributing Guide](./CONTRIBUTING.md)
+- [Architecture Decision Records](./docs/adr/README.md)
+- [Changelog](./CHANGELOG.md)

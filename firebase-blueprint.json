@@ -11,6 +11,9 @@
         "photoURL": { "type": "string" },
         "gender": { "type": "string", "enum": ["male", "female", "other", "prefer-not-to-say"] },
         "age": { "type": "number" },
+        "remindersEnabled": { "type": "boolean" },
+        "morningTime": { "type": "string", "format": "time" },
+        "eveningTime": { "type": "string", "format": "time" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email"]

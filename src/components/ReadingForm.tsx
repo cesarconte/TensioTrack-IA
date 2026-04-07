@@ -107,12 +107,12 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
 
   return (
     <div className={cn(
-      "bg-white rounded-[2rem] shadow-2xl overflow-hidden border transition-all duration-500 max-h-[90vh] flex flex-col",
-      status === 'danger' ? "border-rose-200" : 
-      status === 'warning' ? "border-amber-200" :
-      status === 'normal' ? "border-emerald-200" :
-      status === 'low' ? "border-sky-200" :
-      "border-slate-100"
+      "bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden border transition-all duration-500 max-h-[90vh] flex flex-col",
+      status === 'danger' ? "border-rose-200 dark:border-rose-900/50" : 
+      status === 'warning' ? "border-amber-200 dark:border-amber-900/50" :
+      status === 'normal' ? "border-emerald-200 dark:border-emerald-900/50" :
+      status === 'low' ? "border-sky-200 dark:border-sky-900/50" :
+      "border-slate-100 dark:border-slate-800"
     )}>
       <style dangerouslySetInnerHTML={{ __html: `
         input[type=number]::-webkit-inner-spin-button, 
@@ -133,26 +133,32 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
           background: #e2e8f0;
           border-radius: 10px;
         }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #334155;
+        }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #cbd5e1;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #475569;
         }
       `}} />
       <div className={cn(
         "p-5 border-b transition-colors duration-500 flex items-center justify-between shrink-0",
-        status === 'danger' ? "bg-rose-50/50 border-rose-100" : 
-        status === 'warning' ? "bg-amber-50/50 border-amber-100" :
-        status === 'normal' ? "bg-emerald-50/50 border-emerald-100" :
-        status === 'low' ? "bg-sky-50/50 border-sky-100" :
-        "bg-slate-50/50 border-slate-50"
+        status === 'danger' ? "bg-rose-50/50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/30" : 
+        status === 'warning' ? "bg-amber-50/50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30" :
+        status === 'normal' ? "bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30" :
+        status === 'low' ? "bg-sky-50/50 dark:bg-sky-900/20 border-sky-100 dark:border-sky-900/30" :
+        "bg-slate-50/50 dark:bg-slate-800/50 border-slate-50 dark:border-slate-800"
       )}>
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-9 h-9 rounded-xl flex items-center justify-center text-white transition-colors duration-500",
-            status === 'danger' ? "bg-rose-600" : 
-            status === 'warning' ? "bg-amber-500" :
-            status === 'normal' ? "bg-emerald-500" :
-            status === 'low' ? "bg-sky-500" :
-            "bg-indigo-600"
+            status === 'danger' ? "bg-rose-600 dark:bg-rose-500" : 
+            status === 'warning' ? "bg-amber-500 dark:bg-amber-400" :
+            status === 'normal' ? "bg-emerald-500 dark:bg-emerald-400" :
+            status === 'low' ? "bg-sky-500 dark:bg-sky-400" :
+            "bg-indigo-600 dark:bg-indigo-500"
           )}>
             {status === 'danger' || status === 'warning' || status === 'low' ? (
               <AlertCircle className="w-4 h-4" />
@@ -163,11 +169,11 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
             )}
           </div>
           <div>
-            <h3 className="font-bold text-sm text-slate-900 leading-tight">Sesión de {slot === 'morning' ? 'Mañana' : 'Noche'}</h3>
-            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Toma {step} de 3</p>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">Sesión de {slot === 'morning' ? 'Mañana' : 'Noche'}</h3>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Toma {step} de 3</p>
           </div>
         </div>
-        <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
+        <button onClick={onCancel} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -179,7 +185,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
               key={s} 
               className={cn(
                 "h-1 rounded-full transition-all duration-500",
-                s === step ? "w-6 bg-indigo-600" : s < step ? "w-3 bg-emerald-500" : "w-3 bg-slate-200"
+                s === step ? "w-6 bg-indigo-600 dark:bg-indigo-500" : s < step ? "w-3 bg-emerald-500 dark:bg-emerald-400" : "w-3 bg-slate-200 dark:bg-slate-700"
               )} 
             />
           ))}
@@ -188,7 +194,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sistólica (PAS)</label>
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Sistólica (PAS)</label>
               <div className="relative group">
                 <input 
                   type="number" 
@@ -196,13 +202,13 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                   onChange={(e) => setSystolic(e.target.value)}
                   placeholder="120"
                   className={cn(
-                    "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900",
-                    systolic && (sys < 60 || sys > 300) ? "bg-rose-100 border-rose-500 text-rose-900 animate-pulse" :
-                    status === 'danger' && sys >= 135 ? "bg-rose-50 border-rose-200 focus:border-rose-500 text-rose-700" : 
-                    status === 'warning' && sys >= 130 ? "bg-amber-50 border-amber-200 focus:border-amber-500 text-amber-700" :
-                    status === 'normal' ? "bg-emerald-50 border-emerald-200 focus:border-emerald-500 text-emerald-700" :
-                    status === 'low' && sys < 100 ? "bg-sky-50 border-sky-200 focus:border-sky-500 text-sky-700" :
-                    "bg-slate-50 border-transparent focus:border-indigo-500"
+                    "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900 dark:text-white",
+                    systolic && (sys < 60 || sys > 300) ? "bg-rose-100 dark:bg-rose-900/30 border-rose-500 text-rose-900 dark:text-rose-100 animate-pulse" :
+                    status === 'danger' && sys >= 135 ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/30 focus:border-rose-500 text-rose-700 dark:text-rose-300" : 
+                    status === 'warning' && sys >= 130 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30 focus:border-amber-500 text-amber-700 dark:text-amber-300" :
+                    status === 'normal' ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/30 focus:border-emerald-500 text-emerald-700 dark:text-emerald-300" :
+                    status === 'low' && sys < 100 ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-900/30 focus:border-sky-500 text-sky-700 dark:text-sky-300" :
+                    "bg-slate-50 dark:bg-slate-800 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400"
                   )}
                   required
                 />
@@ -211,34 +217,34 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                     type="button"
                     onClick={() => adjustValue(setSystolic, systolic, 1)}
                     className={cn(
-                      "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
-                      status === 'danger' && sys >= 135 ? "text-rose-400 hover:text-rose-600" : 
-                      status === 'warning' && sys >= 130 ? "text-amber-400 hover:text-amber-600" :
-                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
-                      status === 'low' && sys < 100 ? "text-sky-400 hover:text-sky-600" :
-                      "text-slate-400 hover:text-indigo-600"
+                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
+                      status === 'danger' && sys >= 135 ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" : 
+                      status === 'warning' && sys >= 130 ? "text-amber-400 hover:text-amber-600 dark:text-amber-500 dark:hover:text-amber-400" :
+                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
+                      status === 'low' && sys < 100 ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
+                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
                     )}
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                   <span className={cn(
                     "text-[10px] font-black uppercase tracking-tighter",
-                    status === 'danger' && sys >= 135 ? "text-rose-300" : 
-                    status === 'warning' && sys >= 130 ? "text-amber-300" :
-                    status === 'normal' ? "text-emerald-300" :
-                    status === 'low' && sys < 100 ? "text-sky-300" :
-                    "text-slate-300"
+                    status === 'danger' && sys >= 135 ? "text-rose-300 dark:text-rose-700" : 
+                    status === 'warning' && sys >= 130 ? "text-amber-300 dark:text-amber-700" :
+                    status === 'normal' ? "text-emerald-300 dark:text-emerald-700" :
+                    status === 'low' && sys < 100 ? "text-sky-300 dark:text-sky-700" :
+                    "text-slate-300 dark:text-slate-600"
                   )}>mmHg</span>
                   <button 
                     type="button"
                     onClick={() => adjustValue(setSystolic, systolic, -1)}
                     className={cn(
-                      "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
-                      status === 'danger' && sys >= 135 ? "text-rose-400 hover:text-rose-600" : 
-                      status === 'warning' && sys >= 130 ? "text-amber-400 hover:text-amber-600" :
-                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
-                      status === 'low' && sys < 100 ? "text-sky-400 hover:text-sky-600" :
-                      "text-slate-400 hover:text-indigo-600"
+                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
+                      status === 'danger' && sys >= 135 ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" : 
+                      status === 'warning' && sys >= 130 ? "text-amber-400 hover:text-amber-600 dark:text-amber-500 dark:hover:text-amber-400" :
+                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
+                      status === 'low' && sys < 100 ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
+                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
                     )}
                   >
                     <Minus className="w-4 h-4" />
@@ -247,7 +253,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Diastólica (PAD)</label>
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Diastólica (PAD)</label>
               <div className="relative group">
                 <input 
                   type="number" 
@@ -255,13 +261,13 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                   onChange={(e) => setDiastolic(e.target.value)}
                   placeholder="80"
                   className={cn(
-                    "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900",
-                    diastolic && (dia < 40 || dia > 200) ? "bg-rose-100 border-rose-500 text-rose-900 animate-pulse" :
-                    status === 'danger' && dia >= 85 ? "bg-rose-50 border-rose-200 focus:border-rose-500 text-rose-700" : 
-                    status === 'warning' && dia >= 80 ? "bg-amber-50 border-amber-200 focus:border-amber-500 text-amber-700" :
-                    status === 'normal' ? "bg-emerald-50 border-emerald-200 focus:border-emerald-500 text-emerald-700" :
-                    status === 'low' && dia < 60 ? "bg-sky-50 border-sky-200 focus:border-sky-500 text-sky-700" :
-                    "bg-slate-50 border-transparent focus:border-indigo-500"
+                    "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900 dark:text-white",
+                    diastolic && (dia < 40 || dia > 200) ? "bg-rose-100 dark:bg-rose-900/30 border-rose-500 text-rose-900 dark:text-rose-100 animate-pulse" :
+                    status === 'danger' && dia >= 85 ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/30 focus:border-rose-500 text-rose-700 dark:text-rose-300" : 
+                    status === 'warning' && dia >= 80 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30 focus:border-amber-500 text-amber-700 dark:text-amber-300" :
+                    status === 'normal' ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/30 focus:border-emerald-500 text-emerald-700 dark:text-emerald-300" :
+                    status === 'low' && dia < 60 ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-900/30 focus:border-sky-500 text-sky-700 dark:text-sky-300" :
+                    "bg-slate-50 dark:bg-slate-800 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400"
                   )}
                   required
                 />
@@ -270,34 +276,34 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                     type="button"
                     onClick={() => adjustValue(setDiastolic, diastolic, 1)}
                     className={cn(
-                      "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
-                      status === 'danger' && dia >= 85 ? "text-rose-400 hover:text-rose-600" : 
-                      status === 'warning' && dia >= 80 ? "text-amber-400 hover:text-amber-600" :
-                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
-                      status === 'low' && dia < 60 ? "text-sky-400 hover:text-sky-600" :
-                      "text-slate-400 hover:text-indigo-600"
+                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
+                      status === 'danger' && dia >= 85 ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" : 
+                      status === 'warning' && dia >= 80 ? "text-amber-400 hover:text-amber-600 dark:text-amber-500 dark:hover:text-amber-400" :
+                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
+                      status === 'low' && dia < 60 ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
+                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
                     )}
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                   <span className={cn(
                     "text-[10px] font-black uppercase tracking-tighter",
-                    status === 'danger' && dia >= 85 ? "text-rose-300" : 
-                    status === 'warning' && dia >= 80 ? "text-amber-300" :
-                    status === 'normal' ? "text-emerald-300" :
-                    status === 'low' && dia < 60 ? "text-sky-300" :
-                    "text-slate-300"
+                    status === 'danger' && dia >= 85 ? "text-rose-300 dark:text-rose-700" : 
+                    status === 'warning' && dia >= 80 ? "text-amber-300 dark:text-amber-700" :
+                    status === 'normal' ? "text-emerald-300 dark:text-emerald-700" :
+                    status === 'low' && dia < 60 ? "text-sky-300 dark:text-sky-700" :
+                    "text-slate-300 dark:text-slate-600"
                   )}>mmHg</span>
                   <button 
                     type="button"
                     onClick={() => adjustValue(setDiastolic, diastolic, -1)}
                     className={cn(
-                      "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
-                      status === 'danger' && dia >= 85 ? "text-rose-400 hover:text-rose-600" : 
-                      status === 'warning' && dia >= 80 ? "text-amber-400 hover:text-amber-600" :
-                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
-                      status === 'low' && dia < 60 ? "text-sky-400 hover:text-sky-600" :
-                      "text-slate-400 hover:text-indigo-600"
+                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
+                      status === 'danger' && dia >= 85 ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" : 
+                      status === 'warning' && dia >= 80 ? "text-amber-400 hover:text-amber-600 dark:text-amber-500 dark:hover:text-amber-400" :
+                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
+                      status === 'low' && dia < 60 ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
+                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
                     )}
                   >
                     <Minus className="w-4 h-4" />
@@ -308,7 +314,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Frecuencia Cardíaca</label>
+            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Frecuencia Cardíaca</label>
             <div className="relative group">
               <input 
                 type="number" 
@@ -316,52 +322,52 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
                 onChange={(e) => setPulse(e.target.value)}
                 placeholder="72"
                 className={cn(
-                  "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900",
-                  pulse && (fc < 30 || fc > 250) ? "bg-rose-100 border-rose-500 text-rose-900 animate-pulse" :
-                  pulseStatus === 'high' ? "bg-amber-50 border-amber-200 focus:border-amber-500 text-amber-700" :
-                  pulseStatus === 'low' ? "bg-sky-50 border-sky-200 focus:border-sky-500 text-sky-700" :
-                  pulseStatus === 'normal' ? "bg-emerald-50 border-emerald-200 focus:border-emerald-500 text-emerald-700" :
-                  "bg-slate-50 border-transparent focus:border-indigo-500"
+                  "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900 dark:text-white",
+                  pulse && (fc < 30 || fc > 250) ? "bg-rose-100 dark:bg-rose-900/30 border-rose-500 text-rose-900 dark:text-rose-100 animate-pulse" :
+                  pulseStatus === 'high' ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30 focus:border-amber-500 text-amber-700 dark:text-amber-300" :
+                  pulseStatus === 'low' ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-900/30 focus:border-sky-500 text-sky-700 dark:text-sky-300" :
+                  pulseStatus === 'normal' ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/30 focus:border-emerald-500 text-emerald-700 dark:text-emerald-300" :
+                  "bg-slate-50 dark:bg-slate-800 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400"
                 )}
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
                 <Heart className={cn(
                   "w-6 h-6 animate-pulse transition-colors duration-500",
-                  pulseStatus === 'high' ? "text-rose-600" :
-                  pulseStatus === 'low' ? "text-sky-600" :
-                  pulseStatus === 'normal' ? "text-emerald-600" :
-                  "text-rose-500"
+                  pulseStatus === 'high' ? "text-rose-600 dark:text-rose-500" :
+                  pulseStatus === 'low' ? "text-sky-600 dark:text-sky-500" :
+                  pulseStatus === 'normal' ? "text-emerald-600 dark:text-emerald-500" :
+                  "text-rose-500 dark:text-rose-400"
                 )} />
                 <div className="flex flex-col items-center gap-1">
                   <button 
                     type="button"
                     onClick={() => adjustValue(setPulse, pulse, 1)}
                     className={cn(
-                      "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
-                      pulseStatus === 'high' ? "text-rose-400 hover:text-rose-600" :
-                      pulseStatus === 'low' ? "text-sky-400 hover:text-sky-600" :
-                      pulseStatus === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
-                      "text-slate-400 hover:text-indigo-600"
+                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
+                      pulseStatus === 'high' ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" :
+                      pulseStatus === 'low' ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
+                      pulseStatus === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
+                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
                     )}
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                   <span className={cn(
                     "text-[10px] font-black uppercase tracking-tighter",
-                    pulseStatus === 'high' ? "text-rose-300" :
-                    pulseStatus === 'low' ? "text-sky-300" :
-                    pulseStatus === 'normal' ? "text-emerald-300" :
-                    "text-slate-300"
+                    pulseStatus === 'high' ? "text-rose-300 dark:text-rose-700" :
+                    pulseStatus === 'low' ? "text-sky-300 dark:text-sky-700" :
+                    pulseStatus === 'normal' ? "text-emerald-300 dark:text-emerald-700" :
+                    "text-slate-300 dark:text-slate-600"
                   )}>lpm</span>
                   <button 
                     type="button"
                     onClick={() => adjustValue(setPulse, pulse, -1)}
                     className={cn(
-                      "p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all",
-                      pulseStatus === 'high' ? "text-rose-400 hover:text-rose-600" :
-                      pulseStatus === 'low' ? "text-sky-400 hover:text-sky-600" :
-                      pulseStatus === 'normal' ? "text-emerald-400 hover:text-emerald-600" :
-                      "text-slate-400 hover:text-indigo-600"
+                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
+                      pulseStatus === 'high' ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" :
+                      pulseStatus === 'low' ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
+                      pulseStatus === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
+                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
                     )}
                   >
                     <Minus className="w-4 h-4" />
@@ -372,16 +378,16 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notas (Opcional)</label>
+            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Notas (Opcional)</label>
             <div className="relative group">
               <textarea 
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ej: Después de caminar..."
-                className="w-full min-h-[80px] bg-slate-50 border-2 border-transparent rounded-2xl px-5 py-3 text-sm focus:ring-0 focus:border-indigo-500 transition-all text-slate-900 resize-none"
+                className="w-full min-h-[80px] bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl px-5 py-3 text-sm focus:ring-0 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none"
               />
               <div className="absolute right-4 top-3">
-                <MessageSquare className="w-4 h-4 text-slate-300" />
+                <MessageSquare className="w-4 h-4 text-slate-300 dark:text-slate-600" />
               </div>
             </div>
           </div>
@@ -390,7 +396,7 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 bg-rose-50 text-rose-600 rounded-2xl text-sm font-medium flex items-center gap-2 border border-rose-100"
+              className="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-2xl text-sm font-medium flex items-center gap-2 border border-rose-100 dark:border-rose-900/30"
             >
               <AlertCircle className="w-4 h-4 shrink-0" />
               {validationError || error}
@@ -421,41 +427,41 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
 
         <div className={cn(
           "mt-6 p-3 rounded-2xl border transition-all duration-500",
-          status === 'danger' || pulseStatus === 'high' ? "bg-rose-50 border-rose-100" : 
-          status === 'warning' || pulseStatus === 'low' ? "bg-amber-50 border-amber-100" :
-          status === 'normal' && pulseStatus === 'normal' ? "bg-emerald-50 border-emerald-100" :
-          status === 'low' ? "bg-sky-50 border-sky-100" :
-          "bg-amber-50 border-amber-100"
+          status === 'danger' || pulseStatus === 'high' ? "bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/30" : 
+          status === 'warning' || pulseStatus === 'low' ? "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30" :
+          status === 'normal' && pulseStatus === 'normal' ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30" :
+          status === 'low' ? "bg-sky-50 dark:bg-sky-900/20 border-sky-100 dark:border-sky-900/30" :
+          "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30"
         )}>
           <div className="flex gap-2">
             {(status === 'danger' || status === 'warning' || status === 'low' || pulseStatus === 'high' || pulseStatus === 'low') ? (
               <AlertCircle className={cn(
                 "w-4 h-4 shrink-0 mt-0.5",
-                (status === 'danger' || pulseStatus === 'high') ? "text-rose-600" : 
-                (status === 'warning' || pulseStatus === 'low') ? "text-amber-600" :
-                "text-sky-600"
+                (status === 'danger' || pulseStatus === 'high') ? "text-rose-600 dark:text-rose-400" : 
+                (status === 'warning' || pulseStatus === 'low') ? "text-amber-600 dark:text-amber-400" :
+                "text-sky-600 dark:text-sky-400"
               )} />
             ) : (status === 'normal' && pulseStatus === 'normal') ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
             ) : (
-              <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             )}
             <div className={cn(
               "text-[10px] leading-relaxed space-y-1",
-              (status === 'danger' || pulseStatus === 'high') ? "text-rose-800" : 
-              (status === 'warning' || pulseStatus === 'low') ? "text-amber-800" :
-              (status === 'normal' && pulseStatus === 'normal') ? "text-emerald-800" :
-              status === 'low' ? "text-sky-800" :
-              "text-amber-800"
+              (status === 'danger' || pulseStatus === 'high') ? "text-rose-800 dark:text-rose-200" : 
+              (status === 'warning' || pulseStatus === 'low') ? "text-amber-800 dark:text-amber-200" :
+              (status === 'normal' && pulseStatus === 'normal') ? "text-emerald-800 dark:text-emerald-200" :
+              status === 'low' ? "text-sky-800 dark:text-sky-200" :
+              "text-amber-800 dark:text-amber-200"
             )}>
               {/* Blood Pressure Message */}
               <div>
                 {status === 'danger' ? (
                   <><strong>Hipertensión (AMPA):</strong> Valores por encima del objetivo (135/85).</>
                 ) : status === 'warning' ? (
-                  <><strong>Presión Elevada:</strong> Ligeramente por encima del rango óptimo.</>
+                  <><strong>Normal-Alta:</strong> Ligeramente por encima del rango óptimo (130-134/80-84).</>
                 ) : status === 'normal' ? (
-                  <><strong>Presión Normal:</strong> Valores dentro de los límites saludables.</>
+                  <><strong>Presión Normal:</strong> Valores dentro de los límites saludables (100-129/60-79).</>
                 ) : status === 'low' ? (
                   <><strong>Presión Baja:</strong> Valores inferiores a lo normal (100/60).</>
                 ) : (

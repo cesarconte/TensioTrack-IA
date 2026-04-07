@@ -319,3 +319,33 @@ export const useAddReading = () => {
     }
   });
 };
+
+export const useUpdateReading = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { id: string; systolic: number; diastolic: number; heartRate?: number; notes?: string }) => {
+      if (!auth.currentUser) throw new Error('User not authenticated');
+      
+      const readingRef = doc(db, 'users', auth.currentUser.uid, 'readings', data.id);
+      
+      const updatedData = {
+        systolic: data.systolic,
+        diastolic: data.diastolic,
+        heartRate: data.heartRate || null,
+        notes: data.notes || null,
+      };
+
+      try {
+        await setDoc(readingRef, updatedData, { merge: true });
+        return { id: data.id, ...updatedData };
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${auth.currentUser.uid}/readings/${data.id}`);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['readings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    }
+  });
+};

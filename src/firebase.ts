@@ -1,13 +1,16 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, onSnapshot, Timestamp, addDoc, deleteDoc, writeBatch, getDocFromServer, limit, serverTimestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase SDK
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 // Error Handling
 export enum OperationType {
@@ -90,6 +93,10 @@ export {
   deleteDoc, 
   writeBatch,
   limit,
-  serverTimestamp
+  serverTimestamp,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
 };
 export type { FirebaseUser };

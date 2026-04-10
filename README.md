@@ -8,13 +8,13 @@
 - **Lógica Médica**: Cálculo automático de promedios en 4 niveles (sesión, día, período de 5 días y final).
 - **Análisis con IA**: Integración con Gemini para interpretar tendencias y ofrecer consejos de estilo de vida.
 - **Visualización Profesional**: Gráficos de evolución temporal para PAS, PAD y frecuencia cardíaca.
-- **Privacidad Total**: Persistencia local con SQLite y Prisma.
+- **Privacidad y Sincronización**: Persistencia en la nube con Firebase Firestore y autenticación segura.
 
 ## 🛠️ Stack Tecnológico
 
 - **Frontend**: React 19 + Vite + Tailwind CSS v4 + shadcn/ui.
-- **Backend**: Node.js + Express (Full-Stack).
-- **Base de Datos**: SQLite + Prisma ORM.
+- **Estado Global**: Zustand.
+- **Base de Datos & Auth**: Firebase (Firestore & Auth).
 - **Validación**: Zod + React Hook Form.
 - **IA**: Google Gemini API.
 
@@ -25,15 +25,17 @@
    npm install
    ```
 
-2. **Configurar base de datos**:
-   ```bash
-   npx prisma migrate dev --name init
-   ```
-
-3. **Iniciar servidor de desarrollo**:
+2. **Iniciar servidor de desarrollo**:
    ```bash
    npm run dev
    ```
+
+## 🚀 Despliegue en Producción
+
+Si decides subir tu aplicación a un servicio de hosting, recuerda configurar las variables de entorno:
+
+1. **El archivo `.env` no se subirá** por motivos de seguridad (está en el `.gitignore`).
+2. Añade las variables de entorno necesarias para Firebase y Gemini API.
 
 ## 🧪 Testing
 

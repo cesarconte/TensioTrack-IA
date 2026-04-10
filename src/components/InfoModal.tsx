@@ -1,24 +1,24 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import * as React from "react";
+import { motion } from "motion/react";
 import { 
   X, 
-  Info, 
   BookOpen, 
   CheckCircle2, 
   AlertCircle, 
   Activity,
   Clock,
   Coffee,
-  Wind,
   Heart
-} from 'lucide-react';
-import { cn } from '../lib/utils';
+} from "lucide-react";
+import { cn } from "../lib/utils";
+import { Button } from "./ui/Button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 
 interface InfoModalProps {
   onClose: () => void;
 }
 
-export const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
+export function InfoModal({ onClose }: InfoModalProps) {
   const ranges = [
     { 
       label: 'Hipertensión', 
@@ -62,45 +62,42 @@ export const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
       <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
-      />
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 40 }}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 40 }}
-        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white dark:bg-slate-900 w-full max-w-2xl h-full sm:h-[85vh] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-none sm:border border-slate-100 dark:border-slate-800 my-auto"
       >
-        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100 dark:shadow-none">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200 dark:shadow-none shrink-0">
               <BookOpen className="w-6 h-6" />
             </div>
-            <div>
-              <h2 className="text-2xl font-display font-black text-slate-900 dark:text-white">Guía y Valores AMPA</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Protocolo Médico Oficial</p>
+            <div className="min-w-0">
+              <h2 className="text-xl font-display font-black text-slate-900 dark:text-white truncate">Guía AMPA</h2>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">Protocolo Médico Oficial</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-2xl transition-colors">
-            <X className="w-6 h-6 text-slate-400 dark:text-slate-500" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={onClose} 
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors shrink-0"
+                aria-label="Cerrar guía"
+              >
+                <X className="w-6 h-6 text-slate-400" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Cerrar guía</TooltipContent>
+          </Tooltip>
         </div>
 
-        <div className="p-8 overflow-y-auto custom-scrollbar space-y-10">
-          {/* Ranges Section */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
           <section className="space-y-6">
-            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-              <Activity className="w-5 h-5" />
-              <h3 className="font-display font-black text-lg uppercase tracking-tight">Clasificación de Valores (mmHg)</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clasificación de Valores</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {ranges.map((range, idx) => (
-                <div key={idx} className={cn("p-5 rounded-[2rem] border transition-all hover:shadow-md", range.bg, range.border)}>
+                <div key={idx} className={cn("p-5 rounded-3xl border transition-all", range.bg, range.border)}>
                   <div className="flex items-center justify-between mb-2">
                     <span className={cn("text-[10px] font-black uppercase tracking-widest", range.color)}>{range.label}</span>
                     <span className={cn("font-mono font-bold", range.color)}>{range.range}</span>
@@ -111,77 +108,50 @@ export const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
             </div>
           </section>
 
-          {/* Protocol Section */}
           <section className="space-y-6">
-            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-              <Clock className="w-5 h-5" />
-              <h3 className="font-display font-black text-lg uppercase tracking-tight">¿Cómo realizar una toma correcta?</h3>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pasos para una toma correcta</h3>
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {steps.map((step, idx) => (
                   <div key={idx} className="flex gap-4">
                     <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                       {step.icon}
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{step.text}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{step.text}</p>
                   </div>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* Additional Info */}
           <section className="space-y-4">
-            <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/30 flex gap-4 items-start">
-              <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-sm">
-                <Heart className="w-5 h-5" />
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-bold text-indigo-900 dark:text-indigo-300 text-sm">¿Por qué es importante el AMPA?</h4>
+            <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl border border-indigo-100 dark:border-indigo-900/30 flex gap-4 items-start">
+              <Heart className="w-5 h-5 text-indigo-600 shrink-0 mt-1" />
+              <div className="space-y-1">
+                <h4 className="font-bold text-indigo-900 dark:text-indigo-300 text-sm">¿Por qué AMPA?</h4>
                 <p className="text-xs text-indigo-800 dark:text-indigo-400 leading-relaxed">
-                  La Automedida de la Presión Arterial (AMPA) es más fiable que la toma en consulta, ya que evita el "efecto bata blanca" y permite obtener un promedio real de tu vida cotidiana durante varios días.
+                  Permite obtener un promedio real de tu presión arterial en tu entorno habitual, evitando el estrés de la consulta médica.
                 </p>
               </div>
             </div>
-            <div className="p-6 bg-rose-50 dark:bg-rose-900/20 rounded-[2rem] border border-rose-100 dark:border-rose-900/30 flex gap-4 items-start">
-              <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 shadow-sm">
-                <AlertCircle className="w-5 h-5" />
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-bold text-rose-900 dark:text-rose-300 text-sm">Aviso Médico</h4>
+            <div className="p-6 bg-rose-50 dark:bg-rose-900/20 rounded-3xl border border-rose-100 dark:border-rose-900/30 flex gap-4 items-start">
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-1" />
+              <div className="space-y-1">
+                <h4 className="font-bold text-rose-900 dark:text-rose-300 text-sm">Aviso Importante</h4>
                 <p className="text-xs text-rose-800 dark:text-rose-400 leading-relaxed">
-                  TensioTrack es una herramienta de seguimiento. Si obtienes valores de hipertensión de forma persistente o sientes síntomas como dolor de cabeza intenso, mareos o visión borrosa, contacta con tu médico de inmediato.
+                  Si obtienes valores altos de forma persistente o sientes síntomas graves, contacta con tu médico de inmediato.
                 </p>
               </div>
             </div>
           </section>
         </div>
 
-        <div className="p-8 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
-          <button 
-            onClick={onClose}
-            className="w-full h-14 bg-slate-900 dark:bg-slate-700 text-white rounded-2xl font-bold hover:bg-slate-800 dark:hover:bg-slate-600 transition-all shadow-lg shadow-slate-200 dark:shadow-none"
-          >
+        <div className="p-6 border-t border-slate-100 dark:border-slate-800">
+          <Button className="w-full h-14" onClick={onClose}>
             Entendido
-          </button>
+          </Button>
         </div>
       </motion.div>
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
-        }
-      `}} />
     </div>
   );
-};
+}

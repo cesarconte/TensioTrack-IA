@@ -13,6 +13,14 @@ service cloud.firestore {
     //   - displayName: string (optional)
     //   - photoURL: string (optional)
     //   - createdAt: timestamp (required)
+    //   - age: number (optional)
+    //   - sex: string (optional, 'male' | 'female' | 'other')
+    //   - height: number (optional)
+    //   - weight: number (optional)
+    //   - isSmoker: boolean (optional)
+    //   - hasDiabetes: boolean (optional)
+    //   - isHypertensiveMedicated: boolean (optional)
+    //   - activityLevel: string (optional, 'sedentary' | 'moderate' | 'active')
     //
     // Collection: users/{userId}/readings
     // Document ID: {readingId}
@@ -62,11 +70,16 @@ service cloud.firestore {
              data.uid == request.auth.uid &&
              isValidEmail(data.email) &&
              data.createdAt is timestamp &&
-             (!('remindersEnabled' in data) || data.remindersEnabled is bool) &&
-             (!('morningTime' in data) || (data.morningTime is string && data.morningTime.matches("^([01]\\d|2[0-3]):[0-5]\\d$"))) &&
-             (!('eveningTime' in data) || (data.eveningTime is string && data.eveningTime.matches("^([01]\\d|2[0-3]):[0-5]\\d$"))) &&
-             (!('gender' in data) || data.gender in ['male', 'female', 'other', 'prefer-not-to-say', '']) &&
-             (!('age' in data) || data.age is number);
+             (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500)) &&
+             (!('sex' in data) || data.sex in ['male', 'female', 'other']) &&
+             (!('age' in data) || data.age == null || (data.age is number && data.age >= 0 && data.age <= 120)) &&
+             (!('height' in data) || data.height == null || (data.height is number && data.height >= 0 && data.height <= 300)) &&
+             (!('weight' in data) || data.weight == null || (data.weight is number && data.weight >= 0 && data.weight <= 500)) &&
+             (!('isSmoker' in data) || data.isSmoker is bool) &&
+             (!('hasDiabetes' in data) || data.hasDiabetes is bool) &&
+             (!('isHypertensiveMedicated' in data) || data.isHypertensiveMedicated is bool) &&
+             (!('activityLevel' in data) || data.activityLevel in ['sedentary', 'moderate', 'active']);
     }
 
     function isValidReading(data) {

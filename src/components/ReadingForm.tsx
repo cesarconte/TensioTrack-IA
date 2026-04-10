@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAddReading } from '../lib/api';
-import { cn } from '../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import * as React from "react";
+import { useAppStore } from "../store/useAppStore";
+import { useAddReading, useUpdateReading, useDeleteReading, useDashboard } from "../lib/api";
+import { cn } from "../lib/utils";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Heart, 
   Activity, 
@@ -10,33 +10,123 @@ import {
   AlertCircle, 
   ArrowRight,
   X,
-  Clock,
-  Calendar,
+  Mic,
+  MicOff,
+  Loader2,
+  Camera,
   Plus,
   Minus,
-  MessageSquare
-} from 'lucide-react';
+  MessageSquare,
+  Save,
+  Trash2
+} from "lucide-react";
+import { Button } from "./ui/Button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
+import { Badge } from "./ui/Badge";
+import { toast } from "sonner";
+import { GoogleGenAI, Type } from "@google/genai";
 
 interface ReadingFormProps {
-  slot: 'morning' | 'evening';
-  onComplete: () => void;
-  onCancel: () => void;
+  onClose: () => void;
 }
 
-export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCancel }) => {
-  const [step, setStep] = useState(1);
-  const [systolic, setSystolic] = useState('');
-  const [diastolic, setDiastolic] = useState('');
-  const [pulse, setPulse] = useState('');
-  const [notes, setNotes] = useState('');
-  const [error, setError] = useState<string | null>(null);
+export function ReadingForm({ onClose }: ReadingFormProps) {
+  const { data: dashboard } = useDashboard();
+  const { editingReading, setEditingReading } = useAppStore();
+  const [systolic, setSystolic] = React.useState(editingReading?.systolic.toString() || '');
+  const [diastolic, setDiastolic] = React.useState(editingReading?.diastolic.toString() || '');
+  const [pulse, setPulse] = React.useState(editingReading?.heartRate?.toString() || '');
+  const [notes, setNotes] = React.useState(editingReading?.notes || '');
+  const [error, setError] = React.useState<string | null>(null);
+  const [showConfirmClose, setShowConfirmClose] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  
+  const [isListening, setIsListening] = React.useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = React.useState(false);
+  const [isProcessingImage, setIsProcessingImage] = React.useState(false);
+  const recognitionRef = React.useRef<any>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const addReading = useAddReading();
+  const updateReading = useUpdateReading();
+  const deleteReading = useDeleteReading();
+
+  const isEditing = !!editingReading;
+
+  // Check if form is "dirty" (has changes)
+  const isDirty = React.useMemo(() => {
+    if (!isEditing) {
+      return systolic !== '' || diastolic !== '' || pulse !== '' || notes !== '';
+    }
+    return (
+      systolic !== editingReading.systolic.toString() ||
+      diastolic !== editingReading.diastolic.toString() ||
+      pulse !== (editingReading.heartRate?.toString() || '') ||
+      notes !== (editingReading.notes || '')
+    );
+  }, [isEditing, editingReading, systolic, diastolic, pulse, notes]);
+
+  const handleClose = () => {
+    if (isDirty) {
+      setShowConfirmClose(true);
+    } else {
+      forceClose();
+    }
+  };
+
+  const forceClose = () => {
+    setEditingReading(null);
+    onClose();
+  };
+
+  const handleReset = () => {
+    if (editingReading) {
+      setSystolic(editingReading.systolic.toString());
+      setDiastolic(editingReading.diastolic.toString());
+      setPulse(editingReading.heartRate?.toString() || '');
+      setNotes(editingReading.notes || '');
+      toast.info("Valores restablecidos");
+    }
+  };
+
+  const handleClear = () => {
+    setSystolic('');
+    setDiastolic('');
+    setPulse('');
+    setNotes('');
+    toast.info("Formulario limpiado");
+  };
+
+  const handleDelete = async () => {
+    if (!editingReading) return;
+    setShowDeleteConfirm(false);
+    try {
+      await deleteReading.mutateAsync(editingReading.id);
+      toast.success("Lectura eliminada");
+      forceClose();
+    } catch (err) {
+      toast.error("Error al eliminar");
+    }
+  };
+
+  // Determine current slot
+  const morningSession = dashboard?.today?.sessions.find(s => s.slot === 'morning');
+  const eveningSession = dashboard?.today?.sessions.find(s => s.slot === 'evening');
+  
+  const currentSlot: 'morning' | 'evening' = isEditing 
+    ? editingReading.slot 
+    : ((morningSession?.readings.length || 0) < 3 ? 'morning' : 'evening');
+    
+  const currentToma = isEditing 
+    ? editingReading.order - 1
+    : ((currentSlot === 'morning' ? morningSession?.readings.length : eveningSession?.readings.length) || 0);
+    
+  const displayStep = currentToma + 1;
 
   const sys = parseInt(systolic) || 0;
   const dia = parseInt(diastolic) || 0;
   const fc = parseInt(pulse) || 0;
-  
+
   const getStatus = () => {
     if (sys === 0 || dia === 0) return 'none';
     if (sys >= 135 || dia >= 85) return 'danger';
@@ -45,58 +135,52 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
     return 'normal';
   };
 
-  const getPulseStatus = () => {
-    if (fc === 0) return 'none';
-    if (fc > 100) return 'high';
-    if (fc < 60) return 'low';
-    return 'normal';
-  };
-
   const status = getStatus();
-  const pulseStatus = getPulseStatus();
-
-  const getValidationError = () => {
-    if (systolic && (sys < 60 || sys > 300)) return 'La presión sistólica (PAS) debe estar entre 60 y 300 mmHg.';
-    if (diastolic && (dia < 40 || dia > 200)) return 'La presión diastólica (PAD) debe estar entre 40 y 200 mmHg.';
-    const fc = pulse ? parseInt(pulse) : 0;
-    if (pulse && (fc < 30 || fc > 250)) return 'La frecuencia cardíaca (FC) debe estar entre 30 y 250 lpm.';
-    return null;
-  };
-
-  const validationError = getValidationError();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const validation = getValidationError();
-    if (validation) {
-      setError(validation);
+    if (sys < 60 || sys > 300 || dia < 40 || dia > 200) {
+      setError("Valores de presión arterial fuera de rango médico.");
       return;
     }
 
-    const fc = pulse ? parseInt(pulse) : undefined;
-
     try {
-      await addReading.mutateAsync({
-        systolic: sys,
-        diastolic: dia,
-        heartRate: fc,
-        slot,
-        notes: notes.trim() || undefined
-      });
-      
-      if (step < 3) {
-        setStep(step + 1);
-        setSystolic('');
-        setDiastolic('');
-        setPulse('');
-        setNotes('');
+      if (isEditing) {
+        await updateReading.mutateAsync({
+          id: editingReading.id,
+          systolic: sys,
+          diastolic: dia,
+          heartRate: fc || undefined,
+          notes: notes.trim() || undefined,
+        });
+        toast.success("Lectura actualizada correctamente");
+        handleClose();
       } else {
-        onComplete();
+        await addReading.mutateAsync({
+          systolic: sys,
+          diastolic: dia,
+          heartRate: fc || undefined,
+          slot: currentSlot,
+          notes: notes.trim() || undefined,
+          date: new Date().toISOString().split('T')[0]
+        });
+        
+        toast.success(`Toma ${displayStep} guardada correctamente`);
+        
+        if (displayStep < 3) {
+          setSystolic('');
+          setDiastolic('');
+          setPulse('');
+          setNotes('');
+        } else {
+          handleClose();
+        }
       }
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -105,390 +189,411 @@ export const ReadingForm: React.FC<ReadingFormProps> = ({ slot, onComplete, onCa
     setter((val + delta).toString());
   };
 
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const win = window as any;
+    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Tu navegador no soporta reconocimiento de voz");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = 'es-ES';
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = async (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setIsProcessingVoice(true);
+      try {
+        const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
+        if (!apiKey) throw new Error("API Key missing");
+        
+        const ai = new GoogleGenAI(apiKey) as any;
+        const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        const prompt = `Extrae PAS (sistólica), PAD (diastólica), FC (pulso) y cualquier comentario o nota relevante de: "${transcript}". 
+        Responde solo JSON: {"systolic": number, "diastolic": number, "pulse": number|null, "notes": string|null}`;
+        const result = await model.generateContent(prompt);
+        const data = JSON.parse(result.response.text().replace(/```json|```/g, ''));
+        
+        if (data.systolic) setSystolic(data.systolic.toString());
+        if (data.diastolic) setDiastolic(data.diastolic.toString());
+        if (data.pulse) setPulse(data.pulse.toString());
+        if (data.notes) setNotes(data.notes);
+        toast.success("Lectura procesada por voz");
+      } catch (err) {
+        toast.error("No se pudo entender la voz");
+      } finally {
+        setIsProcessingVoice(false);
+      }
+    };
+    recognition.start();
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingImage(true);
+    try {
+      const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error("API Key missing");
+      
+      const ai = new GoogleGenAI(apiKey) as any;
+      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+      const base64 = await base64Promise;
+
+      const prompt = "Analiza esta imagen de un tensiómetro y extrae los valores de presión sistólica (SYS), diastólica (DIA) y pulso (PULSE). Responde solo JSON: {\"systolic\": number, \"diastolic\": number, \"pulse\": number|null}";
+      
+      const result = await model.generateContent([
+        prompt,
+        { inlineData: { data: base64, mimeType: file.type } }
+      ]);
+      
+      const text = result.response.text();
+      const data = JSON.parse(text.replace(/```json|```/g, ''));
+      
+      if (data.systolic) setSystolic(data.systolic.toString());
+      if (data.diastolic) setDiastolic(data.diastolic.toString());
+      if (data.pulse) setPulse(data.pulse.toString());
+      toast.success("Lectura extraída de la imagen");
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo procesar la imagen");
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
   return (
-    <div className={cn(
-      "bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden border transition-all duration-500 max-h-[90vh] flex flex-col",
-      status === 'danger' ? "border-rose-200 dark:border-rose-900/50" : 
-      status === 'warning' ? "border-amber-200 dark:border-amber-900/50" :
-      status === 'normal' ? "border-emerald-200 dark:border-emerald-900/50" :
-      status === 'low' ? "border-sky-200 dark:border-sky-900/50" :
-      "border-slate-100 dark:border-slate-800"
-    )}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-          -webkit-appearance: none; 
-          margin: 0; 
-        }
-        input[type=number] {
-          -moz-appearance: textfield;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 10px;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #334155;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #475569;
-        }
-      `}} />
-      <div className={cn(
-        "p-5 border-b transition-colors duration-500 flex items-center justify-between shrink-0",
-        status === 'danger' ? "bg-rose-50/50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/30" : 
-        status === 'warning' ? "bg-amber-50/50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30" :
-        status === 'normal' ? "bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30" :
-        status === 'low' ? "bg-sky-50/50 dark:bg-sky-900/20 border-sky-100 dark:border-sky-900/30" :
-        "bg-slate-50/50 dark:bg-slate-800/50 border-slate-50 dark:border-slate-800"
-      )}>
-        <div className="flex items-center gap-3">
-          <div className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center text-white transition-colors duration-500",
-            status === 'danger' ? "bg-rose-600 dark:bg-rose-500" : 
-            status === 'warning' ? "bg-amber-500 dark:bg-amber-400" :
-            status === 'normal' ? "bg-emerald-500 dark:bg-emerald-400" :
-            status === 'low' ? "bg-sky-500 dark:bg-sky-400" :
-            "bg-indigo-600 dark:bg-indigo-500"
-          )}>
-            {status === 'danger' || status === 'warning' || status === 'low' ? (
-              <AlertCircle className="w-4 h-4" />
-            ) : status === 'normal' ? (
-              <CheckCircle2 className="w-4 h-4" />
-            ) : (
-              <Activity className="w-4 h-4" />
-            )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 my-auto"
+      >
+        <div className={cn(
+          "p-6 flex items-center justify-between border-b transition-colors",
+          status === 'danger' ? "bg-rose-50/50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/30" : 
+          status === 'warning' ? "bg-amber-50/50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30" :
+          status === 'normal' ? "bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30" :
+          "bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800"
+        )}>
+          <div className="flex items-center gap-4 min-w-0">
+            <div className={cn(
+              "w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0",
+              status === 'danger' ? "bg-rose-600 shadow-rose-200 dark:shadow-none" : 
+              status === 'warning' ? "bg-amber-500 shadow-amber-200 dark:shadow-none" :
+              status === 'normal' ? "bg-emerald-500 shadow-emerald-200 dark:shadow-none" :
+              "bg-indigo-600 shadow-indigo-200 dark:shadow-none"
+            )}>
+              <Activity className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-xl font-display font-black text-slate-900 dark:text-white truncate">
+                {isEditing ? 'Editar Lectura' : 'Nueva Lectura'}
+              </h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">
+                {isEditing 
+                  ? `Modificando registro del ${new Date(editingReading.recordedAt).toLocaleDateString('es-ES')}`
+                  : `Sesión ${currentSlot === 'morning' ? 'Mañana' : 'Noche'} • Toma ${displayStep} de 3`
+                }
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">Sesión de {slot === 'morning' ? 'Mañana' : 'Noche'}</h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Toma {step} de 3</p>
-          </div>
-        </div>
-        <button onClick={onCancel} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="p-6 overflow-y-auto custom-scrollbar">
-        <div className="flex items-center justify-center gap-2 mb-6">
-          {[1, 2, 3].map((s) => (
-            <div 
-              key={s} 
-              className={cn(
-                "h-1 rounded-full transition-all duration-500",
-                s === step ? "w-6 bg-indigo-600 dark:bg-indigo-500" : s < step ? "w-3 bg-emerald-500 dark:bg-emerald-400" : "w-3 bg-slate-200 dark:bg-slate-700"
-              )} 
-            />
-          ))}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={handleClose} 
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors shrink-0"
+                aria-label="Cerrar formulario"
+              >
+                <X className="w-6 h-6 text-slate-400" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Cerrar formulario</TooltipContent>
+          </Tooltip>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Sistólica (PAS)</label>
-              <div className="relative group">
-                <input 
-                  type="number" 
-                  value={systolic}
-                  onChange={(e) => setSystolic(e.target.value)}
-                  placeholder="120"
-                  className={cn(
-                    "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900 dark:text-white",
-                    systolic && (sys < 60 || sys > 300) ? "bg-rose-100 dark:bg-rose-900/30 border-rose-500 text-rose-900 dark:text-rose-100 animate-pulse" :
-                    status === 'danger' && sys >= 135 ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/30 focus:border-rose-500 text-rose-700 dark:text-rose-300" : 
-                    status === 'warning' && sys >= 130 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30 focus:border-amber-500 text-amber-700 dark:text-amber-300" :
-                    status === 'normal' ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/30 focus:border-emerald-500 text-emerald-700 dark:text-emerald-300" :
-                    status === 'low' && sys < 100 ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-900/30 focus:border-sky-500 text-sky-700 dark:text-sky-300" :
-                    "bg-slate-50 dark:bg-slate-800 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400"
-                  )}
-                  required
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
-                  <button 
-                    type="button"
-                    onClick={() => adjustValue(setSystolic, systolic, 1)}
-                    className={cn(
-                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
-                      status === 'danger' && sys >= 135 ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" : 
-                      status === 'warning' && sys >= 130 ? "text-amber-400 hover:text-amber-600 dark:text-amber-500 dark:hover:text-amber-400" :
-                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
-                      status === 'low' && sys < 100 ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
-                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                    )}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                  <span className={cn(
-                    "text-[10px] font-black uppercase tracking-tighter",
-                    status === 'danger' && sys >= 135 ? "text-rose-300 dark:text-rose-700" : 
-                    status === 'warning' && sys >= 130 ? "text-amber-300 dark:text-amber-700" :
-                    status === 'normal' ? "text-emerald-300 dark:text-emerald-700" :
-                    status === 'low' && sys < 100 ? "text-sky-300 dark:text-sky-700" :
-                    "text-slate-300 dark:text-slate-600"
-                  )}>mmHg</span>
-                  <button 
-                    type="button"
-                    onClick={() => adjustValue(setSystolic, systolic, -1)}
-                    className={cn(
-                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
-                      status === 'danger' && sys >= 135 ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" : 
-                      status === 'warning' && sys >= 130 ? "text-amber-400 hover:text-amber-600 dark:text-amber-500 dark:hover:text-amber-400" :
-                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
-                      status === 'low' && sys < 100 ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
-                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                    )}
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Diastólica (PAD)</label>
-              <div className="relative group">
-                <input 
-                  type="number" 
-                  value={diastolic}
-                  onChange={(e) => setDiastolic(e.target.value)}
-                  placeholder="80"
-                  className={cn(
-                    "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900 dark:text-white",
-                    diastolic && (dia < 40 || dia > 200) ? "bg-rose-100 dark:bg-rose-900/30 border-rose-500 text-rose-900 dark:text-rose-100 animate-pulse" :
-                    status === 'danger' && dia >= 85 ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/30 focus:border-rose-500 text-rose-700 dark:text-rose-300" : 
-                    status === 'warning' && dia >= 80 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30 focus:border-amber-500 text-amber-700 dark:text-amber-300" :
-                    status === 'normal' ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/30 focus:border-emerald-500 text-emerald-700 dark:text-emerald-300" :
-                    status === 'low' && dia < 60 ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-900/30 focus:border-sky-500 text-sky-700 dark:text-sky-300" :
-                    "bg-slate-50 dark:bg-slate-800 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400"
-                  )}
-                  required
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
-                  <button 
-                    type="button"
-                    onClick={() => adjustValue(setDiastolic, diastolic, 1)}
-                    className={cn(
-                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
-                      status === 'danger' && dia >= 85 ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" : 
-                      status === 'warning' && dia >= 80 ? "text-amber-400 hover:text-amber-600 dark:text-amber-500 dark:hover:text-amber-400" :
-                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
-                      status === 'low' && dia < 60 ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
-                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                    )}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                  <span className={cn(
-                    "text-[10px] font-black uppercase tracking-tighter",
-                    status === 'danger' && dia >= 85 ? "text-rose-300 dark:text-rose-700" : 
-                    status === 'warning' && dia >= 80 ? "text-amber-300 dark:text-amber-700" :
-                    status === 'normal' ? "text-emerald-300 dark:text-emerald-700" :
-                    status === 'low' && dia < 60 ? "text-sky-300 dark:text-sky-700" :
-                    "text-slate-300 dark:text-slate-600"
-                  )}>mmHg</span>
-                  <button 
-                    type="button"
-                    onClick={() => adjustValue(setDiastolic, diastolic, -1)}
-                    className={cn(
-                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
-                      status === 'danger' && dia >= 85 ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" : 
-                      status === 'warning' && dia >= 80 ? "text-amber-400 hover:text-amber-600 dark:text-amber-500 dark:hover:text-amber-400" :
-                      status === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
-                      status === 'low' && dia < 60 ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
-                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                    )}
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Frecuencia Cardíaca</label>
-            <div className="relative group">
-              <input 
-                type="number" 
-                value={pulse}
-                onChange={(e) => setPulse(e.target.value)}
-                placeholder="72"
-                className={cn(
-                  "w-full h-16 border-2 rounded-2xl px-5 font-mono text-2xl focus:ring-0 transition-all text-slate-900 dark:text-white",
-                  pulse && (fc < 30 || fc > 250) ? "bg-rose-100 dark:bg-rose-900/30 border-rose-500 text-rose-900 dark:text-rose-100 animate-pulse" :
-                  pulseStatus === 'high' ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30 focus:border-amber-500 text-amber-700 dark:text-amber-300" :
-                  pulseStatus === 'low' ? "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-900/30 focus:border-sky-500 text-sky-700 dark:text-sky-300" :
-                  pulseStatus === 'normal' ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/30 focus:border-emerald-500 text-emerald-700 dark:text-emerald-300" :
-                  "bg-slate-50 dark:bg-slate-800 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400"
-                )}
-              />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                <Heart className={cn(
-                  "w-6 h-6 animate-pulse transition-colors duration-500",
-                  pulseStatus === 'high' ? "text-rose-600 dark:text-rose-500" :
-                  pulseStatus === 'low' ? "text-sky-600 dark:text-sky-500" :
-                  pulseStatus === 'normal' ? "text-emerald-600 dark:text-emerald-500" :
-                  "text-rose-500 dark:text-rose-400"
-                )} />
-                <div className="flex flex-col items-center gap-1">
-                  <button 
-                    type="button"
-                    onClick={() => adjustValue(setPulse, pulse, 1)}
-                    className={cn(
-                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
-                      pulseStatus === 'high' ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" :
-                      pulseStatus === 'low' ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
-                      pulseStatus === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
-                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                    )}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                  <span className={cn(
-                    "text-[10px] font-black uppercase tracking-tighter",
-                    pulseStatus === 'high' ? "text-rose-300 dark:text-rose-700" :
-                    pulseStatus === 'low' ? "text-sky-300 dark:text-sky-700" :
-                    pulseStatus === 'normal' ? "text-emerald-300 dark:text-emerald-700" :
-                    "text-slate-300 dark:text-slate-600"
-                  )}>lpm</span>
-                  <button 
-                    type="button"
-                    onClick={() => adjustValue(setPulse, pulse, -1)}
-                    className={cn(
-                      "p-1 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-lg transition-all",
-                      pulseStatus === 'high' ? "text-rose-400 hover:text-rose-600 dark:text-rose-500 dark:hover:text-rose-400" :
-                      pulseStatus === 'low' ? "text-sky-400 hover:text-sky-600 dark:text-sky-500 dark:hover:text-sky-400" :
-                      pulseStatus === 'normal' ? "text-emerald-400 hover:text-emerald-600 dark:text-emerald-500 dark:hover:text-emerald-400" :
-                      "text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                    )}
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Notas (Opcional)</label>
-            <div className="relative group">
-              <textarea 
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ej: Después de caminar..."
-                className="w-full min-h-[80px] bg-slate-50 dark:bg-slate-800 border-2 border-transparent rounded-2xl px-5 py-3 text-sm focus:ring-0 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none"
-              />
-              <div className="absolute right-4 top-3">
-                <MessageSquare className="w-4 h-4 text-slate-300 dark:text-slate-600" />
-              </div>
-            </div>
-          </div>
-
-          {(error || validationError) && (
+        <AnimatePresence>
+          {showConfirmClose && (
             <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-2xl text-sm font-medium flex items-center gap-2 border border-rose-100 dark:border-rose-900/30"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-900/30 p-4"
             >
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {validationError || error}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <p className="text-xs font-bold text-amber-800 dark:text-amber-200">
+                    Tienes cambios sin guardar. ¿Deseas salir de todos modos?
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => setShowConfirmClose(false)}>
+                    Continuar editando
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={forceClose}>
+                    Salir sin guardar
+                  </Button>
+                </div>
+              </div>
             </motion.div>
           )}
 
-          <button 
-            type="submit" 
-            disabled={addReading.isPending || !!validationError}
-            className={cn(
-              "w-full h-14 rounded-2xl font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50",
-              !!validationError ? "bg-slate-200 text-slate-400 shadow-none cursor-not-allowed" :
-              status === 'danger' ? "bg-rose-600 hover:bg-rose-700 text-white shadow-rose-200" : 
-              status === 'warning' ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200" :
-              status === 'normal' ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200" :
-              status === 'low' ? "bg-sky-600 hover:bg-sky-700 text-white shadow-sky-200" :
-              "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"
-            )}
-          >
-            {addReading.isPending ? "Guardando..." : (
-              <>
-                {step === 3 ? "Finalizar Sesión" : "Siguiente Toma"}
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
-
-        <div className={cn(
-          "mt-6 p-3 rounded-2xl border transition-all duration-500",
-          status === 'danger' || pulseStatus === 'high' ? "bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/30" : 
-          status === 'warning' || pulseStatus === 'low' ? "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30" :
-          status === 'normal' && pulseStatus === 'normal' ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30" :
-          status === 'low' ? "bg-sky-50 dark:bg-sky-900/20 border-sky-100 dark:border-sky-900/30" :
-          "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30"
-        )}>
-          <div className="flex gap-2">
-            {(status === 'danger' || status === 'warning' || status === 'low' || pulseStatus === 'high' || pulseStatus === 'low') ? (
-              <AlertCircle className={cn(
-                "w-4 h-4 shrink-0 mt-0.5",
-                (status === 'danger' || pulseStatus === 'high') ? "text-rose-600 dark:text-rose-400" : 
-                (status === 'warning' || pulseStatus === 'low') ? "text-amber-600 dark:text-amber-400" :
-                "text-sky-600 dark:text-sky-400"
-              )} />
-            ) : (status === 'normal' && pulseStatus === 'normal') ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-            ) : (
-              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-            )}
-            <div className={cn(
-              "text-[10px] leading-relaxed space-y-1",
-              (status === 'danger' || pulseStatus === 'high') ? "text-rose-800 dark:text-rose-200" : 
-              (status === 'warning' || pulseStatus === 'low') ? "text-amber-800 dark:text-amber-200" :
-              (status === 'normal' && pulseStatus === 'normal') ? "text-emerald-800 dark:text-emerald-200" :
-              status === 'low' ? "text-sky-800 dark:text-sky-200" :
-              "text-amber-800 dark:text-amber-200"
-            )}>
-              {/* Blood Pressure Message */}
-              <div>
-                {status === 'danger' ? (
-                  <><strong>Hipertensión (AMPA):</strong> Valores por encima del objetivo (135/85).</>
-                ) : status === 'warning' ? (
-                  <><strong>Normal-Alta:</strong> Ligeramente por encima del rango óptimo (130-134/80-84).</>
-                ) : status === 'normal' ? (
-                  <><strong>Presión Normal:</strong> Valores dentro de los límites saludables (100-129/60-79).</>
-                ) : status === 'low' ? (
-                  <><strong>Presión Baja:</strong> Valores inferiores a lo normal (100/60).</>
-                ) : (
-                  <><strong>Recordatorio AMPA:</strong> Reposo de 5 min. antes de la toma.</>
-                )}
+          {showDeleteConfirm && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-900/30 p-4"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Trash2 className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                  <p className="text-xs font-bold text-rose-800 dark:text-rose-200">
+                    ¿Eliminar esta lectura permanentemente?
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => setShowDeleteConfirm(false)}>
+                    Cancelar
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={handleDelete}>
+                    Eliminar
+                  </Button>
+                </div>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-              {/* Pulse Message */}
-              {pulseStatus !== 'none' && (
-                <div className="pt-1 border-t border-current/10">
-                  {pulseStatus === 'high' ? (
-                    <><strong>Taquicardia:</strong> Tu pulso es superior a 100 lpm en reposo. Asegúrate de estar relajado.</>
-                  ) : pulseStatus === 'low' ? (
-                    <><strong>Bradicardia:</strong> Tu pulso es inferior a 60 lpm. Si eres deportista esto puede ser normal.</>
-                  ) : (
-                    <><strong>Pulso Normal:</strong> Tu frecuencia cardíaca está en el rango óptimo (60-100 lpm).</>
-                  )}
+        <div className="p-8 space-y-8">
+          {/* AI Tools */}
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="secondary" 
+              className="flex-1" 
+              onClick={toggleVoiceInput}
+              isLoading={isProcessingVoice}
+            >
+              {isListening ? <MicOff className="w-4 h-4 text-rose-500" /> : <Mic className="w-4 h-4" />}
+              {isListening ? "Detener" : "Voz"}
+            </Button>
+            <Button 
+              variant="secondary" 
+              className="flex-1"
+              onClick={() => fileInputRef.current?.click()}
+              isLoading={isProcessingImage}
+            >
+              <Camera className="w-4 h-4" />
+              Foto
+            </Button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              capture="environment" 
+              onChange={handleImageUpload}
+            />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sistólica (PAS)</label>
+                <div className="relative">
+                  <input 
+                    type="number" 
+                    value={systolic}
+                    onChange={(e) => setSystolic(e.target.value)}
+                    className="w-full h-16 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 font-mono text-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all"
+                    placeholder="120"
+                    required
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" onClick={() => adjustValue(setSystolic, systolic, 1)} className="p-1 text-slate-400 hover:text-indigo-600" aria-label="Aumentar sistólica"><Plus className="w-4 h-4" /></button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Aumentar sistólica</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" onClick={() => adjustValue(setSystolic, systolic, -1)} className="p-1 text-slate-400 hover:text-indigo-600" aria-label="Disminuir sistólica"><Minus className="w-4 h-4" /></button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Disminuir sistólica</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Diastólica (PAD)</label>
+                <div className="relative">
+                  <input 
+                    type="number" 
+                    value={diastolic}
+                    onChange={(e) => setDiastolic(e.target.value)}
+                    className="w-full h-16 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 font-mono text-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all"
+                    placeholder="80"
+                    required
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, 1)} className="p-1 text-slate-400 hover:text-indigo-600" aria-label="Aumentar diastólica"><Plus className="w-4 h-4" /></button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Aumentar diastólica</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, -1)} className="p-1 text-slate-400 hover:text-indigo-600" aria-label="Disminuir diastólica"><Minus className="w-4 h-4" /></button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Disminuir diastólica</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Frecuencia Cardíaca (FC)</label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  value={pulse}
+                  onChange={(e) => setPulse(e.target.value)}
+                  className="w-full h-16 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 pr-24 font-mono text-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all"
+                  placeholder="72"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <div className="flex flex-col gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" onClick={() => adjustValue(setPulse, pulse, 1)} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors" aria-label="Aumentar frecuencia cardíaca"><Plus className="w-4 h-4" /></button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Aumentar frecuencia cardíaca</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" onClick={() => adjustValue(setPulse, pulse, -1)} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors" aria-label="Disminuir frecuencia cardíaca"><Minus className="w-4 h-4" /></button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Disminuir frecuencia cardíaca</TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1" />
+                  <Heart className="w-6 h-6 text-rose-500 animate-pulse" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notas</label>
+              <textarea 
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full min-h-[100px] bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
+                placeholder="¿Alguna observación?"
+              />
+            </div>
+
+            {error && (
+              <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center gap-3 text-rose-600 dark:text-rose-400 text-sm font-bold border border-rose-100 dark:border-rose-900/30">
+                <AlertCircle className="w-5 h-5" />
+                {error}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3">
+              <Button 
+                type="submit" 
+                className="w-full h-16 text-lg" 
+                isLoading={isEditing ? updateReading.isPending : addReading.isPending}
+                variant={status === 'danger' ? 'danger' : status === 'warning' ? 'secondary' : 'primary'}
+              >
+                {isEditing ? (
+                  <>
+                    <Save className="w-5 h-5" />
+                    Guardar Cambios
+                  </>
+                ) : (
+                  <>
+                    {displayStep === 3 ? "Finalizar Sesión" : "Siguiente Toma"}
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </Button>
+
+              {isEditing && (
+                <div className="grid grid-cols-3 gap-3">
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="h-12"
+                    onClick={handleReset}
+                    disabled={!isDirty}
+                  >
+                    Restablecer
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="h-12 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    isLoading={deleteReading.isPending}
+                  >
+                    Eliminar
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="h-12"
+                    onClick={handleClose}
+                  >
+                    Cancelar
+                  </Button>
                 </div>
               )}
-              
-              {status === 'none' && pulseStatus === 'none' && (
-                <p>Evita hablar durante la toma y mantén el brazo a la altura del corazón.</p>
+
+              {!isEditing && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="h-12"
+                    onClick={handleClear}
+                    disabled={!isDirty}
+                  >
+                    Limpiar
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="h-12"
+                    onClick={handleClose}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
               )}
             </div>
-          </div>
+          </form>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
-};
+}

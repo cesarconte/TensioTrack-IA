@@ -24,6 +24,16 @@ interface AppState {
   // Editing
   editingReading: Reading | null;
   setEditingReading: (reading: Reading | null) => void;
+
+  // Health Settings
+  unitSystem: 'metric' | 'imperial';
+  setUnitSystem: (system: 'metric' | 'imperial') => void;
+  measurementFrequency: 'daily' | 'weekly' | 'monthly';
+  setMeasurementFrequency: (freq: 'daily' | 'weekly' | 'monthly') => void;
+  autoBmi: boolean;
+  setAutoBmi: (enabled: boolean) => void;
+  showTrends: boolean;
+  setShowTrends: (show: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -46,12 +56,25 @@ export const useAppStore = create<AppState>()(
 
       editingReading: null,
       setEditingReading: (editingReading) => set({ editingReading }),
+
+      unitSystem: 'metric',
+      setUnitSystem: (unitSystem) => set({ unitSystem }),
+      measurementFrequency: 'daily',
+      setMeasurementFrequency: (measurementFrequency) => set({ measurementFrequency }),
+      autoBmi: true,
+      setAutoBmi: (autoBmi) => set({ autoBmi }),
+      showTrends: true,
+      setShowTrends: (showTrends) => set({ showTrends }),
     }),
     {
       name: 'tensiotrack-storage',
       partialize: (state) => ({ 
         isDarkMode: state.isDarkMode,
-        activeTab: state.activeTab 
+        activeTab: state.activeTab,
+        unitSystem: state.unitSystem,
+        measurementFrequency: state.measurementFrequency,
+        autoBmi: state.autoBmi,
+        showTrends: state.showTrends
       }),
     }
   )

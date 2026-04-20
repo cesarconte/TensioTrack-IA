@@ -32,6 +32,19 @@
         "userUid": { "type": "string" }
       },
       "required": ["systolic", "diastolic", "order", "slot", "recordedAt", "date", "userUid"]
+    },
+    "AiAnalysis": {
+      "title": "AI Analysis",
+      "description": "Cached AI analysis for a specific period and type",
+      "type": "object",
+      "properties": {
+        "analysis": { "type": "string" },
+        "type": { "type": "string", "enum": ["bp", "pulse"] },
+        "period": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "userUid": { "type": "string" }
+      },
+      "required": ["analysis", "type", "period", "createdAt", "userUid"]
     }
   },
   "firestore": {
@@ -42,6 +55,10 @@
     "/users/{userId}/readings/{readingId}": {
       "schema": "Reading",
       "description": "User blood pressure readings"
+    },
+    "/users/{userId}/ai_analysis/{analysisId}": {
+      "schema": "AiAnalysis",
+      "description": "User cached AI analysis"
     }
   }
 }

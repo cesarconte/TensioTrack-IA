@@ -1,10 +1,10 @@
 import * as React from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { X, Copy, Check, Share2, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { Button } from "./ui/Button";
 import { toast } from "sonner";
+import { X, Share2, Check, Copy } from "lucide-react";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -41,23 +41,23 @@ export function ShareModal({ isOpen, onClose, url }: ShareModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
+            className="bg-card w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-border"
           >
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="font-display font-black text-lg text-slate-900 dark:text-white">Compartir Historial</h3>
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h3 className="font-display font-black text-lg text-foreground">Compartir Historial</h3>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
                     onClick={onClose} 
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                    className="p-2 hover:bg-on-surface/5 rounded-full transition-all hover:scale-110 active:scale-90"
                     aria-label="Cerrar modal de compartir"
                   >
-                    <X className="w-5 h-5 text-slate-400" />
+                    <X className="text-[20px] text-on-surface-variant/60" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>Cerrar modal de compartir</TooltipContent>
@@ -65,7 +65,7 @@ export function ShareModal({ isOpen, onClose, url }: ShareModalProps) {
             </div>
 
             <div className="p-8 flex flex-col items-center text-center space-y-8">
-              <div className="p-6 bg-white rounded-3xl shadow-xl border-4 border-slate-50">
+              <div className="p-6 bg-white rounded-[2.5rem] shadow-xl border-4 border-surface-low">
                 <QRCodeSVG 
                   value={url} 
                   size={180} 
@@ -81,17 +81,17 @@ export function ShareModal({ isOpen, onClose, url }: ShareModalProps) {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-bold text-slate-900 dark:text-white">Escanea este código</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Tu médico puede escanear este código para ver tu historial directamente en su dispositivo.</p>
+                <p className="text-sm font-bold text-foreground">Escanea este código</p>
+                <p className="text-xs text-on-surface-variant">Tu médico puede escanear este código para ver tu historial directamente en su dispositivo.</p>
               </div>
 
               <div className="w-full space-y-3">
-                <Button variant="primary" className="w-full" onClick={handleNativeShare}>
-                  <Share2 className="w-4 h-4" />
+                <Button variant="primary" size="lg" className="w-full" onClick={handleNativeShare}>
+                  <Share2 className="text-[16px] mr-2" />
                   Compartir Enlace
                 </Button>
-                <Button variant="secondary" className="w-full" onClick={handleCopy}>
-                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                <Button variant="secondary" size="lg" className="w-full" onClick={handleCopy}>
+                  {copied ? <Check className="text-[16px] text-success mr-2" /> : <Copy className="text-[16px] mr-2" />}
                   {copied ? "Copiado" : "Copiar Enlace"}
                 </Button>
               </div>

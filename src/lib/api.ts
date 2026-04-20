@@ -18,6 +18,7 @@ import {
   limit
 } from '../firebase';
 import { Reading, DashboardData, UserProfile } from '../types';
+import { getISOWeek } from './utils';
 import { 
   calculateSessionAverage, 
   calculateDayAverage,
@@ -32,7 +33,7 @@ import { toast } from 'sonner';
 // --- Services ---
 
 export const firebaseService = {
-  async getReadings(filters?: { slot?: string; date?: string; limit?: number }): Promise<Reading[]> {
+  async getReadings(filters?: { slot?: string; date?: string; limit?: number; periodId?: number; dateFrom?: string; dateTo?: string }): Promise<Reading[]> {
     if (!auth.currentUser) throw new Error('User not authenticated');
     const readingsRef = collection(db, 'users', auth.currentUser.uid, 'readings');
     
@@ -45,6 +46,18 @@ export const firebaseService = {
     if (filters?.date) {
       q = query(q, where('date', '==', filters.date));
     }
+
+    if (filters?.periodId) {
+      q = query(q, where('periodId', '==', filters.periodId));
+    }
+
+    if (filters?.dateFrom) {
+      q = query(q, where('date', '>=', filters.dateFrom));
+    }
+
+    if (filters?.dateTo) {
+      q = query(q, where('date', '<=', filters.dateTo));
+    }
     
     if (filters?.limit) {
       q = query(q, limit(filters.limit));
@@ -52,20 +65,32 @@ export const firebaseService = {
 
     try {
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        recordedAt: (doc.data().recordedAt as Timestamp).toDate().toISOString()
-      } as Reading));
+      const docs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          recordedAt: data.recordedAt instanceof Timestamp ? data.recordedAt.toDate().toISOString() : data.recordedAt
+        } as Reading;
+      });
+
+      // Filter by period explicitly if provided (to ensure type safety)
+      if (filters?.periodId) {
+        return docs.filter(r => Number(r.periodId) === Number(filters.periodId));
+      }
+      return docs;
     } catch (error) {
       // Fallback: fetch without index if possible
       try {
         const snapshot = await getDocs(readingsRef);
-        let results = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          recordedAt: (doc.data().recordedAt as Timestamp).toDate().toISOString()
-        } as Reading)).sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
+        let results = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            recordedAt: data.recordedAt instanceof Timestamp ? data.recordedAt.toDate().toISOString() : data.recordedAt
+          } as Reading;
+        }).sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
 
         if (filters?.slot && filters.slot !== 'all') {
           results = results.filter(r => r.slot === filters.slot);
@@ -73,12 +98,21 @@ export const firebaseService = {
         if (filters?.date) {
           results = results.filter(r => r.date === filters.date);
         }
+        if (filters?.periodId) {
+          results = results.filter(r => Number(r.periodId) === Number(filters.periodId));
+        }
+        if (filters?.dateFrom) {
+          results = results.filter(r => r.date >= filters.dateFrom!);
+        }
+        if (filters?.dateTo) {
+          results = results.filter(r => r.date <= filters.dateTo!);
+        }
         if (filters?.limit) {
           results = results.slice(0, filters.limit);
         }
         return results;
-      } catch (e) {
-        console.error('Firestore error in getReadings', e);
+      } catch (innerError) {
+        console.error('Firestore error in getReadings fallback', innerError);
         return [];
       }
     }
@@ -96,6 +130,49 @@ export const firebaseService = {
       throw new Error('La sesión ya tiene 3 lecturas (Protocolo AMPA)');
     }
 
+    // Calculate weekId
+    const weekId = getISOWeek(data.date);
+
+    // Calculate periodId cleanly using native Firebase
+    let targetPeriodId = 1;
+
+    try {
+      // 1. Get the latest reading based purely on timestamp (already indexed natively)
+      const latestQ = query(readingsRef, orderBy('recordedAt', 'desc'), limit(1));
+      const latestSnap = await getDocs(latestQ);
+      
+      if (!latestSnap.empty) {
+        const lastReading = latestSnap.docs[0].data() as Reading;
+        const currentPeriodId = lastReading.periodId || 1;
+        
+        // 2. Fetch all readings for ONLY that latest period
+        const periodQ = query(readingsRef, where('periodId', '==', currentPeriodId));
+        const periodSnap = await getDocs(periodQ);
+        const periodReadings = periodSnap.docs.map(d => d.data() as Reading);
+        
+        const uniqueDates = Array.from(new Set(periodReadings.map(r => r.date)));
+        
+        // Check temporal gap between the last date in this period and the new date
+        const lastDateInPeriod = new Date(lastReading.date);
+        const newDate = new Date(data.date);
+        const diffDays = Math.ceil((newDate.getTime() - lastDateInPeriod.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 10) {
+          // Time gap is large enough to logically break the cycle
+          targetPeriodId = currentPeriodId + 1;
+        } else if (uniqueDates.length >= 5 && !uniqueDates.includes(data.date)) {
+          // This period already has 5 unique days, adding a 6th day creates a new cycle
+          targetPeriodId = currentPeriodId + 1;
+        } else {
+          // We are still within the active 5-day cycle
+          targetPeriodId = currentPeriodId;
+        }
+      }
+    } catch (e) {
+      console.error("Error evaluating periodId cleanly, fallback to 1", e);
+      targetPeriodId = 1;
+    }
+
     const newReading = {
       systolic: data.systolic,
       diastolic: data.diastolic,
@@ -106,7 +183,9 @@ export const firebaseService = {
       notes: data.notes || null,
       category: await categorizeNote(data.notes || undefined),
       recordedAt: Timestamp.now(),
-      userUid: auth.currentUser.uid
+      userUid: auth.currentUser.uid,
+      periodId: targetPeriodId,
+      weekId
     };
 
     try {
@@ -147,7 +226,7 @@ export const firebaseService = {
     if (!auth.currentUser) throw new Error('User not authenticated');
     const userRef = doc(db, 'users', auth.currentUser.uid);
     try {
-      await setDoc(userRef, data, { merge: true });
+      await setDoc(userRef, { ...data, updatedAt: Timestamp.now() }, { merge: true });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
       throw error;
@@ -216,23 +295,67 @@ export const useDashboard = () => {
           };
         });
 
-      // Group into cycles of 5 days
-      const cycles = [];
-      for (let i = 0; i < completeDays.length; i += 5) {
-        const cycleDays = completeDays.slice(i, i + 5);
-        if (cycleDays.length === 0) continue;
+      // Group into cycles predictably using actual periodIds which are now guaranteed correct
+      const readingsByPeriod: Record<number, Reading[]> = {};
+      allReadings.forEach(r => {
+        if (!readingsByPeriod[r.periodId!]) readingsByPeriod[r.periodId!] = [];
+        readingsByPeriod[r.periodId!].push(r);
+      });
 
-        const pAverages = calculatePeriodAverages(cycleDays);
+      const periods = Object.keys(readingsByPeriod).map(Number).sort((a, b) => b - a);
+      
+      const cycles = periods.map(pId => {
+        const pReadings = readingsByPeriod[pId];
+        const pReadingsByDate: Record<string, Record<'morning' | 'evening', Reading[]>> = {};
+        
+        pReadings.forEach(r => {
+          if (!pReadingsByDate[r.date]) pReadingsByDate[r.date] = { morning: [], evening: [] };
+          pReadingsByDate[r.date][r.slot].push(r);
+        });
+
+        const pDays = Object.entries(pReadingsByDate)
+          .sort((a, b) => a[0].localeCompare(b[0])) // Ascending for cycle
+          .map(([date, slots]) => {
+            const morningAvg = calculateSessionAverage(slots.morning);
+            const eveningAvg = calculateSessionAverage(slots.evening);
+            return {
+              date,
+              morningAvg,
+              eveningAvg,
+              dailyAvg: calculateDayAverage(morningAvg, eveningAvg),
+              morningReadingsCount: slots.morning.length,
+              eveningReadingsCount: slots.evening.length
+            };
+          });
+
+      const pAverages = calculatePeriodAverages(pDays);
         const fAverage = calculateFinalPeriodAverage(pAverages.morning, pAverages.evening);
 
-        cycles.push({
-          startDate: cycleDays[cycleDays.length - 1].date,
-          endDate: cycleDays[0].date,
+        // Clinical validation: A period is only complete if it has exactly 5 unique days
+        // and each of those days has both morning and evening sessions COMPLETED (3 readings each).
+        const completedSessionsCount = pDays.reduce((acc, d) => {
+          return acc + (d.morningReadingsCount === 3 ? 1 : 0) + (d.eveningReadingsCount === 3 ? 1 : 0);
+        }, 0);
+        
+        // A period should be strictly contiguous (not spanning more than 10-12 total days)
+        // to be clinically valid as a "block".
+        let isTimeConsistent = false;
+        if (pDays.length > 0) {
+          const firstDate = new Date(pDays[0].date);
+          const lastDate = new Date(pDays[pDays.length - 1].date);
+          const spanDays = Math.ceil((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+          isTimeConsistent = spanDays <= 12; // Allow some slack but not weeks
+        }
+
+        return {
+          startDate: pDays[0]?.date || '',
+          endDate: pDays[pDays.length - 1]?.date || '',
           averages: pAverages,
           finalAverage: fAverage,
-          days: cycleDays
-        });
-      }
+          days: pDays,
+          isComplete: completedSessionsCount >= 10 && isTimeConsistent
+        };
+      });
 
       const currentCycle = cycles[0] || null;
       const todayStr = new Date().toISOString().split('T')[0];
@@ -270,12 +393,14 @@ export const useDashboard = () => {
           date: todayStr,
           avgSystolic: todayAvg?.systolic || null,
           avgDiastolic: todayAvg?.diastolic || null,
+          avgHeartRate: todayAvg?.heartRate || null,
           sessions: [
             {
               id: 'morning',
               slot: 'morning',
               avgSystolic: todayMorningAvg?.systolic || null,
               avgDiastolic: todayMorningAvg?.diastolic || null,
+              avgHeartRate: todayMorningAvg?.heartRate || null,
               completedAt: todaySlots.morning.length === 3 ? todaySlots.morning[0].recordedAt : null,
               readings: todaySlots.morning
             },
@@ -284,6 +409,7 @@ export const useDashboard = () => {
               slot: 'evening',
               avgSystolic: todayEveningAvg?.systolic || null,
               avgDiastolic: todayEveningAvg?.diastolic || null,
+              avgHeartRate: todayEveningAvg?.heartRate || null,
               completedAt: todaySlots.evening.length === 3 ? todaySlots.evening[0].recordedAt : null,
               readings: todaySlots.evening
             }
@@ -295,8 +421,8 @@ export const useDashboard = () => {
           periodAverages: currentCycle?.averages || { morning: null, evening: null },
           finalAverage: currentCycle?.finalAverage || null,
           periodDays: currentCycle?.days || [],
-          daysCount: completeDays.length % 5 || (completeDays.length > 0 ? 5 : 0),
-          isComplete: completeDays.length >= 5,
+          daysCount: currentCycle?.days.length || 0,
+          isComplete: currentCycle?.isComplete || false,
           historicalCycles: cycles.slice(1)
         }
       };
@@ -304,9 +430,42 @@ export const useDashboard = () => {
   });
 };
 
-export const useReadings = (filters?: { slot?: string; date?: string; limit?: number }) => {
+export const useAvailablePeriods = () => {
+  return useQuery<{ id: number; label: string }[]>({
+    queryKey: ['availablePeriods', auth.currentUser?.uid],
+    enabled: !!auth.currentUser,
+    queryFn: async () => {
+      if (!auth.currentUser) return [];
+      try {
+        const readingsRef = collection(db, 'users', auth.currentUser.uid, 'readings');
+        const snapshot = await getDocs(readingsRef);
+        
+        const periods = new Set<number>();
+        snapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const pid = data.periodId;
+          if (pid) {
+            periods.add(Number(pid));
+          }
+        });
+        
+        const result = Array.from(periods)
+          .sort((a, b) => b - a)
+          .map(id => ({ id, label: `Período ${id}` }));
+        
+        console.log("Filtered available periods:", result);
+        return result;
+      } catch (error) {
+        console.error("Error fetching available periods:", error);
+        return [];
+      }
+    }
+  });
+};
+
+export const useReadings = (filters?: { slot?: string; date?: string; limit?: number; periodId?: number; dateFrom?: string; dateTo?: string }) => {
   return useQuery<Reading[]>({
-    queryKey: ['readings', auth.currentUser?.uid, filters?.slot, filters?.date, filters?.limit],
+    queryKey: ['readings', auth.currentUser?.uid, filters?.slot, filters?.date, filters?.limit, filters?.periodId, filters?.dateFrom, filters?.dateTo],
     enabled: !!auth.currentUser,
     queryFn: () => firebaseService.getReadings(filters)
   });
@@ -376,7 +535,11 @@ export const useUpdateUserProfile = () => {
     mutationFn: firebaseService.updateUserProfile,
     onSuccess: (_, variables) => {
       if (user) {
-        setUser({ ...user, ...variables });
+        setUser({ 
+          ...user, 
+          ...variables, 
+          updatedAt: new Date().toISOString() 
+        });
       }
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success("Perfil actualizado correctamente");

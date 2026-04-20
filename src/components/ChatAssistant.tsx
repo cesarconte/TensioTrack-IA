@@ -1,24 +1,13 @@
 import * as React from "react";
 import { GoogleGenAI } from "@google/genai";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  MessageSquare, 
-  X, 
-  Send, 
-  Loader2, 
-  Bot, 
-  User as UserIcon,
-  TrendingUp,
-  Heart,
-  Calendar,
-  ChevronDown,
-  Sparkles
-} from "lucide-react";
 import { cn } from "../lib/utils";
 import { Reading } from "../types";
 import ReactMarkdown from "react-markdown";
+import { Button } from "./ui/Button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { useAppStore } from "../store/useAppStore";
+import { TrendingUp, Heart, CalendarDays, MessageCircle, Bot, ChevronDown, User, RefreshCw, Send, Sparkles } from "lucide-react";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -134,9 +123,9 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
   };
 
   const suggestedQuestions = [
-    { text: "¿Cómo van mis tendencias?", icon: <TrendingUp className="w-3 h-3" /> },
-    { text: "¿Mi presión es normal?", icon: <Heart className="w-3 h-3" /> },
-    { text: "Resumen de esta semana", icon: <Calendar className="w-3 h-3" /> },
+    { text: "¿Cómo van mis tendencias?", icon: <TrendingUp className="text-[16px]" /> },
+    { text: "¿Mi presión es normal?", icon: <Heart className="text-[16px]" /> },
+    { text: "Resumen de esta semana", icon: <CalendarDays className="text-[16px]" /> },
   ];
 
   const hasBottomBar = activeTab === 'settings' ? true : false; // Settings has bar up to lg
@@ -146,12 +135,12 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
     <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <motion.button
+            <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(true)}
             className={cn(
-              "fixed right-4 sm:right-6 w-16 h-16 rounded-3xl bg-indigo-600 text-white shadow-2xl flex items-center justify-center z-50 transition-all duration-300",
+              "fixed right-4 sm:right-6 w-16 h-16 rounded-full bg-primary text-white shadow-2xl shadow-primary/20 flex items-center justify-center z-40 transition-all duration-300",
               // Positioning logic:
               // 1. If in settings: bar is visible up to lg. So bottom-24 until lg.
               // 2. If not in settings: bar is visible only on xs (sm:hidden). So bottom-24 on xs, bottom-6 from sm up.
@@ -162,8 +151,8 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
             )}
             aria-label="Abrir asistente de IA"
           >
-            <MessageSquare className="w-7 h-7" />
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full border-4 border-white dark:border-slate-900 animate-pulse" />
+            <MessageCircle className="text-[28px]" />
+            <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-[var(--destructive)] rounded-full border-2 border-white dark:border-[#121116] shadow-sm animate-pulse" />
           </motion.button>
         </TooltipTrigger>
         <TooltipContent side="left">Abrir asistente de IA</TooltipContent>
@@ -176,21 +165,21 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className={cn(
-              "fixed inset-0 sm:inset-auto sm:right-6 w-full sm:w-[420px] h-full sm:h-[650px] sm:max-h-[85vh] bg-white dark:bg-slate-900 sm:rounded-[2.5rem] shadow-2xl flex flex-col z-50 overflow-hidden border-none sm:border border-slate-200 dark:border-slate-800",
+              "fixed inset-0 sm:inset-auto sm:right-6 w-full sm:w-[420px] h-full sm:h-[650px] sm:max-h-[85vh] bg-card sm:rounded-[2.5rem] shadow-2xl flex flex-col z-40 overflow-hidden border-none sm:border border-border",
               activeTab === 'settings'
                 ? "sm:bottom-24 lg:bottom-6"
                 : "sm:bottom-6"
             )}
           >
-            <div className="p-5 bg-indigo-600 text-white flex items-center justify-between">
+            <div className="p-5 bg-primary text-white flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                  <Bot className="w-7 h-7" />
+                  <Bot className="text-[28px]" />
                 </div>
                 <div>
                   <h3 className="font-display font-black text-base">Asistente IA</h3>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-80">En línea</span>
                   </div>
                 </div>
@@ -199,10 +188,10 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
                 <TooltipTrigger asChild>
                   <button 
                     onClick={() => setIsOpen(false)}
-                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                    className="p-2 hover:bg-white/10 rounded-full transition-all hover:scale-110 active:scale-90"
                     aria-label="Cerrar asistente"
                   >
-                    <ChevronDown className="w-6 h-6" />
+                    <ChevronDown className="text-[24px]" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>Cerrar asistente</TooltipContent>
@@ -211,7 +200,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
 
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50 dark:bg-slate-950/50"
+              className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-surface-low"
             >
               {messages.map((msg, i) => (
                 <motion.div
@@ -224,18 +213,18 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
                   )}
                 >
                   <div className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
-                    msg.role === 'user' ? "bg-indigo-100 text-indigo-600" : "bg-indigo-600 text-white"
+                    "w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm",
+                    msg.role === 'user' ? "bg-primary/10 text-primary" : "bg-primary text-white"
                   )}>
-                    {msg.role === 'user' ? <UserIcon className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
+                    {msg.role === 'user' ? <User className="text-[20px]" /> : <Bot className="text-[20px]" />}
                   </div>
                   <div className={cn(
-                    "p-4 rounded-[1.5rem] text-sm shadow-sm",
+                    "p-4 rounded-2xl text-sm shadow-sm",
                     msg.role === 'user' 
-                      ? "bg-indigo-600 text-white rounded-tr-none" 
-                      : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-slate-700"
+                      ? "bg-primary text-white rounded-tr-none" 
+                      : "bg-card text-foreground rounded-tl-none border border-border"
                   )}>
-                    <div className="markdown-body prose prose-sm dark:prose-invert max-w-none">
+                    <div className="markdown-body prose prose-sm dark:prose-invert max-none">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   </div>
@@ -243,29 +232,31 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
               ))}
               {isLoading && (
                 <div className="flex gap-3 max-w-[90%]">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
-                    <Bot className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
+                    <Bot className="text-[20px]" />
                   </div>
-                  <div className="p-4 rounded-[1.5rem] rounded-tl-none bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-3">
-                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                    <span className="text-xs font-bold text-slate-500">Analizando datos...</span>
+                  <div className="p-4 rounded-2xl rounded-tl-none bg-card border border-border shadow-sm flex items-center gap-3">
+                    <RefreshCw className="text-[16px] animate-spin text-primary" />
+                    <span className="text-xs font-bold text-on-surface-variant">Analizando datos...</span>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+            <div className="p-6 bg-card border-t border-border">
               {messages.length === 1 && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {suggestedQuestions.map((q, i) => (
-                    <button
+                    <Button
                       key={i}
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handleSend(q.text)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-800"
+                      className="text-[10px] font-black uppercase tracking-widest"
                     >
                       {q.icon}
                       {q.text}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -277,25 +268,25 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Haz una pregunta..."
                   aria-label="Escribe tu pregunta para el asistente"
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-3.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                  className="flex-1 bg-surface-low border-none rounded-full px-5 py-3.5 text-sm font-medium focus:ring-2 focus:ring-primary text-foreground"
                 />
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button
+                    <Button
                       onClick={() => handleSend()}
                       disabled={!input.trim() || isLoading}
-                      className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
+                      size="icon"
                       aria-label="Enviar mensaje"
                     >
-                      <Send className="w-5 h-5" />
-                    </button>
+                      <Send className="text-[20px]" />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>Enviar mensaje</TooltipContent>
                 </Tooltip>
               </div>
               <div className="flex items-center justify-center gap-2 mt-4">
-                <Sparkles className="w-3 h-3 text-indigo-400" />
-                <p className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-black">
+                <Sparkles className="text-[12px] text-primary bg-primary/10 p-1 rounded-lg" />
+                <p className="text-[9px] text-on-surface-variant uppercase tracking-[0.2em] font-black">
                   TensioTrack AI Assistant
                 </p>
               </div>

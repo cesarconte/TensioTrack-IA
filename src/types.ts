@@ -10,11 +10,14 @@ export interface Reading {
   notes: string | null;
   category: string | null;
   userUid: string;
+  periodId?: number;
+  weekId?: string;
 }
 
 export interface Average {
   systolic: number;
   diastolic: number;
+  heartRate?: number | null;
 }
 
 export interface DayStats {
@@ -43,11 +46,13 @@ export interface DashboardData {
     date: string;
     avgSystolic: number | null;
     avgDiastolic: number | null;
+    avgHeartRate: number | null;
     sessions: {
       id: string;
       slot: 'morning' | 'evening';
       avgSystolic: number | null;
       avgDiastolic: number | null;
+      avgHeartRate: number | null;
       completedAt: string | null;
       readings: Reading[];
     }[];
@@ -75,6 +80,7 @@ export interface UserProfile {
   displayName: string | null;
   photoURL: string | null;
   createdAt?: any;
+  updatedAt?: any;
   // Health Data
   age?: number;
   sex?: 'male' | 'female' | 'other';
@@ -92,4 +98,25 @@ export interface UserProfile {
   caffeineIntake?: 'none' | 'low' | 'moderate' | 'high';
   hasHighCholesterol?: boolean;
   hasKidneyDisease?: boolean;
+}
+
+export interface AIReport {
+  id: string;
+  userUid: string;
+  createdAt: string;
+  cycleId: string;
+  title: string;
+  executiveSummary: string;
+  dataQuality: number;
+  recommendation: string;
+  impact: string;
+  nextReview: string;
+  healthFocus: string;
+  isComparative: boolean;
+  findings: {
+    type: 'success' | 'warning' | 'info';
+    title: string;
+    desc: string;
+  }[];
+  projectionData: { val: number }[];
 }

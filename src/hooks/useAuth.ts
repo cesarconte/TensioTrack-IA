@@ -27,17 +27,14 @@ export function useAuth() {
             setUser(profile);
           } else {
             const userData = userSnap.data() as any;
-            // Sync latest profile info from Google
-            await setDoc(userRef, {
-              displayName: firebaseUser.displayName,
-              photoURL: firebaseUser.photoURL,
-            }, { merge: true });
             
+            // Prioritize Firestore data over Google Auth data for custom changes
             setUser({ 
               ...profile, 
               ...userData,
-              displayName: firebaseUser.displayName || userData.displayName,
-              photoURL: firebaseUser.photoURL || userData.photoURL 
+              displayName: userData.displayName || profile.displayName,
+              photoURL: userData.photoURL || profile.photoURL,
+              updatedAt: userData.updatedAt
             });
           }
         } catch (error) {

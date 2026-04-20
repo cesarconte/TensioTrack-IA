@@ -3,28 +3,13 @@ import { useAppStore } from "../store/useAppStore";
 import { useAddReading, useUpdateReading, useDeleteReading, useDashboard } from "../lib/api";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Heart, 
-  Activity, 
-  CheckCircle2, 
-  AlertCircle, 
-  ArrowRight,
-  X,
-  Mic,
-  MicOff,
-  Loader2,
-  Camera,
-  Plus,
-  Minus,
-  MessageSquare,
-  Save,
-  Trash2
-} from "lucide-react";
 import { Button } from "./ui/Button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { Badge } from "./ui/Badge";
 import { toast } from "sonner";
 import { GoogleGenAI, Type } from "@google/genai";
+import { getBloodPressureStatus, getBloodPressureStyle, getPulseStatus, getPulseStyle } from "../domain/health";
+import { X, Camera, Minus, Plus, RefreshCw, Save, Trash2, Heart, Mic, MicOff } from "lucide-react";
 
 interface ReadingFormProps {
   onClose: () => void;
@@ -80,12 +65,18 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
   };
 
   const handleReset = () => {
-    if (editingReading) {
+    if (isEditing && editingReading) {
       setSystolic(editingReading.systolic.toString());
       setDiastolic(editingReading.diastolic.toString());
       setPulse(editingReading.heartRate?.toString() || '');
       setNotes(editingReading.notes || '');
-      toast.info("Valores restablecidos");
+      toast.info("Valores originales restaurados");
+    } else {
+      setSystolic('');
+      setDiastolic('');
+      setPulse('');
+      setNotes('');
+      toast.info("Formulario restablecido");
     }
   };
 
@@ -278,322 +269,217 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 my-auto"
-      >
-        <div className={cn(
-          "p-6 flex items-center justify-between border-b transition-colors",
-          status === 'danger' ? "bg-rose-50/50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/30" : 
-          status === 'warning' ? "bg-amber-50/50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30" :
-          status === 'normal' ? "bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30" :
-          "bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800"
-        )}>
-          <div className="flex items-center gap-4 min-w-0">
-            <div className={cn(
-              "w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0",
-              status === 'danger' ? "bg-rose-600 shadow-rose-200 dark:shadow-none" : 
-              status === 'warning' ? "bg-amber-500 shadow-amber-200 dark:shadow-none" :
-              status === 'normal' ? "bg-emerald-500 shadow-emerald-200 dark:shadow-none" :
-              "bg-indigo-600 shadow-indigo-200 dark:shadow-none"
-            )}>
-              <Activity className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-xl font-display font-black text-slate-900 dark:text-white truncate">
-                {isEditing ? 'Editar Lectura' : 'Nueva Lectura'}
-              </h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">
-                {isEditing 
-                  ? `Modificando registro del ${new Date(editingReading.recordedAt).toLocaleDateString('es-ES')}`
-                  : `Sesión ${currentSlot === 'morning' ? 'Mañana' : 'Noche'} • Toma ${displayStep} de 3`
-                }
-              </p>
-            </div>
-          </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button 
-                onClick={handleClose} 
-                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors shrink-0"
-                aria-label="Cerrar formulario"
-              >
-                <X className="w-6 h-6 text-slate-400" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Cerrar formulario</TooltipContent>
-          </Tooltip>
+    <div className="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-md overflow-y-auto">
+      <div className="flex min-h-full items-center justify-center p-4 py-8 sm:p-8">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="w-full max-w-2xl bg-surface-low rounded-[2rem] p-6 sm:p-10 md:p-12 shadow-2xl relative overflow-hidden"
+        >
+          {/* Close Button */}
+          <button 
+            onClick={handleClose}
+            className="absolute top-6 right-6 p-2 text-on-surface-variant hover:bg-surface-high rounded-full transition-colors z-10"
+            aria-label="Cerrar formulario"
+          >
+            <X className="" />
+          </button>
+
+          {/* Abstract background element */}
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary-container/10 rounded-full blur-3xl"></div>
+
+        {/* Header Section */}
+        <div className="mb-6 sm:mb-10 relative">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-on-surface tracking-tight font-display mb-1 sm:mb-2">
+            {isEditing ? 'Editar Lectura' : 'Nueva Lectura'}
+          </h1>
+          <p className="text-xs sm:text-sm font-semibold tracking-widest text-primary uppercase opacity-80">
+            {isEditing 
+              ? `MODIFICANDO REGISTRO DEL ${new Date(editingReading.recordedAt).toLocaleDateString('es-ES')}`
+              : `SESIÓN ${currentSlot === 'morning' ? 'MAÑANA' : 'NOCHE'} • TOMA ${displayStep} DE 3`
+            }
+          </p>
         </div>
 
-        <AnimatePresence>
-          {showConfirmClose && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-900/30 p-4"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                  <p className="text-xs font-bold text-amber-800 dark:text-amber-200">
-                    Tienes cambios sin guardar. ¿Deseas salir de todos modos?
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => setShowConfirmClose(false)}>
-                    Continuar editando
-                  </Button>
-                  <Button size="sm" variant="danger" onClick={forceClose}>
-                    Salir sin guardar
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          )}
+        {/* Contextual Action Buttons */}
+        <div className="flex gap-3 sm:gap-4 mb-6 sm:mb-10">
+          <button 
+            type="button"
+            onClick={toggleVoiceInput}
+            className="flex-1 flex items-center justify-center gap-2 sm:gap-3 py-3 sm:py-4 bg-surface-highest rounded-2xl text-on-surface font-semibold hover:bg-surface-high transition-all active:scale-95 text-sm sm:text-base"
+          >
+            {isListening ? <MicOff className="text-primary text-xl sm:text-2xl" /> : <Mic className="text-primary text-xl sm:text-2xl" />}
+            {isListening ? "Detener" : "Voz"}
+          </button>
+          <button 
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 flex items-center justify-center gap-2 sm:gap-3 py-3 sm:py-4 bg-surface-highest rounded-2xl text-on-surface font-semibold hover:bg-surface-high transition-all active:scale-95 text-sm sm:text-base"
+          >
+            <Camera className="text-primary text-xl sm:text-2xl" />
+            Foto
+          </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept="image/*" 
+            capture="environment" 
+            onChange={handleImageUpload}
+          />
+        </div>
 
-          {showDeleteConfirm && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-900/30 p-4"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Trash2 className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-                  <p className="text-xs font-bold text-rose-800 dark:text-rose-200">
-                    ¿Eliminar esta lectura permanentemente?
-                  </p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Measurement Fields Grid */}
+          <div className="space-y-4 sm:space-y-6">
+            {/* Systolic (PAS) */}
+            <div className="bg-surface-lowest p-5 sm:p-6 rounded-[1.5rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm sm:text-base font-bold text-on-surface-variant tracking-wider uppercase">SISTÓLICA (PAS)</span>
+                  {sys > 0 && dia > 0 && (
+                    <Badge className={cn("px-3 py-1 border-none text-[9px] font-black tracking-widest leading-none rounded-full", getBloodPressureStyle(getBloodPressureStatus(sys, dia)).bg, getBloodPressureStyle(getBloodPressureStatus(sys, dia)).color)}>
+                      {getBloodPressureStyle(getBloodPressureStatus(sys, dia)).label}
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => setShowDeleteConfirm(false)}>
-                    Cancelar
-                  </Button>
-                  <Button size="sm" variant="danger" onClick={handleDelete}>
-                    Eliminar
-                  </Button>
-                </div>
+                <span className="text-xs sm:text-sm text-on-surface-variant/60 font-medium">Presión Alta (mmHg)</span>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="p-8 space-y-8">
-          {/* AI Tools */}
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="secondary" 
-              className="flex-1" 
-              onClick={toggleVoiceInput}
-              isLoading={isProcessingVoice}
-            >
-              {isListening ? <MicOff className="w-4 h-4 text-rose-500" /> : <Mic className="w-4 h-4" />}
-              {isListening ? "Detener" : "Voz"}
-            </Button>
-            <Button 
-              variant="secondary" 
-              className="flex-1"
-              onClick={() => fileInputRef.current?.click()}
-              isLoading={isProcessingImage}
-            >
-              <Camera className="w-4 h-4" />
-              Foto
-            </Button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              capture="environment" 
-              onChange={handleImageUpload}
-            />
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sistólica (PAS)</label>
-                <div className="relative">
-                  <input 
-                    type="number" 
-                    value={systolic}
-                    onChange={(e) => setSystolic(e.target.value)}
-                    className="w-full h-16 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 font-mono text-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all"
-                    placeholder="120"
-                    required
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" onClick={() => adjustValue(setSystolic, systolic, 1)} className="p-1 text-slate-400 hover:text-indigo-600" aria-label="Aumentar sistólica"><Plus className="w-4 h-4" /></button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">Aumentar sistólica</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" onClick={() => adjustValue(setSystolic, systolic, -1)} className="p-1 text-slate-400 hover:text-indigo-600" aria-label="Disminuir sistólica"><Minus className="w-4 h-4" /></button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">Disminuir sistólica</TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Diastólica (PAD)</label>
-                <div className="relative">
-                  <input 
-                    type="number" 
-                    value={diastolic}
-                    onChange={(e) => setDiastolic(e.target.value)}
-                    className="w-full h-16 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 font-mono text-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all"
-                    placeholder="80"
-                    required
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, 1)} className="p-1 text-slate-400 hover:text-indigo-600" aria-label="Aumentar diastólica"><Plus className="w-4 h-4" /></button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">Aumentar diastólica</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, -1)} className="p-1 text-slate-400 hover:text-indigo-600" aria-label="Disminuir diastólica"><Minus className="w-4 h-4" /></button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">Disminuir diastólica</TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between md:justify-end gap-2 sm:gap-4 px-2 sm:px-0">
+                <button type="button" onClick={() => adjustValue(setSystolic, systolic, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                  <Minus className="font-bold text-2xl sm:text-3xl" />
+                </button>
+                <input 
+                  type="number" 
+                  value={systolic}
+                  onChange={(e) => setSystolic(e.target.value)}
+                  className="w-24 sm:w-32 text-6xl sm:text-7xl font-extrabold text-on-surface font-display text-center bg-transparent border-none focus:ring-0 p-0 placeholder:text-on-surface"
+                  placeholder="111"
+                  required
+                />
+                <button type="button" onClick={() => adjustValue(setSystolic, systolic, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                  <Plus className="font-bold text-2xl sm:text-3xl" />
+                </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Frecuencia Cardíaca (FC)</label>
-              <div className="relative">
+            {/* Diastolic (PAD) */}
+            <div className="bg-surface-lowest p-5 sm:p-6 rounded-[1.5rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+              <div className="flex flex-col">
+                <span className="text-sm sm:text-base font-bold text-on-surface-variant tracking-wider uppercase">DIASTÓLICA (PAD)</span>
+                <span className="text-xs sm:text-sm text-on-surface-variant/60 font-medium">Presión Baja (mmHg)</span>
+              </div>
+              <div className="flex items-center justify-between md:justify-end gap-2 sm:gap-4 px-2 sm:px-0">
+                <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                  <Minus className="font-bold text-2xl sm:text-3xl" />
+                </button>
+                <input 
+                  type="number" 
+                  value={diastolic}
+                  onChange={(e) => setDiastolic(e.target.value)}
+                  className="w-24 sm:w-32 text-6xl sm:text-7xl font-extrabold text-on-surface font-display text-center bg-transparent border-none focus:ring-0 p-0 placeholder:text-on-surface"
+                  placeholder="77"
+                  required
+                />
+                <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                  <Plus className="font-bold text-2xl sm:text-3xl" />
+                </button>
+              </div>
+            </div>
+
+            {/* Pulse (FC) */}
+            <div className="bg-surface-lowest p-5 sm:p-6 rounded-[1.5rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm sm:text-base font-bold text-on-surface-variant tracking-wider uppercase">FRECUENCIA CARDÍACA (FC)</span>
+                  <Heart className="text-destructive text-lg sm:text-xl fill-current" />
+                  {fc > 0 && (
+                    <Badge className={cn("px-3 py-1 border-none text-[9px] font-black tracking-widest leading-none rounded-full", getPulseStyle(getPulseStatus(fc)).bg, getPulseStyle(getPulseStatus(fc)).color)}>
+                      {getPulseStyle(getPulseStatus(fc)).label}
+                    </Badge>
+                  )}
+                </div>
+                <span className="text-xs sm:text-sm text-on-surface-variant/60 font-medium">Latidos por minuto</span>
+              </div>
+              <div className="flex items-center justify-between md:justify-end gap-2 sm:gap-4 px-2 sm:px-0">
+                <button type="button" onClick={() => adjustValue(setPulse, pulse, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                  <Minus className="font-bold text-2xl sm:text-3xl" />
+                </button>
                 <input 
                   type="number" 
                   value={pulse}
                   onChange={(e) => setPulse(e.target.value)}
-                  className="w-full h-16 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 pr-24 font-mono text-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all"
-                  placeholder="72"
+                  className="w-24 sm:w-32 text-6xl sm:text-7xl font-extrabold text-on-surface font-display text-center bg-transparent border-none focus:ring-0 p-0 placeholder:text-on-surface"
+                  placeholder="68"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <div className="flex flex-col gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" onClick={() => adjustValue(setPulse, pulse, 1)} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors" aria-label="Aumentar frecuencia cardíaca"><Plus className="w-4 h-4" /></button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">Aumentar frecuencia cardíaca</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" onClick={() => adjustValue(setPulse, pulse, -1)} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors" aria-label="Disminuir frecuencia cardíaca"><Minus className="w-4 h-4" /></button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">Disminuir frecuencia cardíaca</TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1" />
-                  <Heart className="w-6 h-6 text-rose-500 animate-pulse" />
-                </div>
+                <button type="button" onClick={() => adjustValue(setPulse, pulse, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                  <Plus className="font-bold text-2xl sm:text-3xl" />
+                </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notas</label>
+            {/* Notes Section */}
+            <div className="flex flex-col gap-2 sm:gap-3 mt-2 sm:mt-4">
+              <label className="text-[10px] sm:text-xs font-bold text-on-surface-variant tracking-widest ml-4 uppercase">NOTAS</label>
               <textarea 
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full min-h-[100px] bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
-                placeholder="¿Alguna observación?"
+                className="w-full bg-surface-lowest border-none rounded-[1.5rem] p-4 sm:p-6 text-sm sm:text-base text-on-surface font-medium focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/50" 
+                rows={2}
+                placeholder="Desayuno ligero"
               />
             </div>
+          </div>
 
-            {error && (
-              <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center gap-3 text-rose-600 dark:text-rose-400 text-sm font-bold border border-rose-100 dark:border-rose-900/30">
-                <AlertCircle className="w-5 h-5" />
-                {error}
+          {/* Bottom Actions Section */}
+          <div className="mt-8 sm:mt-10 flex flex-col gap-6">
+            {/* Primary Actions (Grouped) */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
+              <button 
+                type="button"
+                onClick={handleReset}
+                disabled={!isDirty}
+                className="w-full sm:w-auto px-6 py-3 sm:py-4 text-sm sm:text-base text-on-surface-variant font-bold rounded-full hover:bg-surface-highest transition-colors active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="text-lg sm:text-xl" />
+                Restablecer
+              </button>
+              
+              <button 
+                type="button"
+                onClick={handleClose}
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base bg-surface-highest text-on-surface-variant font-bold rounded-full hover:bg-surface-high transition-colors active:scale-95 border-none flex items-center justify-center gap-2"
+              >
+                <X className="text-lg sm:text-xl" />
+                Cancelar
+              </button>
+              
+              <button 
+                type="submit"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base bg-primary text-primary-foreground font-bold rounded-full shadow-[0_8px_20px_rgba(103,80,165,0.25)] flex items-center justify-center gap-2 sm:gap-3 hover:bg-primary/90 hover:shadow-lg transition-all active:scale-95"
+              >
+                <Save className="text-lg sm:text-xl" />
+                Guardar
+              </button>
+            </div>
+
+            {/* Destructive Action (Row 2 - Only in Edit Mode) */}
+            {isEditing && (
+              <div className="flex justify-center border-t border-border pt-6">
+                <button 
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full sm:w-auto text-destructive font-bold flex items-center justify-center gap-2 px-6 py-3 sm:py-4 rounded-full hover:bg-destructive/5 transition-all active:scale-95 group text-sm sm:text-base"
+                >
+                  <Trash2 className="text-lg sm:text-xl group-hover:scale-110 transition-transform" />
+                  Eliminar lectura
+                </button>
               </div>
             )}
-
-            <div className="flex flex-col gap-3">
-              <Button 
-                type="submit" 
-                className="w-full h-16 text-lg" 
-                isLoading={isEditing ? updateReading.isPending : addReading.isPending}
-                variant={status === 'danger' ? 'danger' : status === 'warning' ? 'secondary' : 'primary'}
-              >
-                {isEditing ? (
-                  <>
-                    <Save className="w-5 h-5" />
-                    Guardar Cambios
-                  </>
-                ) : (
-                  <>
-                    {displayStep === 3 ? "Finalizar Sesión" : "Siguiente Toma"}
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </Button>
-
-              {isEditing && (
-                <div className="grid grid-cols-3 gap-3">
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    className="h-12"
-                    onClick={handleReset}
-                    disabled={!isDirty}
-                  >
-                    Restablecer
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    className="h-12 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    isLoading={deleteReading.isPending}
-                  >
-                    Eliminar
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    className="h-12"
-                    onClick={handleClose}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              )}
-
-              {!isEditing && (
-                <div className="grid grid-cols-2 gap-3">
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    className="h-12"
-                    onClick={handleClear}
-                    disabled={!isDirty}
-                  >
-                    Limpiar
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    className="h-12"
-                    onClick={handleClose}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              )}
-            </div>
-          </form>
-        </div>
-      </motion.div>
+          </div>
+        </form>
+        </motion.div>
+      </div>
     </div>
   );
 }

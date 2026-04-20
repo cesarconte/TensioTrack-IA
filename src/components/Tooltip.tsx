@@ -50,22 +50,22 @@ export const AppTooltip: React.FC<TooltipProps> = ({
     switch (position) {
       case 'top':
         return cn(
-          "top-full border-t-slate-900 dark:border-t-slate-800",
+          "top-full border-t-dim",
           align === 'center' && "left-1/2 -translate-x-1/2",
           align === 'start' && "left-4",
           align === 'end' && "right-4"
         );
       case 'bottom':
         return cn(
-          "bottom-full border-b-slate-900 dark:border-b-slate-800",
+          "bottom-full border-b-dim",
           align === 'center' && "left-1/2 -translate-x-1/2",
           align === 'start' && "left-4",
           align === 'end' && "right-4"
         );
       case 'left':
-        return "left-full top-1/2 -translate-y-1/2 border-l-slate-900 dark:border-l-slate-800";
+        return "left-full top-1/2 -translate-y-1/2 border-l-dim";
       case 'right':
-        return "right-full top-1/2 -translate-y-1/2 border-r-slate-900 dark:border-r-slate-800";
+        return "right-full top-1/2 -translate-y-1/2 border-r-dim";
       default:
         return "";
     }
@@ -98,7 +98,7 @@ export const AppTooltip: React.FC<TooltipProps> = ({
             }}
             transition={{ duration: 0.15, ease: "easeOut" }}
             className={cn(
-              "absolute z-[110] px-3 py-1.5 bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-bold rounded-lg shadow-xl whitespace-normal min-w-[80px] max-w-[180px] text-center pointer-events-none leading-tight",
+              "absolute z-[110] px-3 py-1.5 bg-dim text-white text-[11px] font-bold rounded-lg shadow-xl whitespace-normal min-w-[80px] max-w-[180px] text-center pointer-events-none leading-tight",
               getPositionClasses(),
               showOn === 'mobile' && "md:hidden",
               showOn === 'desktop' && "hidden md:block"

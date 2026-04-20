@@ -1,19 +1,23 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-[2.5rem] border border-slate-100 bg-white text-slate-950 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50",
-      className
-    )}
-    {...props}
-  />
-));
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  interactive?: boolean;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, interactive, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "bg-surface-lowest rounded-[2.5rem] shadow-sm transition-all duration-300",
+        interactive && "hover:shadow-xl hover:scale-[1.01] cursor-pointer active:scale-[0.99]",
+        className
+      )}
+      {...props}
+    />
+  )
+);
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<
@@ -35,7 +39,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "font-display font-black text-xl leading-none tracking-tight",
+      "font-display font-black text-xl leading-none tracking-tight text-on-surface",
       className
     )}
     {...props}
@@ -49,7 +53,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500", className)}
+    className={cn("text-xs font-bold uppercase tracking-widest text-on-surface-variant", className)}
     {...props}
   />
 ));

@@ -1,77 +1,56 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: users
-    // Document ID: {userId} (matches auth.uid)
-    // Fields:
-    //   - uid: string (required)
-    //   - email: string (required, email format)
-    //   - displayName: string (optional)
-    //   - photoURL: string (optional)
-    //   - createdAt: timestamp (required)
-    //   - age: number (optional)
-    //   - sex: string (optional, 'male' | 'female' | 'other')
-    //   - height: number (optional)
-    //   - weight: number (optional)
-    //   - isSmoker: boolean (optional)
-    //   - hasDiabetes: boolean (optional)
-    //   - isHypertensiveMedicated: boolean (optional)
-    //   - activityLevel: string (optional, 'sedentary' | 'moderate' | 'active')
-    //
-    // Collection: users/{userId}/readings
-    // Document ID: {readingId}
-    // Fields:
-    //   - systolic: number (required, 40-300)
-    //   - diastolic: number (required, 30-200)
-    //   - heartRate: number (optional, 30-250)
-    //   - order: number (required, 1-3)
-    //   - slot: string (required, 'morning' | 'evening')
-    //   - recordedAt: timestamp (required)
-    //   - date: string (required, YYYY-MM-DD)
-    //   - userUid: string (required, matches auth.uid)
-    //
-    // ===============================================================
-
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
-    function isAuthenticated() {
-      return request.auth != null;
+    // 0. Global Safety Net - Default Deny
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    // ===============================================================
+    // Connectivity Test (Startup check)
+    // ===============================================================
+    match /test/connection {
+      allow read: if true;
     }
 
-    function isValidEmail(email) {
-      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    // ===============================================================
+    // Helper Functions (The Primitives)
+    // ===============================================================
+    function isSignedIn() { return request.auth != null; }
+    
+    // PERMISSION MANDATE: Allow signed in users; verification check is softened for dev/social logins
+    function isVerified() { 
+      return isSignedIn(); // Relaxed for better UX
     }
-
-    function isValidDateString(dateStr) {
-      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    
+    // Guard against ID poisoning/pollution
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
     }
-
+    
+    // Tiered Identity Logic: RBAC
     function isAdmin() {
-      return isAuthenticated() &&
-        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin') ||
-          (request.auth.token.email == "yugurta@gmail.com" && request.auth.token.email_verified == true));
+      return isSignedIn() && (
+        request.auth.token.email == "yugurta@gmail.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin')
+      );
     }
 
     // ===============================================================
-    // Domain Validators
+    // Entity Validation Blueprints (Anti-Update-Gap)
     // ===============================================================
+
     function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
-             data.uid == request.auth.uid &&
-             isValidEmail(data.email) &&
+      return data.uid == request.auth.uid &&
+             data.email is string && data.email.size() <= 256 &&
              data.createdAt is timestamp &&
-             (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
-             (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500)) &&
+             (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 256)) &&
+             (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 200000)) &&
              (!('sex' in data) || data.sex in ['male', 'female', 'other']) &&
              (!('age' in data) || data.age == null || (data.age is number && data.age >= 0 && data.age <= 120)) &&
              (!('height' in data) || data.height == null || (data.height is number && data.height >= 0 && data.height <= 300)) &&
@@ -79,41 +58,129 @@ service cloud.firestore {
              (!('isSmoker' in data) || data.isSmoker is bool) &&
              (!('hasDiabetes' in data) || data.hasDiabetes is bool) &&
              (!('isHypertensiveMedicated' in data) || data.isHypertensiveMedicated is bool) &&
-             (!('activityLevel' in data) || data.activityLevel in ['sedentary', 'moderate', 'active']);
+             (!('activityLevel' in data) || data.activityLevel in ['sedentary', 'moderate', 'active']) &&
+             (!('alcoholConsumption' in data) || data.alcoholConsumption in ['none', 'occasional', 'frequent']) &&
+             (!('saltIntake' in data) || data.saltIntake in ['low', 'normal', 'high']) &&
+             (!('stressLevel' in data) || data.stressLevel in ['low', 'moderate', 'high']) &&
+             (!('sleepQuality' in data) || data.sleepQuality in ['good', 'average', 'poor']) &&
+             (!('familyHistory' in data) || data.familyHistory is bool) &&
+             (!('caffeineIntake' in data) || data.caffeineIntake in ['none', 'low', 'moderate', 'high']) &&
+             (!('hasHighCholesterol' in data) || data.hasHighCholesterol is bool) &&
+             (!('hasKidneyDisease' in data) || data.hasKidneyDisease is bool) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+             (!('role' in data) || data.role in ['user', 'admin']);
     }
 
     function isValidReading(data) {
-      return data.keys().hasAll(['systolic', 'diastolic', 'order', 'slot', 'recordedAt', 'date', 'userUid']) &&
-             data.systolic is number && data.systolic >= 40 && data.systolic <= 300 &&
+      return data.systolic is number && data.systolic >= 40 && data.systolic <= 300 &&
              data.diastolic is number && data.diastolic >= 30 && data.diastolic <= 200 &&
              (!('heartRate' in data) || data.heartRate == null || (data.heartRate is number && data.heartRate >= 30 && data.heartRate <= 250)) &&
-             (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 1000)) &&
              data.order is number && data.order >= 1 && data.order <= 3 &&
              data.slot in ['morning', 'evening'] &&
+             data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
              data.recordedAt is timestamp &&
-             isValidDateString(data.date) &&
-             data.userUid == request.auth.uid;
+             data.userUid == request.auth.uid &&
+             (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 1000)) &&
+             (!('category' in data) || data.category == null || (data.category is string && data.category.size() <= 100)) &&
+             (!('periodId' in data) || data.periodId == null || data.periodId is number) &&
+             (!('weekId' in data) || data.weekId == null || (data.weekId is string && data.weekId.size() <= 20)) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidAiReport(data) {
+      return data.userUid == request.auth.uid &&
+             data.createdAt is string &&
+             data.cycleId is string &&
+             data.title is string && data.title.size() <= 200 &&
+             data.executiveSummary is string && data.executiveSummary.size() <= 5000 &&
+             data.dataQuality is number && data.dataQuality >= 0 && data.dataQuality <= 100 &&
+             data.recommendation is string && data.recommendation.size() <= 2000 &&
+             data.impact is string && data.impact.size() <= 200 &&
+             (!('nextReview' in data) || data.nextReview is string) &&
+             (!('healthFocus' in data) || data.healthFocus is string) &&
+             (!('isComparative' in data) || data.isComparative is bool) &&
+             (data.findings is list && data.findings.size() <= 20) &&
+             (data.projectionData is list && data.projectionData.size() <= 60);
+    }
+
+    function isValidAiAnalysis(data) {
+      return data.userUid == request.auth.uid &&
+             data.analysis is string &&
+             data.type in ['bp', 'pulse'] &&
+             data.period is string &&
+             data.createdAt is string;
     }
 
     // ===============================================================
-    // Match Blocks
+    // Root Collection: Users
     // ===============================================================
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
-                    request.resource.data.createdAt == resource.data.createdAt;
+      
+      allow create: if isOwner(userId) && isVerified() && 
+                    incoming().keys().hasAll(['uid', 'email', 'createdAt']) && 
+                    isValidUser(incoming());
+      
+      allow update: if isOwner(userId) && isVerified() &&
+                    incoming().uid == existing().uid &&
+                    incoming().createdAt == existing().createdAt &&
+                    (!incoming().diff(existing()).affectedKeys().hasAny(['role'])) && // No self-escalation
+                    isValidUser(incoming());
+      
+      allow delete: if isAdmin(); // Extreme action
     }
 
+    // ===============================================================
+    // Sub-collection: Readings
+    // ===============================================================
     match /users/{userId}/readings/{readingId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidReading(request.resource.data);
-      allow update: if isOwner(userId) && isValidReading(request.resource.data) &&
-                    request.resource.data.recordedAt == resource.data.recordedAt &&
-                    request.resource.data.order == resource.data.order &&
-                    request.resource.data.slot == resource.data.slot &&
-                    request.resource.data.date == resource.data.date &&
-                    request.resource.data.userUid == resource.data.userUid;
+      // Secure List Queries: Evaluation of resource.data is mandatory for allow list
+      allow list: if isOwner(userId) || isAdmin();
+      allow get: if isOwner(userId) || isAdmin();
+      
+      allow create: if isOwner(userId) && isVerified() && 
+                    isValidId(readingId) &&
+                    incoming().keys().hasAll(['systolic', 'diastolic', 'order', 'slot', 'recordedAt', 'date', 'userUid']) &&
+                    isValidReading(incoming()) &&
+                    exists(/databases/$(database)/documents/users/$(userId)); // Mandatory Relation Check
+      
+      allow update: if isOwner(userId) && isVerified() &&
+                    // Immortal Fields (Immutability check)
+                    incoming().recordedAt == existing().recordedAt &&
+                    incoming().order == existing().order &&
+                    incoming().slot == existing().slot &&
+                    incoming().date == existing().date &&
+                    incoming().userUid == existing().userUid &&
+                    // Action-Based affected keys check
+                    incoming().diff(existing()).affectedKeys().hasOnly(['systolic', 'diastolic', 'heartRate', 'notes', 'category', 'updatedAt']) &&
+                    isValidReading(incoming());
+      
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // ===============================================================
+    // Sub-collection: AI Reports & Analysis
+    // ===============================================================
+    match /users/{userId}/ai_reports/{reportId} {
+      allow list: if isOwner(userId) || isAdmin();
+      allow get: if isOwner(userId) || isAdmin();
+      
+      allow create: if isOwner(userId) && isVerified() && 
+                    isValidId(reportId) &&
+                    incoming().keys().hasAll(['userUid', 'createdAt', 'cycleId', 'title', 'executiveSummary', 'dataQuality', 'findings', 'projectionData']) &&
+                    isValidAiReport(incoming()) &&
+                    exists(/databases/$(database)/documents/users/$(userId));
+      
+      allow update: if false; // Reports are typically static once generated
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/ai_analysis/{analysisId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isVerified() && 
+                            isValidId(analysisId) &&
+                            isValidAiAnalysis(incoming()) &&
+                            exists(/databases/$(database)/documents/users/$(userId));
       allow delete: if isOwner(userId) || isAdmin();
     }
   }

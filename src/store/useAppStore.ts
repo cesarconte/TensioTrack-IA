@@ -15,6 +15,10 @@ interface AppState {
   activeTab: 'dashboard' | 'history' | 'report' | 'ai' | 'settings';
   setActiveTab: (tab: 'dashboard' | 'history' | 'report' | 'ai' | 'settings') => void;
   
+  // Settings sub-navigation
+  activeSettingsSection: 'profile' | 'data' | 'privacy' | 'about';
+  setActiveSettingsSection: (section: 'profile' | 'data' | 'privacy' | 'about') => void;
+  
   // Modals
   isReadingFormOpen: boolean;
   setReadingFormOpen: (open: boolean) => void;
@@ -48,6 +52,9 @@ export const useAppStore = create<AppState>()(
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
       activeTab: 'dashboard',
       setActiveTab: (activeTab) => set({ activeTab }),
+
+      activeSettingsSection: 'profile',
+      setActiveSettingsSection: (activeSettingsSection) => set({ activeSettingsSection }),
 
       isReadingFormOpen: false,
       setReadingFormOpen: (isReadingFormOpen) => set({ isReadingFormOpen }),

@@ -21,7 +21,8 @@ export function Layout({ children }: LayoutProps) {
     toggleDarkMode, 
     activeTab, 
     setActiveTab,
-    setReadingFormOpen
+    setReadingFormOpen,
+    activeSettingsSection
   } = useAppStore();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
@@ -94,7 +95,16 @@ export function Layout({ children }: LayoutProps) {
           >
             <div className="px-5 py-3 border-b border-border/50 mb-2">
               <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1 font-display">Cuenta</p>
-              <p className="text-sm font-bold text-foreground truncate">{user?.email}</p>
+              <p className="text-sm font-bold text-foreground truncate">
+                {user?.email ? (
+                  (() => {
+                    const [name, domain] = user.email.split('@');
+                    if (!domain) return user.email;
+                    if (name.length <= 2) return `${name.charAt(0)}*@${domain}`;
+                    return `${name.charAt(0)}${'*'.repeat(Math.min(name.length - 2, 8))}${name.slice(-1)}@${domain}`;
+                  })()
+                ) : 'Invitado'}
+              </p>
             </div>
             
             <button
@@ -130,9 +140,12 @@ export function Layout({ children }: LayoutProps) {
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex flex-col w-72 bg-[#0B0E14] border-r border-white/5 h-screen sticky top-0 shrink-0">
         <div className="p-10">
-          <div className="flex flex-col gap-1 mb-12">
-            <h1 className="text-2xl font-black tracking-tight text-white leading-none">Aura Health</h1>
-            <p className="text-[10px] font-black text-[#636C8B] uppercase tracking-[0.2em]">NIGHT EDITION</p>
+          <div className="flex items-center gap-4 mb-12">
+            <img src="/logo-tensiotrack.svg" alt="TensioTrack Logo" className="w-10 h-10" />
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-black tracking-tight text-white leading-none">TensioTrack</h1>
+              <p className="text-[10px] font-black text-[#636C8B] uppercase tracking-[0.2em]">SISTEMA DE CONTROL MÉDICO</p>
+            </div>
           </div>
 
           <nav className="space-y-6">
@@ -175,7 +188,8 @@ export function Layout({ children }: LayoutProps) {
         <header className="lg:hidden sticky top-0 z-40 w-full bg-card/60 ethereal-blur border-b border-border shadow-sm">
           <div className="px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h1 className="text-lg font-black tracking-tight">Aura Health</h1>
+              <img src="/logo-tensiotrack.svg" alt="Logo" className="w-8 h-8" />
+              <h1 className="text-lg font-black tracking-tight text-foreground">TensioTrack</h1>
             </div>
             <div className="flex items-center gap-2">
               {user && (
@@ -200,8 +214,26 @@ export function Layout({ children }: LayoutProps) {
             {/* Desktop Header */}
             <div className="hidden lg:flex items-center justify-between mb-12 relative z-30">
               <div className="flex items-center gap-4">
-                <h2 className="text-3xl font-black tracking-tight text-foreground">
-                  {navItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+                <h2 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-3">
+                  {(() => {
+                    const activeItem = navItems.find(item => item.id === activeTab);
+                    if (activeTab === 'settings') {
+                      const sectionNames = {
+                        profile: 'Salud',
+                        data: 'Datos',
+                        privacy: 'Privacidad',
+                        about: 'Acerca de'
+                      };
+                      return (
+                        <>
+                          <span className="text-on-surface-variant/40">Ajustes</span>
+                          <span className="text-on-surface-variant/20 text-2xl font-light">/</span>
+                          <span>{sectionNames[activeSettingsSection]}</span>
+                        </>
+                      );
+                    }
+                    return activeItem?.label || 'Dashboard';
+                  })()}
                 </h2>
               </div>
               

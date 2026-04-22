@@ -2,16 +2,38 @@ import * as React from "react";
 import { useAppStore } from "../store/useAppStore";
 import { useClearData, useReadings, useDashboard, useUpdateUserProfile, useDeleteAccount } from "../lib/api";
 import { exportToExcel } from "../lib/exportExcel";
+import jsPDF from "jspdf";
 import { seedClinicalData } from "../lib/seeder";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "./ui/Button";
 import { cn } from "../lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/Tooltip";
 import { toast } from "sonner";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import { kgToLb, lbToKg, cmToIn, inToCm, calculateBMI, getBMICategory } from "../lib/conversions";
-import { LogOut, ArrowLeft, Upload, Trash2, Camera, User, Cake, Scale, TrendingUp, Ruler, Activity, ChevronDown, History, Heart, Clock, Save, Download, Globe, AlertTriangle, FlaskConical, Server, ShieldCheck, CheckCircle2, Lock, Shield, Fingerprint, Flag, Gavel, Pill, Ambulance, Database, Info } from "lucide-react";
+import { LogOut, ArrowLeft, Upload, Trash2, Camera, User, Cake, Scale, TrendingUp, Ruler, Activity, ChevronDown, History, Heart, Clock, Save, Download, Globe, AlertTriangle, FlaskConical, Server, ShieldCheck, CheckCircle2, Lock, Shield, Fingerprint, Flag, Gavel, Pill, Ambulance, Database, Info, FileText } from "lucide-react";
+
+const PDFIcon = ({ size = 18, className = "" }: { size?: number, className?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2.5" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M7 13h2a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H7v2" />
+    <path d="M12 13h1a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-1v-4z" />
+    <path d="M17 13h3v4" />
+    <path d="M17 15h2" />
+  </svg>
+);
 
 export function SettingsPage() {
   const { 
@@ -24,11 +46,12 @@ export function SettingsPage() {
     autoBmi,
     setAutoBmi,
     showTrends,
-    setShowTrends
+    setShowTrends,
+    activeSettingsSection: activeSection,
+    setActiveSettingsSection: setActiveSection
   } = useAppStore();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false);
-  const [activeSection, setActiveSection] = React.useState<'profile' | 'data' | 'privacy' | 'about'>('profile');
   
   const handleLogout = () => signOut(auth);
 
@@ -289,11 +312,64 @@ export function SettingsPage() {
     setShowExportConfirm(false);
     setIsExporting(true);
     try {
-      await exportToExcel(readings, dashboard || null, user);
-      toast.success("Excel generado correctamente");
+      // Re-applying PDF generation logic using jsPDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Basic Header
+      pdf.setFontSize(22);
+      pdf.setTextColor(103, 80, 165); // Primary color
+      pdf.text('Informe de Datos Históricos', 20, 20);
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Generado el: ${new Date().toLocaleDateString('es-ES')} - TensioTrack Pro`, 20, 28);
+
+      // User Info
+      pdf.setFontSize(12);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`Paciente: ${user?.displayName || 'Usuario'}`, 20, 40);
+      pdf.text(`Edad: ${user?.age || '--'} años`, 20, 46);
+      pdf.text(`Peso: ${user?.weight || '--'} kg | Altura: ${user?.height || '--'} cm`, 20, 52);
+
+      // Simple Table Headers
+      pdf.setFillColor(243, 238, 246);
+      pdf.rect(20, 60, 170, 10, 'F');
+      pdf.setFontSize(10);
+      pdf.text('Fecha', 25, 66.5);
+      pdf.text('Sistólica', 65, 66.5);
+      pdf.text('Diastólica', 95, 66.5);
+      pdf.text('Pulso', 125, 66.5);
+      pdf.text('Momento', 155, 66.5);
+
+      // Table Rows (limit to recent readings for basic PDF implementation)
+      let y = 78;
+      const recentReadings = [...readings].sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()).slice(0, 25);
+      
+      recentReadings.forEach((r, i) => {
+        if (y > 270) {
+          pdf.addPage();
+          y = 20;
+        }
+        
+        pdf.setFontSize(9);
+        const date = new Date(r.recordedAt).toLocaleDateString('es-ES');
+        pdf.text(date, 25, y);
+        pdf.text(`${r.systolic} mmHg`, 65, y);
+        pdf.text(`${r.diastolic} mmHg`, 95, y);
+        pdf.text(`${r.heartRate} PPM`, 125, y);
+        pdf.text(r.slot === 'morning' ? 'Mañana' : 'Noche', 155, y);
+        
+        y += 8;
+      });
+
+      pdf.save(`historial_tensiotrack_${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success("Informe PDF generado correctamente");
     } catch (error) {
-      console.error("Error exporting to Excel:", error);
-      toast.error("Error al generar el Excel");
+      console.error("Error generating PDF:", error);
+      toast.error("Error al generar el informe PDF");
     } finally {
       setIsExporting(false);
     }
@@ -317,48 +393,91 @@ export function SettingsPage() {
   return (
     <div className="flex flex-col gap-6 md:gap-8 min-h-[calc(100vh-12rem)] animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Top Navigation Tabs (Desktop/Tablet) - Replaces the old Sidebar */}
-      <div className="hidden sm:flex items-center gap-2 overflow-x-auto hide-scrollbar pb-2 pt-1 px-1 border-b border-surface-highest/20">
-        <button 
-          onClick={() => setActiveTab('dashboard')}
-          className="flex items-center justify-center gap-2 px-5 h-12 rounded-full text-sm font-bold text-on-surface-variant hover:text-primary hover:bg-surface-high transition-all active:scale-95 shrink-0 mr-4"
-          aria-label="Volver al Panel Principal"
-        >
-          <ArrowLeft className="text-[18px]" />
-          <span>Volver</span>
-        </button>
+      {/* Top Navigation Tabs (Desktop/Tablet) - Adaptive MD3 Rail-style Header */}
+      <TooltipProvider delayDuration={0}>
+        <div className="hidden sm:flex items-center justify-between w-full border-b border-surface-highest/10 pt-1 pb-4 px-2 md:px-4 gap-2">
+          {/* Left: Global Back Action */}
+          <div className="flex items-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={() => setActiveTab('dashboard')}
+                  className="flex items-center justify-center gap-2 px-3 md:px-4 h-11 rounded-full text-sm font-black text-on-surface-variant hover:bg-surface-high transition-all active:scale-95 group"
+                  aria-label="Volver al Panel Principal"
+                >
+                  <ArrowLeft className="text-[20px] group-hover:-translate-x-0.5 transition-transform" />
+                  <span className="hidden md:inline-block">Volver</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="md:hidden">Volver al Panel</TooltipContent>
+            </Tooltip>
+          </div>
 
-        {sections.map((section) => {
-          const isActive = activeSection === section.id;
-          return (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={cn(
-                "flex items-center gap-2.5 px-6 h-12 rounded-full text-sm font-bold transition-all relative shrink-0",
-                isActive 
-                  ? "bg-primary text-white shadow-md shadow-primary/20" 
-                  : "text-on-surface hover:bg-surface-high"
-              )}
-              aria-label={section.label}
-            >
-              <section.icon className={cn("text-[18px] transition-transform", isActive ? "scale-110" : "")} />
-              <span>{section.label}</span>
-            </button>
-          );
-        })}
-        
-        <div className="ml-auto pl-4">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-5 h-12 rounded-full text-sm font-bold text-destructive hover:bg-destructive/10 transition-all active:scale-95 shrink-0"
-            aria-label="Cerrar Sesión"
-          >
-            <LogOut className="text-[18px]" />
-            <span>Salir</span>
-          </button>
+          {/* Center: Section Navigation */}
+          <div className="flex items-center p-1.5 bg-surface-low rounded-[2rem] gap-1 shadow-inner border border-surface-highest/5">
+            {sections.map((section) => {
+              const isActive = activeSection === section.id;
+              const Icon = section.icon;
+              // Very short labels for cramped spaces
+              const shortLabel = section.id === 'profile' ? 'Salud' : section.id === 'about' ? 'Info' : section.label;
+              
+              return (
+                <Tooltip key={section.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setActiveSection(section.id)}
+                      className={cn(
+                        "flex items-center justify-center transition-all duration-300 relative h-10 rounded-full active:scale-95",
+                        isActive 
+                          ? "bg-primary text-white shadow-md shadow-primary/20 px-4 md:px-6 ring-2 ring-primary/20" 
+                          : "text-on-surface-variant hover:bg-surface-high px-3 md:px-4"
+                      )}
+                      aria-label={section.label}
+                    >
+                      <Icon className={cn("text-[20px] transition-transform", isActive ? "scale-105" : "scale-100")} strokeWidth={isActive ? 2.5 : 2} />
+                      
+                      {/* MD3 Logic: Active item always shows text on tablet/desktop. Others show text only on larger screens. */}
+                      <span className={cn(
+                        "whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out",
+                        isActive 
+                          ? "ml-2 opacity-100 max-w-[120px] font-bold text-xs md:text-sm" // Fully visible when active
+                          : "ml-0 opacity-0 max-w-0 md:ml-2 md:opacity-100 md:max-w-[120px] lg:max-w-none text-xs md:text-sm" // Hidden on small tablet, visible on md (tablet landscape) and desktop
+                      )}>
+                        {isActive ? shortLabel : (
+                          <>
+                            <span className="hidden xl:inline">{section.label}</span>
+                            <span className="hidden md:inline xl:hidden">{shortLabel}</span>
+                          </>
+                        )}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className={cn("z-[100]", isActive ? "hidden" : "md:hidden")}>
+                    {section.label}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+          
+          {/* Right: Exit Action */}
+          <div className="flex items-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center justify-center gap-2 px-3 md:px-5 h-11 rounded-full text-xs md:text-sm font-bold text-destructive hover:bg-destructive/10 transition-all active:scale-95"
+                  aria-label="Cerrar Sesión"
+                >
+                  <LogOut className="text-[20px]" />
+                  <span className="hidden md:inline">Cerrar Sesión</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="md:hidden">Cerrar Sesión</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
 
       {/* Mobile Bottom Navigation (Portrait only) */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-[50] bg-surface-low/95 backdrop-blur-xl pb-safe shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
@@ -943,27 +1062,28 @@ export function SettingsPage() {
                     {/* Export Card */}
                     <div className="p-5 sm:p-8 rounded-[2.5rem] bg-card space-y-6 shadow-sm flex flex-col h-full group hover:bg-surface-high/30 transition-all duration-300">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <Download className="text-[28px] sm:text-[32px]" />
+                        <FileText className="text-[28px] sm:text-[32px]" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-lg sm:text-xl font-bold text-foreground break-words">Exportar Historial</h4>
+                        <h4 className="text-lg sm:text-xl font-bold text-foreground break-words">Informe PDF</h4>
                         <p className="text-sm text-on-surface-variant mt-2 leading-relaxed break-words">
-                          Genera un informe completo en Excel con todas tus lecturas, promedios y notas. Ideal para revisiones médicas.
+                          Genera un informe clínico completo en formato PDF con tus lecturas recientes para compartir con tu especialista.
                         </p>
                       </div>
                       
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 px-4 py-2 bg-surface-low rounded-xl text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
-                          <Globe className="text-[12px]" />
-                          Descarga vía SSL/TLS 1.3
+                          <ShieldCheck className="text-[12px]" />
+                          Generación via SSL/TLS 1.3
                         </div>
                         <Button 
                           variant="secondary" 
                           onClick={() => setShowExportConfirm(true)}
                           size="lg"
-                          className="w-full"
+                          className="w-full flex items-center justify-center gap-2"
                         >
-                          Exportar a Excel
+                          <PDFIcon />
+                          Generar Informe PDF
                         </Button>
                       </div>
                     </div>
@@ -990,8 +1110,9 @@ export function SettingsPage() {
                           variant="secondary" 
                           onClick={() => setShowClearConfirm(true)}
                           size="lg"
-                          className="w-full"
+                          className="w-full flex items-center justify-center gap-2"
                         >
+                          <History className="text-[18px]" />
                           Limpiar Historial de Lecturas
                         </Button>
 
@@ -999,8 +1120,9 @@ export function SettingsPage() {
                           variant="danger" 
                           onClick={() => setShowDeleteAccountConfirm(true)}
                           size="lg"
-                          className="w-full"
+                          className="w-full flex items-center justify-center gap-2"
                         >
+                          <Trash2 className="text-[18px]" />
                           Eliminar Cuenta Definitivamente
                         </Button>
                       </div>
@@ -1088,15 +1210,15 @@ export function SettingsPage() {
                     className="bg-card p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center space-y-6 border border-border"
                   >
                     <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mx-auto">
-                      <Download className="text-[40px]" />
+                      <PDFIcon size={40} />
                     </div>
                     <div>
-                      <h4 className="text-2xl font-display font-black text-foreground">¿Exportar datos?</h4>
-                      <p className="text-on-surface-variant mt-2">Se generará un archivo Excel con todo tu historial de lecturas.</p>
+                      <h4 className="text-2xl font-display font-black text-foreground">¿Generar informe?</h4>
+                      <p className="text-on-surface-variant mt-2">Se generará un documento PDF con tu historial clínico de lecturas.</p>
                     </div>
                     <div className="flex gap-4">
                       <Button variant="outline" onClick={() => setShowExportConfirm(false)} className="flex-1">Cancelar</Button>
-                      <Button onClick={handleExport} isLoading={isExporting} className="flex-1">Exportar</Button>
+                      <Button onClick={handleExport} isLoading={isExporting} className="flex-1">Generar PDF</Button>
                     </div>
                   </motion.div>
                 </motion.div>
@@ -1298,12 +1420,12 @@ export function SettingsPage() {
               className="bg-surface-low rounded-[3rem] p-6 sm:p-12 space-y-10 shadow-sm"
             >
             <div className="flex flex-col items-center text-center space-y-6">
-              <div className="w-24 h-24 bg-primary rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary/20">
-                <Heart className="text-white text-[48px]" />
+              <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 bg-transparent flex items-center justify-center overflow-hidden transition-all duration-700">
+                <img src="/logo-tensiotrack.svg" alt="Logo" className="w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40" />
               </div>
               <div>
                 <h3 className="text-4xl font-display font-black text-foreground tracking-tight">TensioTrack</h3>
-                <p className="text-on-surface-variant font-bold uppercase tracking-widest text-xs mt-2">Versión 2.4.0 Professional</p>
+                <p className="text-on-surface-variant font-bold uppercase tracking-widest text-xs mt-2">Versión 0.9.8 Beta (Pre-lanzamiento)</p>
               </div>
             </div>
 

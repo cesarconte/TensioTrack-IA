@@ -315,82 +315,50 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 md:gap-8 min-h-[calc(100vh-12rem)] animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Sidebar Navigation (Navigation Rail on sm/md, Full Drawer on lg) */}
-      <aside className="hidden sm:flex flex-col w-20 lg:w-72 shrink-0 space-y-2 transition-all duration-300">
-        <div className="bg-card rounded-[2.5rem] p-2 lg:p-4 shadow-sm">
-          <div className="hidden lg:block px-6 py-4 mb-2">
-            <h3 className="text-xs font-black text-on-surface-variant uppercase tracking-widest">Ajustes</h3>
-          </div>
-          <nav className="space-y-1">
-            {sections.map((section) => {
-              const isActive = activeSection === section.id;
-              return (
-                <Tooltip key={section.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setActiveSection(section.id)}
-                      className={cn(
-                        "w-full flex items-center justify-center lg:justify-start gap-4 px-3 lg:px-6 py-4 rounded-2xl text-sm font-bold transition-all relative group hover:scale-[1.02] active:scale-[0.97]",
-                        isActive 
-                          ? "bg-primary/10 text-primary" 
-                          : "text-on-surface-variant hover:bg-surface-low"
-                      )}
-                      aria-label={section.label}
-                    >
-                      <section.icon className="text-[20px] shrink-0" />
-                      <span className="hidden lg:inline truncate">{section.label}</span>
-                      {isActive && (
-                        <motion.div 
-                          layoutId="active-section-indicator"
-                          className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-l-full hidden lg:block"
-                        />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="lg:hidden">
-                    {section.label}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </nav>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center lg:justify-start gap-4 px-3 lg:px-6 py-4 rounded-2xl text-sm font-bold text-destructive hover:bg-destructive/10 transition-all hover:scale-[1.02] active:scale-[0.97]"
-                aria-label="Cerrar Sesión"
-              >
-                <LogOut className="text-[20px] shrink-0" />
-                <span className="hidden lg:inline">Cerrar Sesión</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="lg:hidden">
-              Cerrar Sesión
-            </TooltipContent>
-          </Tooltip>
-        </div>
+    <div className="flex flex-col gap-6 md:gap-8 min-h-[calc(100vh-12rem)] animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* Top Navigation Tabs (Desktop/Tablet) - Replaces the old Sidebar */}
+      <div className="hidden sm:flex items-center gap-2 overflow-x-auto hide-scrollbar pb-2 pt-1 px-1 border-b border-surface-highest/20">
+        <button 
+          onClick={() => setActiveTab('dashboard')}
+          className="flex items-center justify-center gap-2 px-5 h-12 rounded-full text-sm font-bold text-on-surface-variant hover:text-primary hover:bg-surface-high transition-all active:scale-95 shrink-0 mr-4"
+          aria-label="Volver al Panel Principal"
+        >
+          <ArrowLeft className="text-[18px]" />
+          <span>Volver</span>
+        </button>
 
-        {/* Back to Dashboard Button - Only visible on Tablet/Small Desktop where Header Nav might be cramped or hidden */}
-        <div className="hidden sm:block lg:hidden">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button 
-                onClick={() => setActiveTab('dashboard')}
-                className="group flex items-center justify-center gap-3 w-full py-6 text-on-surface-variant hover:text-primary transition-all hover:scale-110 active:scale-90"
-                aria-label="Volver al Panel Principal"
-              >
-                <ArrowLeft className="text-[24px] group-hover:-translate-x-1 transition-transform shrink-0" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              Volver al Panel Principal
-            </TooltipContent>
-          </Tooltip>
+        {sections.map((section) => {
+          const isActive = activeSection === section.id;
+          return (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={cn(
+                "flex items-center gap-2.5 px-6 h-12 rounded-full text-sm font-bold transition-all relative shrink-0",
+                isActive 
+                  ? "bg-primary text-white shadow-md shadow-primary/20" 
+                  : "text-on-surface hover:bg-surface-high"
+              )}
+              aria-label={section.label}
+            >
+              <section.icon className={cn("text-[18px] transition-transform", isActive ? "scale-110" : "")} />
+              <span>{section.label}</span>
+            </button>
+          );
+        })}
+        
+        <div className="ml-auto pl-4">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-5 h-12 rounded-full text-sm font-bold text-destructive hover:bg-destructive/10 transition-all active:scale-95 shrink-0"
+            aria-label="Cerrar Sesión"
+          >
+            <LogOut className="text-[18px]" />
+            <span>Salir</span>
+          </button>
         </div>
-      </aside>
+      </div>
 
       {/* Mobile Bottom Navigation (Portrait only) */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-[50] bg-surface-low/95 backdrop-blur-xl pb-safe shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
@@ -464,7 +432,7 @@ export function SettingsPage() {
                   {/* Outer Purple Glow Ring */}
                   <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-[#9D8BFF] to-[#B39DFF] opacity-60 blur-[2px]" />
                   
-                  <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-[#1A1C1E] p-1.5 shadow-2xl">
+                  <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-surface-low p-1.5 shadow-2xl">
                     <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#2D2A32] relative">
                       {user?.photoURL ? (
                         <img 
@@ -508,7 +476,7 @@ export function SettingsPage() {
 
                 {/* Info Section */}
                 <div className="flex-1 text-center md:text-left space-y-6 min-w-0">
-                  <h2 className="text-3xl sm:text-5xl font-display font-black text-on-surface tracking-tighter sm:truncate">
+                  <h2 className="text-display-md font-display font-black text-on-surface tracking-tighter leading-tight break-words">
                     {user?.displayName || 'Paciente'}
                   </h2>
                   
@@ -534,15 +502,15 @@ export function SettingsPage() {
             <section className="space-y-6">
               <header className="px-4 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-4xl font-extrabold tracking-tight font-display text-on-surface mb-2">Datos de Salud</h3>
+                  <h3 className="text-headline-lg font-extrabold tracking-tight font-display text-on-surface mb-2">Datos de Salud</h3>
                   <p className="text-on-surface-variant text-lg">Personaliza y gestiona tus métricas biométricas esenciales para un seguimiento preciso.</p>
                 </div>
               </header>
               
-              <div className="bg-surface-low rounded-[2.5rem] p-8 sm:p-10 space-y-8 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-surface-low rounded-[2.5rem] p-8 sm:p-10 space-y-10 shadow-sm">
+                <div className="flex flex-col gap-6">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Nombre Completo</label>
+                    <label className="text-sm font-bold text-on-surface-variant ml-1">Nombre Completo</label>
                     <div className="relative">
                       <User className="absolute left-5 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant bg-surface-low p-1 rounded-lg" />
                       <input 
@@ -556,7 +524,7 @@ export function SettingsPage() {
 
                   <div className="space-y-3">
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Sexo Biológico</label>
-                    <div className="flex bg-surface-high p-1 rounded-full">
+                    <div className="flex bg-surface-high p-1 rounded-full max-w-md">
                       {(['male', 'female', 'other'] as const).map((s) => (
                         <button
                           key={s}
@@ -575,109 +543,109 @@ export function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Age, Weight, Height, BMI Grid - Improved Responsiveness */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-4 gap-6">
-                  {/* Age Card */}
-                  <div className="bg-surface-low rounded-[2.5rem] p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:scale-110">
-                        <Cake size={24} className="sm:w-7 sm:h-7" strokeWidth={2.5} />
+                {/* Age, Weight, Height, BMI Grid - 4x1 on Desktop, Responsive 2x2/1x1 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+                  {/* Edad Card */}
+                  <div className="bg-white rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:rotate-12">
+                        <Cake size={22} strokeWidth={2.5} />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">VERIFICADO</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40">VERIFICADO</span>
                     </div>
                     <div>
-                      <h3 className="text-on-surface-variant font-bold text-lg mb-2">Edad</h3>
-                      <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">Edad</h3>
+                      <div className="flex items-baseline gap-1.5 min-w-0">
                         <input 
                           type="number" 
                           value={age}
                           onChange={(e) => setAge(e.target.value)}
-                          className="w-20 sm:w-28 bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none"
+                          className="w-[1.8em] bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none transition-all"
                           placeholder="--"
                         />
-                        <span className="text-on-surface-variant font-bold text-base sm:text-lg whitespace-nowrap">años</span>
+                        <span className="text-on-surface-variant font-bold text-sm sm:text-base whitespace-nowrap">años</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Weight Card */}
-                  <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 flex flex-col justify-between shadow-sm transition-all duration-300 hover:shadow-xl h-full group">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:scale-110">
-                        <Scale size={24} className="sm:w-7 sm:h-7" strokeWidth={2.5} />
+                  <div className="bg-white rounded-[2.5rem] p-6 flex flex-col justify-between shadow-sm transition-all duration-300 hover:shadow-xl h-full group relative overflow-hidden active:scale-[0.98]">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:rotate-12">
+                        <Scale size={22} strokeWidth={2.5} />
                       </div>
-                      <div className="flex items-center gap-1 text-destructive font-black text-[10px] sm:text-xs whitespace-nowrap">
-                        <TrendingUp size={14} strokeWidth={3} />
+                      <div className="flex items-center gap-1 text-destructive font-black text-[10px] whitespace-nowrap">
+                        <TrendingUp size={12} strokeWidth={3} />
                         <span>+0.2 kg</span>
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-on-surface-variant font-bold text-lg mb-2">Peso Actual</h3>
-                      <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">Peso Actual</h3>
+                      <div className="flex items-baseline gap-1.5 min-w-0">
                         <input 
                           type="text" 
                           value={weight}
                           onChange={(e) => setWeight(e.target.value)}
-                          className="w-20 sm:w-28 bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none"
+                          className="w-[2.2em] bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none transition-all"
                           placeholder="--"
                         />
-                        <span className="text-on-surface-variant font-bold text-base sm:text-lg whitespace-nowrap">{unitSystem === 'metric' ? 'kg' : 'lb'}</span>
+                        <span className="text-on-surface-variant font-bold text-sm sm:text-base whitespace-nowrap">{unitSystem === 'metric' ? 'kg' : 'lb'}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Height Card */}
-                  <div className="bg-surface-low rounded-[2.5rem] p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:scale-110">
-                        <Ruler size={24} className="sm:w-7 sm:h-7" strokeWidth={2.5} />
+                  {/* Altura Card */}
+                  <div className="bg-white rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:rotate-12">
+                        <Ruler size={22} strokeWidth={2.5} />
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-on-surface-variant font-bold text-lg mb-2">Altura</h3>
-                      <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">Altura</h3>
+                      <div className="flex items-baseline gap-1.5 min-w-0">
                         <input 
                           type="text" 
                           value={height}
                           onChange={(e) => setHeight(e.target.value)}
-                          className="w-20 sm:w-28 bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none"
+                          className="w-[2.2em] bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none transition-all"
                           placeholder="--"
                         />
-                        <span className="text-on-surface-variant font-bold text-base sm:text-lg whitespace-nowrap">{unitSystem === 'metric' ? 'cm' : 'in'}</span>
+                        <span className="text-on-surface-variant font-bold text-sm sm:text-base whitespace-nowrap">{unitSystem === 'metric' ? 'cm' : 'in'}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BMI Card */}
-                  <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:scale-110">
-                        <Activity size={24} className="sm:w-7 sm:h-7" strokeWidth={2.5} />
+                  {/* IMC Card */}
+                  <div className="bg-white rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:rotate-12">
+                        <Activity size={22} strokeWidth={2.5} />
                       </div>
                       {bmi > 0 && (
                         <div className={cn(
-                          "px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest whitespace-nowrap",
+                          "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap",
                           bmiCategory.color.split(' ')[0],
-                          "bg-surface-low shadow-sm"
+                          "bg-surface-low/50"
                         )}>
                           <span className={bmiCategory.color.split(' ')[1] || bmiCategory.color}>{bmiCategory.label}</span>
                         </div>
                       )}
                     </div>
                     <div>
-                      <h3 className="text-on-surface-variant font-bold text-lg mb-2">IMC (BMI)</h3>
-                      <div className="flex items-baseline gap-2 flex-wrap min-w-0">
-                        <span className="text-4xl sm:text-5xl font-black font-display text-on-surface leading-none">
+                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">IMC (BMI)</h3>
+                      <div className="flex items-baseline gap-1.5 min-w-0">
+                        <span className="text-4xl sm:text-5xl font-black font-display text-on-surface leading-none w-[2.2em] truncate transition-all">
                           {bmi > 0 ? bmi.toFixed(1) : '--'}
                         </span>
-                        <span className="text-on-surface-variant font-bold text-base sm:text-lg whitespace-nowrap">kg/m²</span>
+                        <span className="text-on-surface-variant font-bold text-sm sm:text-base whitespace-nowrap">kg/m²</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Activity Level and Other Factors */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Nivel de Actividad</label>
                     <div className="flex bg-surface-high p-1 rounded-full">
@@ -719,7 +687,7 @@ export function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Consumo de Sal</label>
                     <div className="flex bg-surface-high p-1 rounded-full">
@@ -761,7 +729,7 @@ export function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Calidad del Sueño</label>
                     <div className="flex bg-surface-high p-1 rounded-full">
@@ -831,19 +799,15 @@ export function SettingsPage() {
 
             {/* Ajustes Complementarios Section */}
             <section className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 gap-4">
-                <h3 className="text-2xl font-display font-black text-foreground">Ajustes Complementarios</h3>
-              </div>
-              
               <div className="bg-surface-low rounded-[2.5rem] p-8 space-y-8">
                 <div className="flex items-center justify-between border-b border-surface-highest/10 pb-6">
                   <div className="max-w-md">
-                    <h4 className="font-display font-bold text-xl mb-1 text-on-surface">Ajustes Complementarios</h4>
+                    <h3 className="text-2xl font-display font-black text-foreground mb-1">Ajustes Complementarios</h3>
                     <p className="text-sm text-on-surface-variant">Define la frecuencia de sincronización y las unidades de medida preferidas.</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-12 gap-y-8">
                   {/* Measurement System */}
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Sistema de Medida</label>
@@ -885,7 +849,7 @@ export function SettingsPage() {
                   {/* Auto BMI */}
                   <div className="flex items-center justify-between p-4 bg-surface-highest/30 rounded-xl">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0">
                         <Activity size={24} strokeWidth={2.5} />
                       </div>
                       <div>
@@ -907,7 +871,7 @@ export function SettingsPage() {
                   {/* Trends History */}
                   <div className="flex items-center justify-between p-4 bg-surface-highest/30 rounded-xl">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0">
                         <History size={24} strokeWidth={2.5} />
                       </div>
                       <div>
@@ -935,18 +899,19 @@ export function SettingsPage() {
               <Button 
                 variant="outline"
                 onClick={() => setActiveTab('dashboard')}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto flex items-center justify-center gap-2"
               >
+                <ArrowLeft size={18} />
                 Cancelar y Volver al Panel
               </Button>
               <Button 
                 onClick={handleSaveHealthData}
                 disabled={!isDirty || updateUserProfile.isPending}
                 isLoading={updateUserProfile.isPending}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 shadow-none hover:shadow-primary/20 hover:shadow-xl transition-all"
               >
-                <Save className="mr-2" />
-                Actualizar Perfil
+                <Save size={18} />
+                <span>Actualizar Perfil</span>
               </Button>
             </div>
           </motion.div>)}
@@ -974,10 +939,10 @@ export function SettingsPage() {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                     {/* Export Card */}
                     <div className="p-5 sm:p-8 rounded-[2.5rem] bg-card space-y-6 shadow-sm flex flex-col h-full group hover:bg-surface-high/30 transition-all duration-300">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                         <Download className="text-[28px] sm:text-[32px]" />
                       </div>
                       <div className="flex-1">
@@ -1005,7 +970,7 @@ export function SettingsPage() {
 
                     {/* Danger Zone Card */}
                     <div className="p-5 sm:p-8 rounded-[2.5rem] bg-destructive/10 space-y-6 shadow-sm flex flex-col h-full group hover:bg-destructive/20 transition-all duration-300 border border-destructive/20">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive group-hover:scale-110 transition-transform">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-destructive/10 flex items-center justify-center text-destructive group-hover:scale-110 transition-transform">
                         <Trash2 className="text-[28px] sm:text-[32px]" />
                       </div>
                       <div className="flex-1">
@@ -1059,7 +1024,7 @@ export function SettingsPage() {
                         disabled={isSeeding}
                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/20 rounded-full py-6 flex items-center justify-center gap-3 font-black tracking-widest uppercase text-xs"
                       >
-                        {isSeeding ? "Generando..." : "INYECTAR SET DE DATOS CLÍNICOS (180 TOMAS)"}
+                        {isSeeding ? "Generando..." : "INYECTAR SET DE DATOS CLÍNICOS (180 LECTURAS)"}
                       </Button>
                     </div>
                   </div>
@@ -1208,7 +1173,7 @@ export function SettingsPage() {
                 <div className="lg:col-span-2 bg-surface-low rounded-[2.5rem] p-8 space-y-8 shadow-sm">
                   <div className="flex items-start justify-between">
                     <div className="flex gap-4">
-                      <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                      <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                         <Shield className="text-[28px]" />
                       </div>
                       <div>
@@ -1258,19 +1223,19 @@ export function SettingsPage() {
               </div>
 
               {/* Medical Data Sharing Card */}
-              <div className="bg-surface-low rounded-[3rem] p-8 sm:p-12 space-y-10 shadow-sm">
+              <div className="bg-surface-low rounded-[3rem] p-6 sm:p-12 space-y-8 sm:space-y-10 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <h4 className="text-2xl font-display font-black text-foreground">Compartir Datos Médicos</h4>
                     <p className="text-on-surface-variant text-sm">Permisos granulares para sus datos biométricos sensibles.</p>
                   </div>
-                  <div className="px-4 py-2 bg-primary/10 rounded-xl flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest">
+                  <div className="px-4 py-2 bg-primary/10 rounded-xl flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest self-start sm:self-center">
                     <ShieldCheck className="text-[16px]" />
                     Entorno de Cumplimiento Médico
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {[
                     { id: 'vitals', label: 'Tensión y Pulso', desc: 'Sus lecturas diarias y ritmo cardíaco', icon: Heart, state: shareVitals, setState: setShareVitals },
                     { id: 'meds', label: 'Medicamentos', desc: 'Información sobre sus pastillas y recetas', icon: Pill, state: shareMedication, setState: setShareMedication },
@@ -1279,29 +1244,33 @@ export function SettingsPage() {
                   ].map((item) => {
                     const IconComponent = item.icon;
                     return (
-                    <div key={item.id} className="p-6 rounded-[2rem] bg-surface flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm">
-                          <IconComponent className="text-[24px]" />
-                        </div>
-                        <div>
-                          <h5 className="text-sm font-bold text-foreground">{item.label}</h5>
-                          <p className="text-xs text-on-surface-variant">{item.desc}</p>
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => item.setState(!item.state)}
-                        className={cn(
-                          "w-12 h-6 rounded-full transition-colors relative flex-shrink-0",
-                          item.state ? "bg-primary" : "bg-surface-low"
-                        )}
+                      <div 
+                        key={item.id} 
+                        className="p-5 sm:p-8 rounded-[2.5rem] bg-surface flex items-center justify-between gap-4 sm:gap-6 hover:bg-surface-high/30 transition-all duration-300 group"
                       >
-                        <div className={cn(
-                          "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
-                          item.state ? "left-7" : "left-1"
-                        )} />
-                      </button>
-                    </div>
+                        <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0 group-hover:scale-110 transition-transform">
+                            <IconComponent className="text-[22px] sm:text-[26px]" />
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="text-sm sm:text-base font-bold text-foreground leading-tight">{item.label}</h5>
+                            <p className="text-[10px] sm:text-xs text-on-surface-variant leading-tight sm:leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">{item.desc}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => item.setState(!item.state)}
+                          className={cn(
+                            "w-10 h-5 sm:w-12 sm:h-6 rounded-full transition-all relative shrink-0 active:scale-90",
+                            item.state ? "bg-primary shadow-lg shadow-primary/20" : "bg-surface-low shadow-inner"
+                          )}
+                          aria-label={`Compartir ${item.label}`}
+                        >
+                          <div className={cn(
+                            "absolute top-0.5 sm:top-1 w-4 h-4 rounded-full transition-all shadow-md",
+                            item.state ? "left-5.5 sm:left-7 bg-white" : "left-0.5 sm:left-1 bg-white",
+                          )} />
+                        </button>
+                      </div>
                     )
                   })}
                 </div>
@@ -1309,7 +1278,7 @@ export function SettingsPage() {
 
               {/* Data Ownership Statement */}
               <div className="bg-primary/5 rounded-[2.5rem] p-8 flex flex-col sm:flex-row items-center gap-6">
-                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm flex-shrink-0">
+                <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm flex-shrink-0">
                   <Fingerprint className="text-[28px]" strokeWidth={2.5} />
                 </div>
                 <div className="space-y-1">
@@ -1326,7 +1295,7 @@ export function SettingsPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-surface-low rounded-[3rem] p-8 sm:p-12 space-y-10 shadow-sm"
+              className="bg-surface-low rounded-[3rem] p-6 sm:p-12 space-y-10 shadow-sm"
             >
             <div className="flex flex-col items-center text-center space-y-6">
               <div className="w-24 h-24 bg-primary rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary/20">
@@ -1338,33 +1307,33 @@ export function SettingsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
               {/* Mission Card */}
-              <div className="bg-surface rounded-[2.5rem] p-8 space-y-6 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                    <Flag className="text-[24px]" />
+              <div className="bg-surface rounded-[2.5rem] p-6 sm:p-10 space-y-5 sm:space-y-6 shadow-sm hover:bg-surface-high/30 transition-all duration-300 group flex flex-col items-center sm:items-start text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-6 w-full justify-center sm:justify-start">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0 group-hover:scale-110 transition-transform">
+                    <Flag className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <h4 className="text-2xl font-display font-black text-foreground">Misión</h4>
+                  <h4 className="text-lg sm:text-2xl font-display font-black text-foreground leading-tight w-full text-center sm:text-left">Misión</h4>
                 </div>
-                <p className="text-on-surface-variant leading-relaxed font-medium">
+                <p className="text-on-surface-variant leading-relaxed font-medium text-sm sm:text-base w-full text-center sm:text-left">
                   TensioTrack ha sido creado para ayudarle a cuidar de su salud de forma sencilla y segura. Nuestra misión es hacer que llevar el control de su tensión sea una tarea fácil, permitiéndole guardar sus registros a lo largo del tiempo para que usted y su médico tengan siempre una información clara y precisa sobre su bienestar.
                 </p>
               </div>
 
               {/* Medical Disclaimer Card */}
-              <div className="bg-surface rounded-[2.5rem] p-8 space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-destructive">
-                    <Gavel className="text-[24px]" />
+              <div className="bg-surface rounded-[2.5rem] p-6 sm:p-10 space-y-5 sm:space-y-6 shadow-sm hover:bg-surface-high/30 transition-all duration-300 group flex flex-col items-center sm:items-start text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-6 w-full justify-center sm:justify-start">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center text-destructive shadow-sm shrink-0 group-hover:scale-110 transition-transform">
+                    <Gavel className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <h4 className="text-2xl font-display font-black text-foreground">Descargo de Responsabilidad Clínica</h4>
+                  <h4 className="text-[17px] sm:text-2xl font-display font-black text-foreground leading-tight w-full text-center sm:text-left tracking-tight">Descargo de Responsabilidad Clínica</h4>
                 </div>
-                <p className="text-on-surface-variant leading-relaxed italic font-medium">
+                <p className="text-on-surface-variant leading-relaxed italic font-medium text-sm sm:text-base w-full text-center sm:text-left">
                   Esta aplicación es una herramienta de registro y no sustituye el diagnóstico médico profesional. Consulte siempre con su médico antes de realizar cambios en su tratamiento o si presenta síntomas inusuales. Los datos archivados son para propósitos informativos.
                 </p>
-                <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest pt-2">
-                  <ShieldCheck className="text-[16px]" />
+                <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-primary font-black text-[9px] sm:text-[10px] uppercase tracking-widest pt-4 border-t border-surface-highest/10 w-full mt-auto">
+                  <ShieldCheck className="text-[16px] sm:text-[18px]" />
                   Cumplimiento Verificado 2026
                 </div>
               </div>
@@ -1372,11 +1341,13 @@ export function SettingsPage() {
 
             {/* Image grid removed as per revert request */}
 
-            <div className="pt-8 mt-8 flex flex-col items-center justify-center gap-4">
-              <div className="flex items-center gap-2 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                Hecho con <Heart className="text-[16px] text-destructive inline-block fill-current" /> en Gijón, Asturias
+            <div className="pt-8 mt-8 flex flex-col items-center justify-center gap-4 w-full border-t border-surface-highest/10">
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-black text-on-surface-variant uppercase tracking-widest whitespace-nowrap">
+                <span>Hecho con</span>
+                <Heart className="text-[14px] sm:text-[16px] text-destructive fill-current shrink-0" />
+                <span>en Gijón, Asturias</span>
               </div>
-              <p className="text-[10px] text-on-surface-variant font-medium max-w-md text-center">
+              <p className="text-[9px] sm:text-[10px] text-on-surface-variant font-medium max-w-xs sm:max-w-md text-center">
                 TensioTrack es una marca registrada. Todos los derechos reservados © 2026.
               </p>
             </div>

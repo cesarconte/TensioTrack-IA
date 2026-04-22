@@ -216,10 +216,10 @@ export const exportToExcel = async (readings: Reading[], dashboard: DashboardDat
     { header: 'Fecha', key: 'date', width: 15 },
     { header: 'Hora', key: 'time', width: 12 },
     { header: 'Sesión', key: 'session', width: 15 },
-    { header: 'Toma', key: 'order', width: 10 },
+    { header: 'Lectura', key: 'order', width: 10 },
     { header: 'Sistólica (PAS)', key: 'sys', width: 18 },
     { header: 'Diastólica (PAD)', key: 'dia', width: 18 },
-    { header: 'Pulso (BPM)', key: 'hr', width: 15 },
+    { header: 'Pulso (PPM)', key: 'hr', width: 15 },
     { header: 'Categoría', key: 'category', width: 20 },
     { header: 'Notas', key: 'notes', width: 40 }
   ];

@@ -374,7 +374,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
         {/* Resumen Global (Full width) */}
         <Card className="bg-surface shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border-border/10 rounded-[2rem] p-8 lg:p-10 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-[14px] bg-primary/10 flex items-center justify-center text-primary">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <BarChart3 size={20} />
             </div>
             <h3 className="text-xl font-display font-black text-foreground whitespace-nowrap">Resumen Global</h3>
@@ -523,7 +523,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
 
              <div className="pt-4 border-t border-border/10 space-y-3">
                <div className="flex justify-between items-center text-xs">
-                 <span className="font-medium text-on-surface-variant">Total de tomas</span>
+                 <span className="font-medium text-on-surface-variant">Total de lecturas</span>
                  <span className="font-black text-foreground">{insights.totalReadings}</span>
                </div>
                {insights.morningHigher && (

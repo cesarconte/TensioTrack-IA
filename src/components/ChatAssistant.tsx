@@ -65,7 +65,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
       const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const recentReadings = readings.slice(0, 30).map(r => 
-        `- ${new Date(r.recordedAt).toLocaleString()}: ${r.systolic}/${r.diastolic} mmHg, ${r.heartRate || '--'} lpm`
+        `- ${new Date(r.recordedAt).toLocaleString()}: ${r.systolic}/${r.diastolic} mmHg, ${r.heartRate || '--'} ppm`
       ).join('\n');
 
       const systemInstruction = `Eres un asistente de salud cardiovascular experto para TensioTrack. 
@@ -142,11 +142,8 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
             className={cn(
               "fixed right-4 sm:right-6 w-16 h-16 rounded-full bg-primary text-white shadow-2xl shadow-primary/20 flex items-center justify-center z-40 transition-all duration-300",
               // Positioning logic:
-              // 1. If in settings: bar is visible up to lg. So bottom-24 until lg.
-              // 2. If not in settings: bar is visible only on xs (sm:hidden). So bottom-24 on xs, bottom-6 from sm up.
-              activeTab === 'settings' 
-                ? "bottom-24 lg:bottom-6" 
-                : "bottom-24 sm:bottom-6",
+              // Mobile/Tablet: nav bar is visible up to lg (lg:hidden). So it should be bottom-24 up to lg, and bottom-6 from lg up.
+              "bottom-24 lg:bottom-6",
               isOpen && "scale-0 opacity-0 pointer-events-none"
             )}
             aria-label="Abrir asistente de IA"
@@ -166,9 +163,10 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className={cn(
               "fixed inset-0 sm:inset-auto sm:right-6 w-full sm:w-[420px] h-full sm:h-[650px] sm:max-h-[85vh] bg-card sm:rounded-[2.5rem] shadow-2xl flex flex-col z-40 overflow-hidden border-none sm:border border-border",
-              activeTab === 'settings'
-                ? "sm:bottom-24 lg:bottom-6"
-                : "sm:bottom-6"
+              // Positioning logic:
+              // Chat window on Mobile is full screen. On tablet/desktop it's a popup.
+              // On tablet (sm to lg), nav bar is visible at bottom, so it needs bottom-24. On desktop (lg+), no nav bar, so bottom-6.
+              "sm:bottom-24 lg:bottom-6"
             )}
           >
             <div className="p-5 bg-primary text-white flex items-center justify-between">

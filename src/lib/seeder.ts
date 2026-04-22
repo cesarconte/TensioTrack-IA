@@ -57,7 +57,7 @@ const getRandomInsight = () => {
     { category: 'estrés', notes: ['Día complicado en el trabajo.', 'Algo de ansiedad por la mañana.', 'Me siento un poco agobiado hoy.'] },
     { category: 'medicación', notes: ['Tomé la pastilla a la hora de siempre.', 'Me tomé el enalapril media hora tarde.', 'Se me olvidó la medicación de la cena de ayer.'] },
     { category: 'dieta', notes: ['Cena algo pesada ayer.', 'Comí con un poco más de sal de lo normal.', 'He tomado mucha agua hoy.'] },
-    { category: 'ejercicio', notes: ['Caminata de 40 mins antes de la toma.', 'Me siento activo, hice estiramientos suaves.', 'Paseo largo por la tarde.'] },
+    { category: 'ejercicio', notes: ['Caminata de 40 mins antes de la lectura.', 'Me siento activo, hice estiramientos suaves.', 'Paseo largo por la tarde.'] },
     { category: 'alcohol/tabaco', notes: ['Tomé una copa de vino en la cena.', 'Fumé un par de ojitos ayer por la tarde.', 'Ayer salí y tomé un par de cervezas.'] },
     { category: 'otro', notes: ['Me siento normal hoy.', 'Todo bajo control.', 'Ligero dolor de cabeza al levantarme.', 'Un poco mareado hoy.'] }
   ];

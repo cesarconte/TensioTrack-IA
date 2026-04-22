@@ -226,7 +226,11 @@ export const firebaseService = {
     if (!auth.currentUser) throw new Error('User not authenticated');
     const userRef = doc(db, 'users', auth.currentUser.uid);
     try {
-      await setDoc(userRef, { ...data, updatedAt: Timestamp.now() }, { merge: true });
+      // Remove undefined values to prevent Firestore errors
+      const sanitizedData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+      );
+      await setDoc(userRef, { ...sanitizedData, updatedAt: Timestamp.now() }, { merge: true });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
       throw error;

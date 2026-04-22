@@ -106,7 +106,7 @@ export function Login() {
               const IconComp = item.icon;
               return (
               <div key={i} className="bg-card p-5 rounded-[2.5rem] border border-border shadow-sm flex flex-col items-center lg:items-start gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10", item.color)}>
+                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center bg-primary/10", item.color)}>
                   <IconComp className="text-[20px]" />
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{item.label}</span>

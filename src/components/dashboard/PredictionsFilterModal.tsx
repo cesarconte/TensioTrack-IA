@@ -67,7 +67,7 @@ export function PredictionsFilterModal({
           </button>
           
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-primary/10 rounded-xl text-primary">
+            <div className="p-2 bg-primary/10 rounded-full text-primary">
               <Filter size={18} />
             </div>
             <p className="text-[10px] font-black tracking-widest text-primary uppercase">Configuración de Análisis</p>
@@ -123,7 +123,7 @@ export function PredictionsFilterModal({
                 >
                   <div className="flex items-center gap-4">
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                      "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
                       localSelectedIndex === -1 ? "bg-primary text-white" : "bg-surface-low text-on-surface-variant/40"
                     )}>
                       <Calendar size={18} />
@@ -150,7 +150,7 @@ export function PredictionsFilterModal({
                     >
                       <div className="flex items-center gap-4">
                         <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                          "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
                           localSelectedIndex === index ? "bg-primary text-white" : "bg-surface-low text-on-surface-variant/40"
                         )}>
                           <Search size={18} />
@@ -159,7 +159,7 @@ export function PredictionsFilterModal({
                           <p className="text-sm font-bold">
                             Ciclo {new Date(cycle.startDate).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })} - {new Date(cycle.endDate).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
                           </p>
-                          <p className="text-[10px] font-medium opacity-60">Histórico • {cycle.days.length} días</p>
+                          <p className="text-[10px] font-medium opacity-60">Evaluado • {cycle.days.length} días</p>
                         </div>
                       </div>
                       {localSelectedIndex === index && <div className="w-2 h-2 rounded-full bg-primary" />}
@@ -168,7 +168,7 @@ export function PredictionsFilterModal({
                 ) : (
                   selectedMonth !== new Date().getMonth() && (
                     <div className="p-8 text-center bg-surface-lowest rounded-2xl border border-dashed border-border opacity-60">
-                      <p className="text-xs font-medium italic">No se encontraron ciclos históricos para este mes.</p>
+                      <p className="text-xs font-medium italic">No se encontraron ciclos clínicos para este mes.</p>
                     </div>
                   )
                 )}

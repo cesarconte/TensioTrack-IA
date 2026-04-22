@@ -61,7 +61,7 @@ export const getBloodPressureStyle = (status: BloodPressureStatus): StatusStyle 
 };
 
 /**
- * Categorizes pulse rate (lpm).
+ * Categorizes pulse rate (ppm).
  */
 export const getPulseStatus = (hr: number): PulseStatus => {
   if (hr > 100) return 'tachycardia';

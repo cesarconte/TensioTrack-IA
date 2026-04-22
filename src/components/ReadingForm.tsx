@@ -158,7 +158,7 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
           date: new Date().toISOString().split('T')[0]
         });
         
-        toast.success(`Toma ${displayStep} guardada correctamente`);
+        toast.success(`Lectura ${displayStep} guardada correctamente`);
         
         if (displayStep < 3) {
           setSystolic('');
@@ -296,7 +296,7 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
           <p className="text-xs sm:text-sm font-semibold tracking-widest text-primary uppercase opacity-80">
             {isEditing 
               ? `MODIFICANDO REGISTRO DEL ${new Date(editingReading.recordedAt).toLocaleDateString('es-ES')}`
-              : `SESIÓN ${currentSlot === 'morning' ? 'MAÑANA' : 'NOCHE'} • TOMA ${displayStep} DE 3`
+              : `SESIÓN ${currentSlot === 'morning' ? 'MAÑANA' : 'NOCHE'} • LECTURA ${displayStep} DE 3`
             }
           </p>
         </div>

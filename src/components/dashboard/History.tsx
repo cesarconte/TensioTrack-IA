@@ -231,7 +231,7 @@ export function History() {
       readings: filteredReadings,
       label,
       noun,
-      expectedToComplete: daysCount * 6 // 3 tomas mañana + 3 tomas noche
+      expectedToComplete: daysCount * 6 // 3 lecturas mañana + 3 lecturas noche
     };
   }, [readings, activeFilters]);
 
@@ -321,7 +321,7 @@ export function History() {
                     </Badge>
                   </div>
                   <span className="text-sm font-medium text-on-surface-variant">
-                    Toma {reading.order} • {dateStr}
+                    Lectura {reading.order} • {dateStr}
                   </span>
                 </div>
               </div>
@@ -344,7 +344,7 @@ export function History() {
                   <Heart className="text-primary text-2xl fill-current" />
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-5xl font-display font-black text-foreground">{reading.heartRate || '--'}</span>
-                    <span className="text-sm font-bold text-on-surface-variant">lpm</span>
+                    <span className="text-sm font-bold text-on-surface-variant">ppm</span>
                   </div>
                 </div>
               </div>
@@ -431,7 +431,7 @@ export function History() {
             <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">PULSO</span>
             <div className="flex items-baseline gap-1 mt-0.5">
               <span className="text-2xl font-display font-black text-foreground">{reading.heartRate || '--'}</span>
-              <span className="text-[10px] font-bold text-on-surface-variant">lpm</span>
+              <span className="text-[10px] font-bold text-on-surface-variant">ppm</span>
             </div>
           </div>
         </div>
@@ -612,7 +612,7 @@ export function History() {
                         <div key={dayData.date} className="space-y-8">
                           {/* Date Header for the Day */}
                           <div className="flex items-center gap-4 pb-4 border-b border-border">
-                            <div className="w-12 h-12 rounded-2xl bg-surface-low flex items-center justify-center text-primary shrink-0">
+                            <div className="w-12 h-12 rounded-full bg-surface-low flex items-center justify-center text-primary shrink-0">
                               <Calendar className="" />
                             </div>
                             <div>
@@ -674,7 +674,7 @@ export function History() {
                     return (
                       <div key={`period-avg-${pid}`} className="bg-surface-low rounded-[2rem] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                             <PieChart className="text-[28px]" />
                           </div>
                           <div>
@@ -704,7 +704,7 @@ export function History() {
                   <div key={dayData.date} className="space-y-8">
                     {/* Date Header for the Day */}
                     <div className="flex items-center gap-4 pb-4 border-b border-border">
-                      <div className="w-12 h-12 rounded-2xl bg-surface-low flex items-center justify-center text-primary shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-surface-low flex items-center justify-center text-primary shrink-0">
                         <Calendar className="" />
                       </div>
                       <div>
@@ -803,7 +803,7 @@ export function History() {
         </div>
 
         <div className="bg-surface-low rounded-[2.5rem] p-8 sm:p-12 flex flex-col justify-between h-full min-h-[300px]">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-8">
+          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-8">
             <Stethoscope className="text-[28px]" />
           </div>
           <div>

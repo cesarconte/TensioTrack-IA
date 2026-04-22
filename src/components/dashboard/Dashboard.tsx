@@ -20,13 +20,15 @@ import {
   ResponsiveContainer,
   Legend,
   ReferenceLine,
-  ReferenceArea
+  ReferenceArea,
+  AreaChart,
+  Area
 } from 'recharts';
 
 import { getCachedAnalysis, generateAndCacheAnalysis } from '../../services/aiService';
 import { toast } from 'sonner';
 import { getBloodPressureStatus, getBloodPressureStyle, getPulseStatus, getPulseStyle } from "../../domain/health";
-import { Sparkles, Loader2, LayoutDashboard, Plus, Info, Clock, CalendarCheck, Calendar, ChevronDown, UserCheck, BarChart3, ShieldCheck, Check, ArrowRight, BrainCircuit, Activity, Heart, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Sparkles, Loader2, LayoutDashboard, Target, HeartPulse, AlertCircle, Plus, Info, Clock, CalendarCheck, Calendar, ChevronDown, UserCheck, BarChart3, ShieldCheck, Check, ArrowRight, BrainCircuit, Activity, Heart, TrendingUp, TrendingDown, Minus, Sun, Moon } from "lucide-react";
 
 const LocalPulseStatusDisplay = ({ hr }: { hr: number | null | undefined }) => {
   if (!hr) return <Badge variant="secondary" className="bg-surface-low text-on-surface-variant/40 px-2 py-0.5 border-none text-[10px] uppercase font-bold tracking-widest leading-none">--</Badge>;
@@ -72,10 +74,10 @@ const AnalysisCard = ({
     <CardHeader className="pb-6">
       <div className="flex justify-between items-start">
         <div>
-          <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest block mb-1">Visión General</span>
-          <CardTitle className="text-xl font-black text-on-surface">{title}</CardTitle>
+          <CardDescription className="text-primary font-black">VISIÓN GENERAL</CardDescription>
+          <CardTitle className="text-2xl font-black text-foreground">{title}</CardTitle>
         </div>
-        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm">
+        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0">
           {icon}
         </div>
       </div>
@@ -113,9 +115,9 @@ const AnalysisCard = ({
         </div>
       </div>
 
-      <div className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div className="pt-6 border-t border-border flex flex-col gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0">
             <Sparkles className="text-[24px]" />
           </div>
           <div className="flex-1">
@@ -126,12 +128,12 @@ const AnalysisCard = ({
         <Button 
           onClick={onGenerate}
           disabled={isGenerating}
-          className="rounded-full px-8 py-6 bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          className="w-full rounded-full py-6 bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
         >
           {isGenerating ? (
             <Loader2 className="animate-spin text-[20px]" />
           ) : (
-            'Generar'
+            'Generar Informe IA'
           )}
         </Button>
       </div>
@@ -152,9 +154,7 @@ export function Dashboard() {
     measurementFrequency
   } = useAppStore();
   const [chartFilter, setChartFilter] = React.useState<'both' | 'pas' | 'pad'>('both');
-  const [chartPeriod, setChartPeriod] = React.useState<'today' | 'period' | 'week' | 'month'>('month');
-  const [trendPeriod, setTrendPeriod] = React.useState<'today' | 'period' | 'week' | 'month'>('month');
-  const [pulsePeriod, setPulsePeriod] = React.useState<'today' | 'period' | 'week' | 'month'>('month');
+  const [chartPeriod, setChartPeriod] = React.useState<'today' | 'period' | '15d' | 'month'>('month');
   const [finalPeriod, setFinalPeriod] = React.useState<'period' | 'fortnight' | 'month' | 'quarter' | 'semester' | 'year' | 'total'>('month');
   
   const [aiAnalysisBp, setAiAnalysisBp] = React.useState<string | null>(null);
@@ -174,25 +174,25 @@ export function Dashboard() {
     
     if (hour >= 6 && hour < 13) {
       return {
-        greeting: "¡Buenos días!",
+        greeting: "Buenos días",
         image: "https://picsum.photos/seed/morning-warm-light/1200/400",
         message: "Comience el día con una sonrisa y salud."
       };
-    } else if (hour >= 13 && hour < 20.5) {
+    } else if (hour >= 13 && hour < 21) {
       return {
-        greeting: "¡Buenas tardes!",
+        greeting: "Buenas tardes",
         image: "https://picsum.photos/seed/afternoon-serene-landscape/1200/400",
         message: "Continúe con sus hábitos saludables hoy."
       };
-    } else if (hour >= 20.5 || hour < 24) {
+    } else if (hour >= 21 || hour < 6) {
       return {
-        greeting: "¡Buenas noches!",
+        greeting: "Buenas noches",
         image: "https://picsum.photos/seed/night-peaceful-stars/1200/400",
         message: "Es momento de descansar y relajarse."
       };
     } else {
       return {
-        greeting: "¡Hola!",
+        greeting: "Hola",
         image: "https://picsum.photos/seed/early-morning-calm/1200/400",
         message: "Bienvenido de nuevo a su seguimiento."
       };
@@ -201,24 +201,24 @@ export function Dashboard() {
 
   React.useEffect(() => {
     const loadCachedBp = async () => {
-      const cached = await getCachedAnalysis('bp', trendPeriod);
+      const cached = await getCachedAnalysis('bp', finalPeriod);
       setAiAnalysisBp(cached);
     };
     loadCachedBp();
-  }, [trendPeriod]);
+  }, [finalPeriod]);
 
   React.useEffect(() => {
     const loadCachedPulse = async () => {
-      const cached = await getCachedAnalysis('pulse', pulsePeriod);
+      const cached = await getCachedAnalysis('pulse', finalPeriod);
       setAiAnalysisPulse(cached);
     };
     loadCachedPulse();
-  }, [pulsePeriod]);
+  }, [finalPeriod]);
 
   const handleGenerateBpAnalysis = async (dataStr: string) => {
     try {
       setIsGeneratingBp(true);
-      const analysis = await generateAndCacheAnalysis('bp', trendPeriod, dataStr);
+      const analysis = await generateAndCacheAnalysis('bp', finalPeriod, dataStr);
       setAiAnalysisBp(analysis);
       toast.success('Análisis generado con éxito');
     } catch (error) {
@@ -232,7 +232,7 @@ export function Dashboard() {
   const handleGeneratePulseAnalysis = async (dataStr: string) => {
     try {
       setIsGeneratingPulse(true);
-      const analysis = await generateAndCacheAnalysis('pulse', pulsePeriod, dataStr);
+      const analysis = await generateAndCacheAnalysis('pulse', finalPeriod, dataStr);
       setAiAnalysisPulse(analysis);
       toast.success('Análisis generado con éxito');
     } catch (error) {
@@ -282,18 +282,16 @@ export function Dashboard() {
       const fiveDaysAgoStr = fiveDaysAgo.toISOString().split('T')[0];
       filteredReadings = allReadings.filter(r => r.date >= fiveDaysAgoStr && r.date <= todayStr);
       label = 'Registros de los últimos 5 días';
-    } else if (chartPeriod === 'week') {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(now.getDate() - 7);
-      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= sevenDaysAgoStr && r.date <= todayStr);
-      label = 'Registros de los últimos 7 días';
+    } else if (chartPeriod === '15d') {
+      const fifteenDaysAgo = new Date();
+      fifteenDaysAgo.setDate(now.getDate() - 15);
+      const fifteenDaysAgoStr = fifteenDaysAgo.toISOString().split('T')[0];
+      filteredReadings = allReadings.filter(r => r.date >= fifteenDaysAgoStr && r.date <= todayStr);
+      label = 'Registros de los últimos 15 días (3 períodos)';
     } else if (chartPeriod === 'month') {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(now.getDate() - 30);
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= thirtyDaysAgoStr && r.date <= todayStr);
-      label = 'Registros de los últimos 30 días';
+      const currentMonthStr = todayStr.substring(0, 7);
+      filteredReadings = allReadings.filter(r => r.date.startsWith(currentMonthStr));
+      label = 'Registros del mes actual';
     }
 
     const morningReadings = filteredReadings.filter(r => r.slot === 'morning');
@@ -324,27 +322,33 @@ export function Dashboard() {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
 
-    if (trendPeriod === 'today') {
-      filteredReadings = allReadings.filter(r => r.date === todayStr);
-      label = 'Hoy';
-    } else if (trendPeriod === 'period') {
-      const fiveDaysAgo = new Date();
-      fiveDaysAgo.setDate(now.getDate() - 5);
-      const fiveDaysAgoStr = fiveDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= fiveDaysAgoStr && r.date <= todayStr);
+    const getDaysAgoStr = (days: number) => {
+      const d = new Date(now);
+      d.setDate(now.getDate() - days);
+      return d.toISOString().split('T')[0];
+    };
+
+    if (finalPeriod === 'period') {
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(5) && r.date <= todayStr);
       label = 'Últimos 5 días';
-    } else if (trendPeriod === 'week') {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(now.getDate() - 7);
-      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= sevenDaysAgoStr && r.date <= todayStr);
-      label = 'Últimos 7 días';
-    } else if (trendPeriod === 'month') {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(now.getDate() - 30);
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= thirtyDaysAgoStr && r.date <= todayStr);
+    } else if (finalPeriod === 'fortnight') {
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(15) && r.date <= todayStr);
+      label = 'Últimos 15 días';
+    } else if (finalPeriod === 'month') {
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(30) && r.date <= todayStr);
       label = 'Últimos 30 días';
+    } else if (finalPeriod === 'quarter') {
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(90) && r.date <= todayStr);
+      label = 'Últimos 90 días';
+    } else if (finalPeriod === 'semester') {
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(180) && r.date <= todayStr);
+      label = 'Últimos 6 meses';
+    } else if (finalPeriod === 'year') {
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(365) && r.date <= todayStr);
+      label = 'Último año';
+    } else if (finalPeriod === 'total') {
+      filteredReadings = allReadings;
+      label = 'Desde el inicio';
     }
 
     // Group by date to get daily averages
@@ -375,6 +379,19 @@ export function Dashboard() {
 
     const totalSys = data.length > 0 ? Math.round(data.reduce((sum, d) => sum + d.pas, 0) / data.length) : 0;
     const totalDia = data.length > 0 ? Math.round(data.reduce((sum, d) => sum + d.pad, 0) / data.length) : 0;
+    const sysMax = data.length > 0 ? Math.max(...data.map(d => d.pas)) : 0;
+    const sysMin = data.length > 0 ? Math.min(...data.map(d => d.pas)) : 0;
+    const diaMax = data.length > 0 ? Math.max(...data.map(d => d.pad)) : 0;
+    const diaMin = data.length > 0 ? Math.min(...data.map(d => d.pad)) : 0;
+    
+    let targetCount = 0;
+    filteredReadings.forEach(r => {
+       const status = getBloodPressureStatus(r.systolic, r.diastolic);
+       if (status === 'normal' || status === 'normal-high') {
+         targetCount++;
+       }
+    });
+    const timeInTarget = filteredReadings.length > 0 ? Math.round((targetCount / filteredReadings.length) * 100) : 0;
 
     // Calculate comparison for badges
     let comparisonText = '--';
@@ -384,18 +401,24 @@ export function Dashboard() {
       const prevStart = new Date(now);
       const prevEnd = new Date(now);
       
-      if (trendPeriod === 'today') {
-        prevStart.setDate(now.getDate() - 1);
-        prevEnd.setDate(now.getDate() - 1);
-      } else if (trendPeriod === 'period') {
+      if (finalPeriod === 'period') {
         prevStart.setDate(now.getDate() - 10);
         prevEnd.setDate(now.getDate() - 6);
-      } else if (trendPeriod === 'week') {
-        prevStart.setDate(now.getDate() - 14);
-        prevEnd.setDate(now.getDate() - 8);
-      } else if (trendPeriod === 'month') {
+      } else if (finalPeriod === 'fortnight') {
+        prevStart.setDate(now.getDate() - 30);
+        prevEnd.setDate(now.getDate() - 16);
+      } else if (finalPeriod === 'month') {
         prevStart.setDate(now.getDate() - 60);
         prevEnd.setDate(now.getDate() - 31);
+      } else if (finalPeriod === 'quarter') {
+        prevStart.setDate(now.getDate() - 180);
+        prevEnd.setDate(now.getDate() - 91);
+      } else if (finalPeriod === 'semester') {
+        prevStart.setDate(now.getDate() - 360);
+        prevEnd.setDate(now.getDate() - 181);
+      } else if (finalPeriod === 'year') {
+        prevStart.setDate(now.getDate() - 730);
+        prevEnd.setDate(now.getDate() - 366);
       }
       
       const startStr = prevStart.toISOString().split('T')[0];
@@ -414,12 +437,12 @@ export function Dashboard() {
       const percent = Math.round((Math.abs(diff) / prevAvgSys) * 100);
       comparisonTrend = diff > 0 ? 'up' : diff < 0 ? 'down' : 'stable';
       const trendIcon = diff > 0 ? '↑' : diff < 0 ? '↓' : '↔';
-      comparisonText = `${trendIcon} ${percent}% vs ${trendPeriod === 'today' ? 'ayer' : 'período anterior'}`;
+      comparisonText = `${trendIcon} ${percent}% vs período anterior`;
     }
 
-    const periodDaysLabel = trendPeriod === 'today' ? '1 día analizado' : 
-                          trendPeriod === 'period' ? '5 días analizados' : 
-                          trendPeriod === 'week' ? '7 días analizados' : '30 días analizados';
+    const periodDaysLabel = data.length > 0 
+      ? `${data.length} ${data.length === 1 ? 'día analizado' : 'días analizados'}`
+      : 'Sin datos registrados';
 
     let trendAnalysis = "Registra más datos para obtener un análisis de tendencia detallado.";
     if (data.length >= 2) {
@@ -446,8 +469,8 @@ export function Dashboard() {
       trendAnalysis = `En este período, tu presión sistólica ha ${sysText} y la diastólica se ha ${diaText}. ${statusText} Promedio reciente: ${secondSysAvg}/${secondDiaAvg} mmHg.`;
     }
 
-    return { data, label, avgSys: totalSys, avgDia: totalDia, trendAnalysis, comparisonText, comparisonTrend, periodDaysLabel };
-  }, [allReadings, trendPeriod]);
+    return { data, label: finalPeriod, avgSys: totalSys, avgDia: totalDia, sysMax, sysMin, diaMax, diaMin, timeInTarget, trendAnalysis, comparisonText, comparisonTrend, periodDaysLabel };
+  }, [allReadings, finalPeriod]);
 
   const pulseData = React.useMemo(() => {
     if (!allReadings) return { data: [], label: 'Sin datos', min: 0, max: 0, avg: 0, analysis: '' };
@@ -457,27 +480,33 @@ export function Dashboard() {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
 
-    if (pulsePeriod === 'today') {
-      filteredReadings = filteredReadings.filter(r => r.date === todayStr);
-      label = 'Hoy';
-    } else if (pulsePeriod === 'period') {
-      const fiveDaysAgo = new Date();
-      fiveDaysAgo.setDate(now.getDate() - 5);
-      const fiveDaysAgoStr = fiveDaysAgo.toISOString().split('T')[0];
-      filteredReadings = filteredReadings.filter(r => r.date >= fiveDaysAgoStr && r.date <= todayStr);
+    const getDaysAgoStr = (days: number) => {
+      const d = new Date(now);
+      d.setDate(now.getDate() - days);
+      return d.toISOString().split('T')[0];
+    };
+
+    if (finalPeriod === 'period') {
+      filteredReadings = filteredReadings.filter(r => r.date >= getDaysAgoStr(5) && r.date <= todayStr);
       label = 'Últimos 5 días';
-    } else if (pulsePeriod === 'week') {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(now.getDate() - 7);
-      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-      filteredReadings = filteredReadings.filter(r => r.date >= sevenDaysAgoStr && r.date <= todayStr);
-      label = 'Últimos 7 días';
-    } else if (pulsePeriod === 'month') {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(now.getDate() - 30);
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-      filteredReadings = filteredReadings.filter(r => r.date >= thirtyDaysAgoStr && r.date <= todayStr);
+    } else if (finalPeriod === 'fortnight') {
+      filteredReadings = filteredReadings.filter(r => r.date >= getDaysAgoStr(15) && r.date <= todayStr);
+      label = 'Últimos 15 días';
+    } else if (finalPeriod === 'month') {
+      filteredReadings = filteredReadings.filter(r => r.date >= getDaysAgoStr(30) && r.date <= todayStr);
       label = 'Últimos 30 días';
+    } else if (finalPeriod === 'quarter') {
+      filteredReadings = filteredReadings.filter(r => r.date >= getDaysAgoStr(90) && r.date <= todayStr);
+      label = 'Últimos 90 días';
+    } else if (finalPeriod === 'semester') {
+      filteredReadings = filteredReadings.filter(r => r.date >= getDaysAgoStr(180) && r.date <= todayStr);
+      label = 'Últimos 6 meses';
+    } else if (finalPeriod === 'year') {
+      filteredReadings = filteredReadings.filter(r => r.date >= getDaysAgoStr(365) && r.date <= todayStr);
+      label = 'Último año';
+    } else if (finalPeriod === 'total') {
+      filteredReadings = filteredReadings;
+      label = 'Desde el inicio';
     }
 
     const dailyData = filteredReadings.reduce((acc, reading) => {
@@ -508,6 +537,15 @@ export function Dashboard() {
     const max = allFc.length > 0 ? Math.max(...allFc) : 0;
     const avg = allFc.length > 0 ? Math.round(allFc.reduce((a, b) => a + b, 0) / allFc.length) : 0;
 
+    let targetCount = 0;
+    let anomaliesCount = 0;
+    filteredReadings.forEach(r => {
+       const hr = r.heartRate!;
+       if (hr >= 60 && hr <= 100) targetCount++;
+       else anomaliesCount++;
+    });
+    const timeInTarget = filteredReadings.length > 0 ? Math.round((targetCount / filteredReadings.length) * 100) : 0;
+
     // Calculate comparison for badges
     let comparisonText = '--';
     let comparisonTrend: 'up' | 'down' | 'stable' = 'stable';
@@ -516,18 +554,24 @@ export function Dashboard() {
       const prevStart = new Date(now);
       const prevEnd = new Date(now);
       
-      if (pulsePeriod === 'today') {
-        prevStart.setDate(now.getDate() - 1);
-        prevEnd.setDate(now.getDate() - 1);
-      } else if (pulsePeriod === 'period') {
+      if (finalPeriod === 'period') {
         prevStart.setDate(now.getDate() - 10);
         prevEnd.setDate(now.getDate() - 6);
-      } else if (pulsePeriod === 'week') {
-        prevStart.setDate(now.getDate() - 14);
-        prevEnd.setDate(now.getDate() - 8);
-      } else if (pulsePeriod === 'month') {
+      } else if (finalPeriod === 'fortnight') {
+        prevStart.setDate(now.getDate() - 30);
+        prevEnd.setDate(now.getDate() - 16);
+      } else if (finalPeriod === 'month') {
         prevStart.setDate(now.getDate() - 60);
         prevEnd.setDate(now.getDate() - 31);
+      } else if (finalPeriod === 'quarter') {
+        prevStart.setDate(now.getDate() - 180);
+        prevEnd.setDate(now.getDate() - 91);
+      } else if (finalPeriod === 'semester') {
+        prevStart.setDate(now.getDate() - 360);
+        prevEnd.setDate(now.getDate() - 181);
+      } else if (finalPeriod === 'year') {
+        prevStart.setDate(now.getDate() - 730);
+        prevEnd.setDate(now.getDate() - 366);
       }
       
       const startStr = prevStart.toISOString().split('T')[0];
@@ -546,12 +590,12 @@ export function Dashboard() {
       const percent = Math.round((Math.abs(diff) / prevAvgHr) * 100);
       comparisonTrend = diff > 0 ? 'up' : diff < 0 ? 'down' : 'stable';
       const trendIcon = diff > 0 ? '↑' : diff < 0 ? '↓' : '↔';
-      comparisonText = `${trendIcon} ${percent}% vs ${pulsePeriod === 'today' ? 'ayer' : 'período anterior'}`;
+      comparisonText = `${trendIcon} ${percent}% vs período anterior`;
     }
 
-    const periodDaysLabel = pulsePeriod === 'today' ? '1 día analizado' : 
-                          pulsePeriod === 'period' ? '5 días analizados' : 
-                          pulsePeriod === 'week' ? '7 días analizados' : '30 días analizados';
+    const periodDaysLabel = data.length > 0 
+      ? `${data.length} ${data.length === 1 ? 'día analizado' : 'días analizados'}`
+      : 'Sin datos registrados';
 
     let analysis = "Registra más datos de pulso para obtener un análisis detallado.";
     if (data.length >= 2) {
@@ -578,52 +622,48 @@ export function Dashboard() {
       }
     }
 
-    return { data, label, min, max, avg, analysis, comparisonText, comparisonTrend, periodDaysLabel };
-  }, [allReadings, pulsePeriod]);
+    return { data, label: finalPeriod, min, max, avg, timeInTarget, anomaliesCount, analysis, comparisonText, comparisonTrend, periodDaysLabel };
+  }, [allReadings, finalPeriod]);
 
   const finalResultData = React.useMemo(() => {
-    if (!allReadings) return { avgSys: 0, avgDia: 0, avgHr: 0, count: 0, daysCount: 0, label: 'Sin datos' };
+    if (!allReadings) return { avgSys: 0, avgDia: 0, avgHr: 0, count: 0, daysCount: 0, label: 'Sin datos', prevAvgSys: null };
 
     let filteredReadings = allReadings;
+    let prevReadings: any[] = [];
     let label = '';
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
+    
+    // Helper to get dates
+    const getDaysAgoStr = (days: number) => {
+      const d = new Date(now);
+      d.setDate(now.getDate() - days);
+      return d.toISOString().split('T')[0];
+    };
 
     if (finalPeriod === 'period') {
-      const fiveDaysAgo = new Date();
-      fiveDaysAgo.setDate(now.getDate() - 5);
-      const fiveDaysAgoStr = fiveDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= fiveDaysAgoStr && r.date <= todayStr);
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(5) && r.date <= todayStr);
+      prevReadings = allReadings.filter(r => r.date >= getDaysAgoStr(10) && r.date < getDaysAgoStr(5));
       label = 'Últimos 5 días';
     } else if (finalPeriod === 'fortnight') {
-      const fifteenDaysAgo = new Date();
-      fifteenDaysAgo.setDate(now.getDate() - 15);
-      const fifteenDaysAgoStr = fifteenDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= fifteenDaysAgoStr && r.date <= todayStr);
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(15) && r.date <= todayStr);
+      prevReadings = allReadings.filter(r => r.date >= getDaysAgoStr(30) && r.date < getDaysAgoStr(15));
       label = 'Últimos 15 días';
     } else if (finalPeriod === 'month') {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(now.getDate() - 30);
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= thirtyDaysAgoStr && r.date <= todayStr);
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(30) && r.date <= todayStr);
+      prevReadings = allReadings.filter(r => r.date >= getDaysAgoStr(60) && r.date < getDaysAgoStr(30));
       label = 'Últimos 30 días';
     } else if (finalPeriod === 'quarter') {
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(now.getDate() - 90);
-      const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= ninetyDaysAgoStr && r.date <= todayStr);
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(90) && r.date <= todayStr);
+      prevReadings = allReadings.filter(r => r.date >= getDaysAgoStr(180) && r.date < getDaysAgoStr(90));
       label = 'Últimos 90 días';
     } else if (finalPeriod === 'semester') {
-      const semesterAgo = new Date();
-      semesterAgo.setDate(now.getDate() - 180);
-      const semesterAgoStr = semesterAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= semesterAgoStr && r.date <= todayStr);
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(180) && r.date <= todayStr);
+      prevReadings = allReadings.filter(r => r.date >= getDaysAgoStr(360) && r.date < getDaysAgoStr(180));
       label = 'Últimos 6 meses';
     } else if (finalPeriod === 'year') {
-      const yearAgo = new Date();
-      yearAgo.setDate(now.getDate() - 365);
-      const yearAgoStr = yearAgo.toISOString().split('T')[0];
-      filteredReadings = allReadings.filter(r => r.date >= yearAgoStr && r.date <= todayStr);
+      filteredReadings = allReadings.filter(r => r.date >= getDaysAgoStr(365) && r.date <= todayStr);
+      prevReadings = allReadings.filter(r => r.date >= getDaysAgoStr(730) && r.date < getDaysAgoStr(365));
       label = 'Último año';
     } else if (finalPeriod === 'total') {
       filteredReadings = allReadings;
@@ -637,17 +677,50 @@ export function Dashboard() {
     const hrReadings = filteredReadings.filter(r => r.heartRate);
     const avgHr = hrReadings.length > 0 ? Math.round(hrReadings.reduce((sum, r) => sum + (r.heartRate || 0), 0) / hrReadings.length) : 0;
 
-    return { avgSys, avgDia, avgHr, count, daysCount, label };
+    const prevCount = prevReadings.length;
+    const prevAvgSys = prevCount > 0 ? Math.round(prevReadings.reduce((sum, r) => sum + r.systolic, 0) / prevCount) : null;
+
+    return { avgSys, avgDia, avgHr, count, daysCount, label, prevAvgSys };
   }, [allReadings, finalPeriod]);
+
+  const period5DaysResult = React.useMemo(() => {
+    if (!allReadings) return { currentSys: null, prevSys: null };
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    
+    const getDaysAgoStr = (days: number) => {
+      const d = new Date(now);
+      d.setDate(now.getDate() - days);
+      return d.toISOString().split('T')[0];
+    };
+
+    const currentReadings = allReadings.filter(r => r.date >= getDaysAgoStr(5) && r.date <= todayStr);
+    const prevReadings = allReadings.filter(r => r.date >= getDaysAgoStr(10) && r.date < getDaysAgoStr(5));
+    
+    const currentSys = currentReadings.length > 0 ? Math.round(currentReadings.reduce((s, r) => s + r.systolic, 0) / currentReadings.length) : null;
+    const prevSys = prevReadings.length > 0 ? Math.round(prevReadings.reduce((s, r) => s + r.systolic, 0) / prevReadings.length) : null;
+    return { currentSys, prevSys };
+  }, [allReadings]);
 
   if (isLoading) {
     return (
       <div className="space-y-8 animate-pulse">
-        <div className="h-32 bg-surface-low rounded-[2.5rem]" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-48 bg-surface-low rounded-[2.5rem]" />
-          ))}
+        <div className="h-40 sm:h-56 relative rounded-[2rem] overflow-hidden group shadow-2xl shadow-primary/10">
+          <img 
+            src={timeContext.image} 
+            alt="Time of Day" 
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-linear-to-r from-card/90 via-card/40 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-center px-8 sm:px-12">
+            <h2 className="text-3xl sm:text-5xl font-display font-black tracking-tighter text-foreground mb-1">
+              {timeContext.greeting}, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'Paciente'}</span>
+            </h2>
+            <p className="text-sm sm:text-lg font-bold text-on-surface-variant max-w-md hidden sm:block">
+              {timeContext.message}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -682,6 +755,32 @@ export function Dashboard() {
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterdayDateStr = yesterdayDate.toISOString().split('T')[0];
   const yesterdayAvg = dashboard?.recentDailyAverages?.find(d => d.date === yesterdayDateStr);
+
+  let latestSessionTrendText = "Sin datos previos";
+  let latestSessionTrendIcon = "horizontal_rule";
+  let latestSessionTrendColor = "text-on-surface-variant";
+
+  if (latestSession) {
+    if (latestSession.slot === 'evening' && morningSession?.avgSystolic) {
+      const diff = latestSession.avgSystolic - morningSession.avgSystolic;
+      const percent = Math.round((diff / morningSession.avgSystolic) * 100);
+      if (percent > 0) {
+        latestSessionTrendText = `+${percent}% vs mañana`;
+        latestSessionTrendIcon = "trending_up";
+        latestSessionTrendColor = "text-destructive";
+      } else if (percent < 0) {
+        latestSessionTrendText = `${percent}% vs mañana`;
+        latestSessionTrendIcon = "trending_down";
+        latestSessionTrendColor = "text-primary";
+      } else {
+        latestSessionTrendText = "Igual que mañana";
+        latestSessionTrendIcon = "trending_flat";
+        latestSessionTrendColor = "text-on-surface-variant";
+      }
+    } else if (latestSession.slot === 'morning') {
+      latestSessionTrendText = "Primera lectura del día";
+    }
+  }
 
   let trendText = "Sin datos previos";
   let trendIcon = "horizontal_rule";
@@ -754,7 +853,8 @@ export function Dashboard() {
           {payload.map((entry: any, index: number) => {
             const type = entry.dataKey;
             const value = entry.value;
-            let colorClass = type === 'pas' ? "text-primary" : type === 'pad' ? "text-primary-container" : "text-warning";
+            let colorClass = type === 'pas' ? "text-primary" : type === 'pad' ? "" : "text-warning";
+            let customStyle = type === 'pad' && !colorClass ? { color: '#BBA2FD' } : {};
             
             if (type === 'pas') {
               if (value >= 180) colorClass = "text-destructive";
@@ -769,7 +869,7 @@ export function Dashboard() {
             return (
               <div key={index} className="flex items-center justify-between gap-6 py-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">{entry.name}</span>
-                <span className={cn("text-lg font-black", colorClass)}>{value}</span>
+                <span className={cn("text-lg font-black", colorClass)} style={colorClass ? undefined : customStyle}>{value}</span>
               </div>
             );
           })}
@@ -828,66 +928,109 @@ export function Dashboard() {
     comparisonInsight = "Faltan datos para comparar. Completa las mediciones de mañana y noche.";
   }
 
+  const todayDateObj = new Date();
+  const todayFormatted = todayDateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+
+  let period5TrendText = "Sin datos previos";
+  let period5TrendIcon = "horizontal_rule";
+  let period5TrendColor = "text-on-surface-variant";
+
+  if (period5DaysResult.currentSys && period5DaysResult.prevSys) {
+    const dDiff = period5DaysResult.currentSys - period5DaysResult.prevSys;
+    const dPercent = Math.round((dDiff / period5DaysResult.prevSys) * 100);
+    if (dPercent > 0) {
+      period5TrendText = `+${dPercent}% vs período anterior`;
+      period5TrendIcon = "trending_up";
+      period5TrendColor = "text-destructive";
+    } else if (dPercent < 0) {
+      period5TrendText = `${dPercent}% vs período anterior`;
+      period5TrendIcon = "trending_down";
+      period5TrendColor = "text-primary";
+    } else {
+      period5TrendText = "Sin cambios";
+      period5TrendIcon = "trending_flat";
+      period5TrendColor = "text-on-surface-variant";
+    }
+  }
+
+  let historyTrendText = "Sin datos previos";
+  let historyTrendIcon = "horizontal_rule";
+  let historyTrendColor = "text-on-surface-variant";
+
+  if (finalResultData.avgSys && finalResultData.prevAvgSys) {
+    const dDiff = finalResultData.avgSys - finalResultData.prevAvgSys;
+    const dPercent = Math.round((dDiff / finalResultData.prevAvgSys) * 100);
+    if (dPercent > 0) {
+      historyTrendText = `+${dPercent}% vs ${finalResultData.label.toLowerCase()}`;
+      historyTrendIcon = "trending_up";
+      historyTrendColor = "text-destructive";
+    } else if (dPercent < 0) {
+      historyTrendText = `${dPercent}% vs ${finalResultData.label.toLowerCase()}`;
+      historyTrendIcon = "trending_down";
+      historyTrendColor = "text-primary";
+    } else {
+      historyTrendText = "Sin cambios";
+      historyTrendIcon = "trending_flat";
+      historyTrendColor = "text-on-surface-variant";
+    }
+  }
+
+  const currentStatusLatest = getDiagnosticStatus(latestSession?.avgSystolic, latestSession?.avgDiastolic);
+  const currentStatusToday = getDiagnosticStatus(dashboard?.today?.avgSystolic, dashboard?.today?.avgDiastolic);
+  const currentStatusPeriod = getDiagnosticStatus(periodAvgSystolic, periodAvgDiastolic);
+
   return (
     <div className="space-y-10 pb-20 sm:pb-0">
       {/* Welcome Banner with Image */}
-      <section className="relative h-48 sm:h-64 rounded-[2.5rem] overflow-hidden group">
+      <section className="relative rounded-[2rem] overflow-hidden group shadow-2xl shadow-primary/10">
         <img 
           src={timeContext.image} 
           alt={timeContext.greeting} 
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-dim/80 via-dim/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-card/90 via-card/40 to-transparent" />
         
-        <div className="absolute inset-0 p-8 sm:p-12 flex flex-col justify-center">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="max-w-xl space-y-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white">
-                <LayoutDashboard className="" />
+        <div className="relative p-7 sm:p-10 md:p-12 flex flex-col justify-center min-h-[14rem] sm:min-h-[16rem]">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 relative z-10 w-full">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="max-w-xl space-y-4"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-primary/10 backdrop-blur-md rounded-full flex items-center justify-center text-primary border border-primary/20 shrink-0">
+                  <LayoutDashboard className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Panel de Control</span>
               </div>
-              <span className="text-xs font-black text-white uppercase tracking-widest">Panel de Control</span>
-            </div>
-            <h2 className="text-3xl sm:text-5xl font-display font-black text-white tracking-tight leading-tight">
-              {timeContext.greeting} <span className="text-primary-container">{user?.displayName?.split(' ')[0] || 'Paciente'}</span>
-            </h2>
-            <p className="text-white/80 font-medium max-w-md text-lg">
-              {dashboard?.stats.isComplete 
-                ? "Protocolo completado. Su informe médico está listo para ser revisado."
-                : (dashboard?.stats.daysCount && dashboard.stats.daysCount > 0 
-                    ? `Día ${dashboard.stats.daysCount} de 5 del protocolo AMPA. ${timeContext.message}`
-                    : `Bienvenido. ${timeContext.message}`)}
-            </p>
-          </motion.div>
-        </div>
-
-        <div className="hidden sm:block absolute top-6 right-6">
-          <Button 
-            size="lg" 
-            onClick={() => setReadingFormOpen(true)}
-          >
-            <Plus className="mr-2 text-[18px]" />
-            Nueva Lectura
-          </Button>
+              <h2 className="text-4xl sm:text-5xl md:text-display-md font-display font-black text-foreground tracking-tighter leading-tight text-balance">
+                ¡{timeContext.greeting}, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'Paciente'}</span>!
+              </h2>
+              <p className="text-on-surface-variant font-bold max-w-md text-sm sm:text-base leading-relaxed">
+                {dashboard?.stats.isComplete 
+                  ? "Protocolo completado. Su informe médico está listo para ser revisado."
+                  : (dashboard?.stats.daysCount && dashboard.stats.daysCount > 0 
+                      ? `Día ${dashboard.stats.daysCount} de 5 del protocolo AMPA. ${timeContext.message}`
+                      : `Bienvenido. ${timeContext.message}`)}
+              </p>
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Mobile Floating Action Button (FAB) - MD3 Style */}
+      {/* Mobile & Tablet Floating Action Button (FAB) - MD3 Style */}
       <motion.div 
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="sm:hidden fixed bottom-[11rem] right-4 z-50"
+        className="lg:hidden fixed bottom-[11rem] right-4 sm:right-6 z-50 hover:scale-105 transition-transform"
       >
         <Button 
           onClick={() => setReadingFormOpen(true)}
-          className="w-16 h-16 rounded-3xl shadow-2xl shadow-primary/30 dark:shadow-none"
+          className="w-16 h-16 p-0 rounded-[2rem] shadow-2xl shadow-primary/40 dark:shadow-primary/20 flex items-center justify-center shrink-0 bg-primary text-white"
           aria-label="Nueva Lectura"
         >
-          <Plus className="text-[32px]" />
+          <Plus className="w-8 h-8 shrink-0" />
         </Button>
       </motion.div>
 
@@ -903,267 +1046,284 @@ export function Dashboard() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Level 1: Last Session */}
-          <Card className="relative overflow-hidden bg-surface-low border-none rounded-[2rem] p-6 shadow-none flex flex-col min-h-[220px]">
+          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
             <div className="flex items-start justify-between mb-6">
-              <div className="flex flex-col gap-0.5">
-                <h3 className="text-[16px] font-bold text-on-surface">Última Toma</h3>
-                <span className="text-[10px] font-black text-on-surface-variant/60 uppercase tracking-widest">
-                  {latestSession?.slot === 'morning' ? 'Mañana' : latestSession?.slot === 'evening' ? 'Noche' : '--'}
-                </span>
+              <div className="flex flex-col gap-1">
+                <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">Última Lectura</h3>
+                <CardDescription className="text-[10px] font-black tracking-[0.1em] opacity-60 uppercase">
+                  {latestSession ? (latestSession.slot === 'morning' ? 'MAÑANA' : 'NOCHE') : 'SIN LECTURAS HOY'}
+                </CardDescription>
               </div>
-              <Clock className="text-primary text-[20px]" />
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
+                <Clock className="w-5 h-5" />
+              </div>
             </div>
+
             <div className="flex flex-col mb-6">
-              <span className="text-5xl font-black font-display text-on-surface tracking-tighter leading-none">
-                {latestSession?.avgSystolic || '--'}/{latestSession?.avgDiastolic || '--'}
+              <span className="text-5xl sm:text-6xl font-black font-display text-foreground tracking-tighter leading-none shrink-0">
+                {latestSession ? `${latestSession.avgSystolic}/${latestSession.avgDiastolic}` : '--/--'}
               </span>
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1.5">mmHg</span>
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mt-3 ml-1 opacity-60 shrink-0">MMHG</span>
             </div>
+
             <div className="mt-auto space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white/50 rounded-xl p-2 flex flex-col items-center justify-center gap-0.5">
-                  <span className="text-[8px] font-bold text-on-surface-variant tracking-widest uppercase">Lecturas</span>
-                  <span className="text-sm font-black text-primary">{latestSession?.readings.length || 0} / 3</span>
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                  <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">LECTURAS</span>
+                  <span className="text-sm sm:text-md font-black text-primary">{latestSession?.readings.length || 0} / 3</span>
                 </div>
-                <div className="bg-white/50 rounded-xl p-2 flex flex-col items-center justify-center gap-0.5">
-                  <span className="text-[8px] font-bold text-on-surface-variant tracking-widest uppercase">Pulso Med.</span>
-                  <span className="text-sm font-black text-primary">{latestSession?.avgHeartRate || '--'} <span className="text-[9px]">BPM</span></span>
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                  <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">PULSO MEDIO</span>
+                  <span className="text-sm sm:text-md font-black text-primary">{latestSession?.avgHeartRate || '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
                 </div>
               </div>
-              <div className="pt-1">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Estado</span>
-                  <span className={cn("text-[10px] font-black uppercase tracking-widest", latestSession?.avgSystolic ? getDiagnosticStatus(latestSession.avgSystolic, latestSession.avgDiastolic).color : 'text-on-surface-variant')}>
-                    {latestSession?.avgSystolic ? getDiagnosticStatus(latestSession.avgSystolic, latestSession.avgDiastolic).label : 'Sin datos'}
-                  </span>
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.15em]">Estado</span>
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest", currentStatusLatest.color)}>{currentStatusLatest.label}</span>
                 </div>
-                <div className={cn("h-1.5 w-full rounded-full overflow-hidden", latestSession?.avgSystolic ? getDiagnosticStatus(latestSession.avgSystolic, latestSession.avgDiastolic).bg : 'bg-surface-variant/20')}>
+                <div className="h-1.5 w-full bg-surface-high rounded-full overflow-hidden">
                   <div 
-                    className={cn("h-full rounded-full transition-all duration-1000", latestSession?.avgSystolic ? getDiagnosticStatus(latestSession.avgSystolic, latestSession.avgDiastolic).color.replace('text-', 'bg-') : 'bg-surface-variant/40')} 
+                    className={cn("h-full transition-all duration-1000", currentStatusLatest.bg)} 
                     style={{ width: latestSession?.avgSystolic ? `${Math.min(100, Math.max(5, ((latestSession.avgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }} 
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[#825E78] font-bold text-xs pt-2 border-t border-border/50">
-                <Clock className="text-[16px]" />
-                <span>{sessionTimeText}</span>
-              </div>
+              {morningSession && eveningSession ? (
+                <div className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] border border-border/50", latestSessionTrendColor, latestSessionTrendColor.replace('text-', 'bg-') + '/10')}>
+                  {latestSessionTrendIcon === 'trending_up' ? <TrendingUp className="w-4 h-4" /> : latestSessionTrendIcon === 'trending_down' ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                  <span>{latestSessionTrendText}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] border border-border/50 text-on-surface-variant bg-surface-high">
+                  <Clock className="w-4 h-4" />
+                  <span>{latestSession ? latestSessionTrendText : 'Sin datos previos'}</span>
+                </div>
+              )}
             </div>
           </Card>
 
           {/* Level 2: Daily */}
-          <Card className="relative overflow-hidden bg-surface-low border-none rounded-[2rem] p-6 shadow-none flex flex-col min-h-[220px]">
+          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
             <div className="flex items-start justify-between mb-6">
-              <div className="flex flex-col gap-0.5">
-                <h3 className="text-[16px] font-bold text-on-surface">Promedio Hoy</h3>
-                <span className="text-[10px] font-black text-on-surface-variant/60 uppercase tracking-widest">
-                  {new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
-                </span>
+              <div className="flex flex-col gap-1">
+                <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">Media Hoy</h3>
+                <CardDescription className="text-[10px] font-black tracking-[0.1em] opacity-60 uppercase">
+                  {todayFormatted}
+                </CardDescription>
               </div>
-              <CalendarCheck className="text-primary text-[20px]" />
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
+                <CalendarCheck className="w-5 h-5" />
+              </div>
             </div>
+
             <div className="flex flex-col mb-6">
-              <span className="text-5xl font-black font-display text-on-surface tracking-tighter leading-none">
-                {dashboard?.today?.avgSystolic || '--'}/{dashboard?.today?.avgDiastolic || '--'}
+              <span className="text-display-lg font-black font-display text-foreground tracking-tighter leading-none shrink-0">
+                {dashboard?.today?.avgSystolic ? `${dashboard.today.avgSystolic}/${dashboard.today.avgDiastolic}` : '--/--'}
               </span>
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1.5">mmHg</span>
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mt-3 ml-1 opacity-60 shrink-0">MMHG</span>
             </div>
-            <div className="space-y-2 mb-4 mt-auto">
-              <div className="flex items-center justify-between bg-white/40 px-3 py-2 rounded-xl">
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mañana</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-on-surface">{morningSession?.avgSystolic || '--'}/{morningSession?.avgDiastolic || '--'}</span>
-                  <span className="text-[10px] font-bold text-on-surface-variant">{morningSession?.avgHeartRate || '--'} BPM</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between bg-white/40 px-3 py-2 rounded-xl">
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Noche</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-on-surface">{eveningSession?.avgSystolic || '--'}/{eveningSession?.avgDiastolic || '--'}</span>
-                  <span className="text-[10px] font-bold text-on-surface-variant">{eveningSession?.avgHeartRate || '--'} BPM</span>
-                </div>
-              </div>
-            </div>
+
             <div className="mt-auto space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white/50 rounded-xl p-2 flex flex-col items-center justify-center gap-0.5">
-                  <span className="text-[8px] font-bold text-on-surface-variant tracking-widest uppercase">Lecturas</span>
-                  <span className="text-sm font-black text-primary">{(morningSession?.readings.length || 0) + (eveningSession?.readings.length || 0)} / 6</span>
+              <div className="space-y-2 mb-4 shrink-0">
+                <div className="flex items-center justify-between text-xs font-bold px-1">
+                  <span className="text-on-surface-variant uppercase tracking-widest text-[9px] w-16">MAÑANA</span>
+                  <div className="flex gap-4">
+                    <span className="text-foreground">{morningSession?.avgSystolic ? `${morningSession.avgSystolic}/${morningSession.avgDiastolic}` : '--/--'}</span>
+                    <span className="text-on-surface-variant opacity-60 w-12 text-right">{morningSession?.avgHeartRate ? `${morningSession.avgHeartRate} PPM` : '--'}</span>
+                  </div>
                 </div>
-                <div className="bg-white/50 rounded-xl p-2 flex flex-col items-center justify-center gap-0.5">
-                  <span className="text-[8px] font-bold text-on-surface-variant tracking-widest uppercase">Pulso Med.</span>
-                  <span className="text-sm font-black text-primary">{dashboard?.today?.avgHeartRate || '--'} <span className="text-[9px]">BPM</span></span>
+                <div className="flex items-center justify-between text-xs font-bold px-1">
+                  <span className="text-on-surface-variant uppercase tracking-widest text-[9px] w-16">NOCHE</span>
+                  <div className="flex gap-4">
+                    <span className="text-foreground">{eveningSession?.avgSystolic ? `${eveningSession.avgSystolic}/${eveningSession.avgDiastolic}` : '--/--'}</span>
+                    <span className="text-on-surface-variant opacity-60 w-12 text-right">{eveningSession?.avgHeartRate ? `${eveningSession.avgHeartRate} PPM` : '--'}</span>
+                  </div>
                 </div>
               </div>
-              <div className="pt-1">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Estado</span>
-                  <span className={cn("text-[10px] font-black uppercase tracking-widest", dashboard?.today?.avgSystolic ? getDiagnosticStatus(dashboard.today.avgSystolic, dashboard.today.avgDiastolic).color : 'text-on-surface-variant')}>
-                    {dashboard?.today?.avgSystolic ? getDiagnosticStatus(dashboard.today.avgSystolic, dashboard.today.avgDiastolic).label : 'Sin datos'}
-                  </span>
+
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                  <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">LECTURAS</span>
+                  <span className="text-sm sm:text-md font-black text-primary">{(morningSession?.readings.length || 0) + (eveningSession?.readings.length || 0)} / 6</span>
                 </div>
-                <div className={cn("h-1.5 w-full rounded-full overflow-hidden", dashboard?.today?.avgSystolic ? getDiagnosticStatus(dashboard.today.avgSystolic, dashboard.today.avgDiastolic).bg : 'bg-surface-variant/20')}>
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                  <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">PULSO MEDIO</span>
+                  <span className="text-sm sm:text-md font-black text-primary">{dashboard?.today?.avgHeartRate || '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.15em]">Estado</span>
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest", currentStatusToday.color)}>{currentStatusToday.label}</span>
+                </div>
+                <div className="h-1.5 w-full bg-surface-high rounded-full overflow-hidden">
                   <div 
-                    className={cn("h-full rounded-full transition-all duration-1000", dashboard?.today?.avgSystolic ? getDiagnosticStatus(dashboard.today.avgSystolic, dashboard.today.avgDiastolic).color.replace('text-', 'bg-') : 'bg-surface-variant/40')} 
+                    className={cn("h-full transition-all duration-1000", currentStatusToday.bg)} 
                     style={{ width: dashboard?.today?.avgSystolic ? `${Math.min(100, Math.max(5, ((dashboard.today.avgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }} 
                   />
                 </div>
               </div>
-              <div className={cn("flex items-center gap-1.5 font-bold text-xs pt-2 border-t border-border/50", trendColor)}>
-                {trendIcon === 'trending_up' ? <TrendingUp className="text-[16px]" /> : trendIcon === 'trending_down' ? <TrendingDown className="text-[16px]" /> : <Minus className="text-[16px]" />}
+              <div className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] border border-border/50", trendColor, trendColor.replace('text-', 'bg-') + '/10')}>
+                {trendIcon === 'trending_up' ? <TrendingUp className="w-4 h-4" /> : trendIcon === 'trending_down' ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                 <span>{trendText}</span>
               </div>
             </div>
           </Card>
 
           {/* Level 3: Period */}
-          <Card className="relative overflow-hidden bg-surface-low border-none rounded-[2rem] p-6 shadow-none flex flex-col min-h-[220px]">
+          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
             <div className="flex items-start justify-between mb-6">
-              <div className="flex flex-col gap-0.5">
-                <h3 className="text-[16px] font-bold text-on-surface">Media Período</h3>
-                <span className="text-[10px] font-black text-on-surface-variant/60 uppercase tracking-widest">Últimos 5 días</span>
+              <div className="flex flex-col gap-1">
+                <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">Media Período</h3>
+                <CardDescription className="text-[10px] font-black tracking-[0.1em] opacity-60 uppercase">
+                  ÚLTIMOS 5 DÍAS
+                </CardDescription>
               </div>
-              <Calendar className="text-primary text-[20px]" />
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
+                <Calendar className="w-5 h-5" />
+              </div>
             </div>
+
             <div className="flex flex-col mb-6">
-              <span className="text-5xl font-black font-display text-on-surface tracking-tighter leading-none">
-                {periodAvgSystolic || '--'}/{periodAvgDiastolic || '--'}
+              <span className="text-display-lg font-black font-display text-foreground tracking-tighter leading-none shrink-0">
+                {periodAvgSystolic ? `${periodAvgSystolic}/${periodAvgDiastolic}` : '--/--'}
               </span>
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1.5">mmHg</span>
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mt-3 ml-1 opacity-60 shrink-0">MMHG</span>
             </div>
-            <div className="space-y-2 mb-4 mt-auto">
-              <div className="flex items-center justify-between bg-white/40 px-3 py-2 rounded-xl">
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mañana</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-on-surface">{dashboard?.stats.periodAverages.morning?.systolic || '--'}/{dashboard?.stats.periodAverages.morning?.diastolic || '--'}</span>
-                  <span className="text-[10px] font-bold text-on-surface-variant">{dashboard?.stats.periodAverages.morning?.heartRate || '--'} BPM</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between bg-white/40 px-3 py-2 rounded-xl">
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Noche</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-on-surface">{dashboard?.stats.periodAverages.evening?.systolic || '--'}/{dashboard?.stats.periodAverages.evening?.diastolic || '--'}</span>
-                  <span className="text-[10px] font-bold text-on-surface-variant">{dashboard?.stats.periodAverages.evening?.heartRate || '--'} BPM</span>
-                </div>
-              </div>
-            </div>
+
             <div className="mt-auto space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white/50 rounded-xl p-2 flex flex-col items-center justify-center gap-0.5">
-                  <span className="text-[8px] font-bold text-on-surface-variant tracking-widest uppercase">Lecturas</span>
-                  <span className="text-sm font-black text-primary">{periodReadingsCount} / 30</span>
+              <div className="space-y-2 mb-4 shrink-0">
+                <div className="flex items-center justify-between text-xs font-bold px-1">
+                  <span className="text-on-surface-variant uppercase tracking-widest text-[9px] w-16">MAÑANA</span>
+                  <div className="flex gap-4">
+                    <span className="text-foreground">{dashboard?.stats.periodAverages.morning?.systolic ? `${dashboard.stats.periodAverages.morning.systolic}/${dashboard.stats.periodAverages.morning.diastolic}` : '--/--'}</span>
+                    <span className="text-on-surface-variant opacity-60 w-12 text-right">{dashboard?.stats.periodAverages.morning?.heartRate ? `${dashboard.stats.periodAverages.morning.heartRate} PPM` : '--'}</span>
+                  </div>
                 </div>
-                <div className="bg-white/50 rounded-xl p-2 flex flex-col items-center justify-center gap-0.5">
-                  <span className="text-[8px] font-bold text-on-surface-variant tracking-widest uppercase">Pulso Med.</span>
-                  <span className="text-sm font-black text-primary">{dashboard?.stats.finalAverage?.heartRate || '--'} <span className="text-[9px]">BPM</span></span>
+                <div className="flex items-center justify-between text-xs font-bold px-1">
+                  <span className="text-on-surface-variant uppercase tracking-widest text-[9px] w-16">NOCHE</span>
+                  <div className="flex gap-4">
+                    <span className="text-foreground">{dashboard?.stats.periodAverages.evening?.systolic ? `${dashboard.stats.periodAverages.evening.systolic}/${dashboard.stats.periodAverages.evening.diastolic}` : '--/--'}</span>
+                    <span className="text-on-surface-variant opacity-60 w-12 text-right">{dashboard?.stats.periodAverages.evening?.heartRate ? `${dashboard.stats.periodAverages.evening.heartRate} PPM` : '--'}</span>
+                  </div>
                 </div>
               </div>
-              <div className="pt-1">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Estado</span>
-                  <span className={cn("text-[10px] font-black uppercase tracking-widest", periodAvgSystolic ? getDiagnosticStatus(periodAvgSystolic, periodAvgDiastolic).color : 'text-on-surface-variant')}>
-                    {periodAvgSystolic ? getDiagnosticStatus(periodAvgSystolic, periodAvgDiastolic).label : 'Sin datos'}
-                  </span>
+
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                  <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">LECTURAS</span>
+                  <span className="text-sm sm:text-md font-black text-primary">{periodReadingsCount || 0} / 30</span>
                 </div>
-                <div className={cn("h-1.5 w-full rounded-full overflow-hidden", periodAvgSystolic ? getDiagnosticStatus(periodAvgSystolic, periodAvgDiastolic).bg : 'bg-surface-variant/20')}>
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                  <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">PULSO MEDIO</span>
+                  <span className="text-sm sm:text-md font-black text-primary">{Math.round((dashboard?.stats.periodAverages.morning?.heartRate || 0) / 2 + (dashboard?.stats.periodAverages.evening?.heartRate || 0) / 2) || '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.15em]">Estado</span>
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest", currentStatusPeriod.color)}>{currentStatusPeriod.label}</span>
+                </div>
+                <div className="h-1.5 w-full bg-surface-high rounded-full overflow-hidden">
                   <div 
-                    className={cn("h-full rounded-full transition-all duration-1000", periodAvgSystolic ? getDiagnosticStatus(periodAvgSystolic, periodAvgDiastolic).color.replace('text-', 'bg-') : 'bg-surface-variant/40')} 
+                    className={cn("h-full transition-all duration-1000", currentStatusPeriod.bg)} 
                     style={{ width: periodAvgSystolic ? `${Math.min(100, Math.max(5, ((periodAvgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }} 
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-on-surface-variant font-bold text-xs pt-2 border-t border-border/50">
-                <Info className="text-[16px]" />
-                <span>Últimos 5 días</span>
+              <div className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] border border-border/50", period5TrendColor, period5TrendColor.replace('text-', 'bg-') + '/10')}>
+                {period5TrendIcon === 'trending_up' ? <TrendingUp className="w-4 h-4" /> : period5TrendIcon === 'trending_down' ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                <span>{period5TrendText}</span>
               </div>
             </div>
           </Card>
 
           {/* Level 4: Final */}
-          <Card className="relative overflow-hidden bg-surface-low border-none rounded-[2rem] p-6 shadow-none flex flex-col min-h-[220px]">
+          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
             <div className="flex items-start justify-between mb-6">
-              <div className="flex flex-col gap-0.5">
-                <h3 className="text-[16px] font-bold text-on-surface">Resultado AMPA</h3>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-black text-on-surface-variant/60 uppercase tracking-widest">
-                    {finalPeriod === 'period' ? 'Último Período' : finalResultData.label}
-                  </span>
-                  <div className="h-1 w-1 rounded-full bg-on-surface-variant/30" />
-                  <div className="relative flex items-center group">
-                    <select 
-                      value={finalPeriod}
-                      onChange={(e) => setFinalPeriod(e.target.value as any)}
-                      className="bg-transparent border-none text-[10px] font-black text-on-surface uppercase tracking-widest focus:ring-0 outline-none cursor-pointer appearance-none pr-4 z-10"
-                    >
-                      <option value="period">5 Días</option>
-                      <option value="fortnight">15 Días</option>
-                      <option value="month">Mes</option>
-                      <option value="quarter">Trimestre</option>
-                      <option value="semester">Semestre</option>
-                      <option value="year">Año</option>
-                      <option value="total">Total</option>
-                    </select>
-                    <ChevronDown className="absolute right-0 text-[14px] text-primary pointer-events-none transition-transform group-hover:translate-y-0.5" />
-                  </div>
+              <div className="flex flex-col gap-1 flex-1 min-w-0 pr-4">
+                <h3 className="text-headline-sm font-black text-foreground tracking-tight">Evolución Clínica</h3>
+                <div className="relative flex items-center group mt-1 w-full max-w-[180px]">
+                  <select 
+                    value={finalPeriod}
+                    onChange={(e) => setFinalPeriod(e.target.value as any)}
+                    className="bg-transparent w-full border-none text-[10px] font-black text-primary uppercase tracking-[0.1em] focus:ring-0 outline-none cursor-pointer appearance-none z-10 pr-8 pl-0 py-2"
+                  >
+                    <option value="period">ÚLTIMOS 5 DÍAS</option>
+                    <option value="fortnight">ÚLTIMOS 15 DÍAS</option>
+                    <option value="month">ÚLTIMOS 30 DÍAS</option>
+                    <option value="quarter">ÚLTIMOS 90 DÍAS</option>
+                    <option value="semester">ÚLTIMOS 6 MESES</option>
+                    <option value="year">ÚLTIMO AÑO</option>
+                    <option value="total">DESDE EL INICIO</option>
+                  </select>
+                  <ChevronDown className="absolute right-0 w-3 h-3 text-primary pointer-events-none transition-transform group-hover:translate-y-0.5" />
                 </div>
               </div>
-              <UserCheck className="text-primary text-[20px]" />
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
+                <UserCheck className="w-5 h-5" />
+              </div>
             </div>
+
             <div className="flex flex-col mb-6">
-              <span className="text-5xl font-black font-display text-on-surface tracking-tighter leading-none">
-                {finalResultData.avgSys || '--'}/{finalResultData.avgDia || '--'}
+              <span className="text-display-lg font-black font-display text-foreground tracking-tighter leading-none shrink-0">
+                {finalResultData.avgSys ? `${finalResultData.avgSys}/${finalResultData.avgDia}` : '--/--'}
               </span>
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1.5">mmHg</span>
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mt-3 ml-1 opacity-60 shrink-0">MMHG</span>
             </div>
+
             <div className="mt-auto space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white/50 rounded-xl p-2 flex flex-col items-center justify-center gap-0.5">
-                  <span className="text-[8px] font-bold text-on-surface-variant tracking-widest uppercase">Lecturas</span>
-                  <span className="text-sm font-black text-primary">
-                    {finalResultData.count}
-                  </span>
+              <div className="space-y-2 mb-4 shrink-0 text-transparent select-none overflow-hidden h-[46px]">
+                {/* Spacer block to uniformly match the other cards that have morning/night breakdowns */}
+                _
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                  <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">LECTURAS TOTALES</span>
+                  <span className="text-sm sm:text-md font-black text-primary">{finalResultData.count}</span>
                 </div>
-                <div className="bg-white/50 rounded-xl p-2 flex flex-col items-center justify-center gap-0.5">
-                  <span className="text-[8px] font-bold text-on-surface-variant tracking-widest uppercase">Pulso Med.</span>
-                  <span className="text-sm font-black text-primary">
-                    {finalResultData.avgHr || '--'} <span className="text-[9px]">BPM</span>
-                  </span>
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                  <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">PULSO MEDIO</span>
+                  <span className="text-sm sm:text-md font-black text-primary">{finalResultData.avgHr || '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
                 </div>
               </div>
-              <div className="pt-1">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Estado</span>
-                  <span className={cn("text-[10px] font-black uppercase tracking-widest", finalResultData.avgSys ? finalStatus.color : 'text-on-surface-variant')}>
-                    {finalResultData.avgSys ? finalStatus.label : 'Sin datos'}
-                  </span>
+
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.15em]">Estado</span>
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest", finalStatus.color)}>{finalResultData.avgSys ? finalStatus.label : 'SIN DATOS'}</span>
                 </div>
-                <div className={cn("h-1.5 w-full rounded-full overflow-hidden", finalResultData.avgSys ? finalStatus.bg : 'bg-surface-variant/20')}>
+                <div className="h-1.5 w-full bg-surface-high rounded-full overflow-hidden">
                   <div 
-                    className={cn("h-full rounded-full transition-all duration-1000", finalResultData.avgSys ? finalStatus.color.replace('text-', 'bg-') : 'bg-surface-variant/40')} 
+                    className={cn("h-full transition-all duration-1000", finalStatus.bg)} 
                     style={{ width: finalResultData.avgSys ? `${Math.min(100, Math.max(5, ((finalResultData.avgSys) - 90) / (160 - 90) * 100))}%` : '0%' }} 
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-on-surface-variant font-bold text-xs pt-2 border-t border-border/50">
-                <Calendar className="text-[16px]" />
-                <span>{finalResultData.daysCount} {finalResultData.daysCount === 1 ? 'día analizado' : 'días analizados'}</span>
+              <div className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] border border-border/50", historyTrendColor, historyTrendColor.replace('text-', 'bg-') + '/10')}>
+                {historyTrendIcon === 'trending_up' ? <TrendingUp className="w-4 h-4" /> : historyTrendIcon === 'trending_down' ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                <span>{historyTrendText}</span>
               </div>
             </div>
           </Card>
         </div>
       </section>
 
-      {/* Charts & Status Section */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Card className="h-full bg-surface-low border-none shadow-none rounded-[2rem]">
+      {/* Charts & Status Section - Refined for better proportions */}
+      <section className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-3 gap-8 items-stretch">
+        <div className="xl:col-span-2">
+          <Card className="h-full bg-white dark:bg-card rounded-[2rem] border-border/50 shadow-aura-light dark:shadow-aura-dark">
             <CardHeader className="pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <CardTitle className="text-2xl font-bold text-on-surface">Comparativa Mañana vs Noche</CardTitle>
-                  <CardDescription className="text-on-surface-variant text-sm mt-1">{chartData.label}</CardDescription>
+                <div className="flex flex-col gap-1">
+                  <CardDescription className="text-primary">COMPARATIVA DIARIA</CardDescription>
+                  <CardTitle className="text-2xl font-black text-foreground">Mañana vs Noche</CardTitle>
                 </div>
                 <div className="flex bg-surface p-1 rounded-full border border-border">
                   <button 
@@ -1179,10 +1339,10 @@ export function Dashboard() {
                     5D
                   </button>
                   <button 
-                    onClick={() => setChartPeriod('week')}
-                    className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", chartPeriod === 'week' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
+                    onClick={() => setChartPeriod('15d')}
+                    className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", chartPeriod === '15d' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
                   >
-                    1S
+                    15D
                   </button>
                   <button 
                     onClick={() => setChartPeriod('month')}
@@ -1214,7 +1374,7 @@ export function Dashboard() {
                     margin={{ top: 20, right: 10, left: -20, bottom: 20 }}
                     barGap={4}
                   >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EADDFF" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(15,23,42,0.05)"} />
                     <XAxis 
                       dataKey="name" 
                       axisLine={false} 
@@ -1224,43 +1384,38 @@ export function Dashboard() {
                         const item = payload.value === 'Mañana' ? { name: 'Mañana', time: '08:00 AM' } : { name: 'Noche', time: '10:30 PM' };
                         return (
                           <g transform={`translate(${x},${y})`}>
-                            <text x={0} y={15} dy={0} textAnchor="middle" fill="#2D2A32" fontSize={14} fontWeight={700}>{item.name}</text>
-                            <text x={0} y={35} dy={0} textAnchor="middle" fill="#79747E" fontSize={12}>{item.time}</text>
+                            <text x={0} y={15} dy={0} textAnchor="middle" fill={isDarkMode ? '#F8FAFC' : '#0F172A'} fontSize={14} fontWeight={800}>{item.name}</text>
+                            <text x={0} y={35} dy={0} textAnchor="middle" fill={isDarkMode ? '#94A3B8' : '#64748B'} fontSize={12} fontWeight={600}>{item.time}</text>
                           </g>
                         );
                       }}
                     />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#79747E', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: isDarkMode ? '#94A3B8' : '#64748B', fontSize: 12, fontWeight: 600 }} />
                     <Tooltip 
-                      cursor={{ fill: '#EADDFF', opacity: 0.4 }}
-                      contentStyle={{ 
-                        borderRadius: '1.5rem', 
-                        border: 'none', 
-                        boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
-                        backgroundColor: '#fff',
-                      }}
+                      cursor={{ fill: 'var(--primary)', opacity: 0.05 }}
+                      content={<CustomTooltip />}
                     />
                     <Legend 
                       verticalAlign="top" 
                       align="right"
                       iconType="circle" 
-                      wrapperStyle={{ paddingBottom: '20px', fontSize: '12px', fontWeight: 600, color: '#49454F', textTransform: 'uppercase' }} 
+                      wrapperStyle={{ paddingBottom: '30px', fontSize: '10px', fontWeight: 800, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.1em' }} 
                     />
-                    <Bar dataKey="pas" name="Sistólica" fill="#5E4B9C" radius={[8, 8, 0, 0]} barSize={48} />
-                    <Bar dataKey="pad" name="Diastólica" fill="#B39DFF" radius={[8, 8, 0, 0]} barSize={48} />
+                    <Bar dataKey="pas" name="Sistólica" fill="#6322E0" radius={[10, 10, 0, 0]} barSize={56} />
+                    <Bar dataKey="pad" name="Diastólica" fill="#BBA2FD" radius={[10, 10, 0, 0]} barSize={56} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
               {/* Comparison Insight */}
               {morningPas > 0 && eveningPas > 0 && (
-                <div className="mt-8 p-6 rounded-[2rem] bg-white flex flex-col sm:flex-row items-start gap-5 shadow-sm">
-                  <div className="w-12 h-12 rounded-full bg-[#F0B8D8] flex items-center justify-center shrink-0">
-                    <BarChart3 className="text-[#4F378B] text-[20px]" />
+                <div className="mt-8 p-8 rounded-[2rem] bg-surface-low flex flex-col sm:flex-row items-start gap-6 border border-border/50">
+                  <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0">
+                    <BarChart3 className="text-primary w-6 h-6" />
                   </div>
                   <div className="flex-1 space-y-2">
-                    <h5 className="font-bold text-[#2D2A32] text-lg">Análisis de Variación</h5>
-                    <p className="text-[#49454F] text-sm leading-relaxed">
+                    <h5 className="font-display font-black text-foreground text-xl tracking-tighter">Análisis de Variación</h5>
+                    <p className="text-on-surface-variant text-sm leading-relaxed font-medium">
                       {comparisonInsight}
                     </p>
                   </div>
@@ -1270,81 +1425,79 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Overall Status Card - Redesigned as a remix of Stitch designs */}
-        <div className="lg:col-span-1">
-          <Card className="h-full bg-surface-low border-none shadow-none rounded-[2.5rem] overflow-hidden relative flex flex-col">
-            {/* Shield Icon (Image 2 style) - Gray Tone with Check */}
-            <div className="absolute top-8 right-8 pointer-events-none text-[#4F378B]/20">
-              <ShieldCheck className="text-[52px] font-variation-fill" />
+        {/* Overall Status Card - Redesigned for Aura Weightless */}
+        <div className="xl:col-span-1">
+          <Card className="h-full bg-white dark:bg-card shadow-aura rounded-[2.5rem] overflow-hidden relative flex flex-col">
+            {/* Decorative Background Icon - Standardized size and color to match others exactly */}
+            <div className="absolute top-6 right-6 pointer-events-none z-0">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
             </div>
 
-            <CardHeader className="pb-4 relative z-10">
-              <div className="flex items-center gap-3">
-                {/* Status Indicator (Image 3 style remix) */}
+            <CardHeader className="pb-4 relative z-10 pr-16 sm:pr-20">
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* Status Indicator */}
                 <div className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center relative shrink-0",
-                  isControlled ? "bg-success/10" : "bg-destructive/10"
+                  "w-16 h-16 rounded-full flex items-center justify-center relative shrink-0",
+                  isControlled ? "bg-success/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]" : "bg-destructive/20 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
                 )}>
                   <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shadow-sm",
+                    "w-11 h-11 rounded-full flex items-center justify-center shadow-lg",
                     isControlled ? "bg-success text-white" : "bg-destructive text-white"
                   )}>
-                    <Check className="text-[20px]" />
+                    <Check className="w-6 h-6 stroke-[3px]" />
                   </div>
-                  {/* Outer Ring */}
-                  <div className={cn(
-                    "absolute inset-0 rounded-full border-4 opacity-20",
-                    isControlled ? "border-success" : "border-destructive"
-                  )} />
                 </div>
 
-                {/* Status Pill (Image 3 style) */}
-                <div className={cn(
-                  "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm",
-                  isControlled ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                )}>
-                  {isControlled ? "Controlado" : "Revisión"}
-                </div>
+                <Badge 
+                  className="font-black px-4 py-1.5 tracking-widest"
+                  variant={isControlled ? "success" : "danger"}
+                >
+                  {isControlled ? "CONTROLADO" : "REVISIÓN"}
+                </Badge>
               </div>
             </CardHeader>
 
-            <CardContent className="flex-1 flex flex-col gap-6 relative z-10">
+            <CardContent className="flex-1 flex flex-col gap-4 relative z-10 px-8 sm:px-10">
               <div className="space-y-4">
                 <h4 className={cn(
-                  "text-3xl font-display font-black leading-tight",
-                  isControlled ? "text-on-surface" : "text-destructive"
+                  "text-headline-lg font-display font-black leading-tight tracking-tighter text-balance whitespace-normal hyphens-none",
+                  isControlled ? "text-foreground" : "text-destructive"
                 )}>
                   {isControlled ? "Presión Controlada" : "Atención Requerida"}
                 </h4>
 
-                {/* Description Box (Image 2 style) */}
-                <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-5 border border-white/40 shadow-sm relative">
-                  <p className="text-sm text-on-surface-variant font-medium leading-relaxed">
+                <div className="bg-surface-low dark:text-[#0B0E14] rounded-[2rem] p-6 border border-border/10 relative shadow-sm">
+                  <p className="text-base text-on-surface-variant font-black leading-relaxed">
                     {dashboard?.stats.finalAverage 
                       ? (isControlled
-                          ? <>Tus promedios están dentro de los objetivos médicos recomendados (<span className="text-success font-bold">135/85</span>).</>
+                          ? <>Tus promedios están dentro de los objetivos médicos recomendados (<span className="text-success font-black">135/85</span>).</>
                           : "Tus promedios superan los límites recomendados. Consulta con tu médico.")
                       : "Completa el protocolo de 5 días para obtener una evaluación precisa."}
                   </p>
                 </div>
 
-                {/* Medical Cross Icon (Image 1 style) - Positioned BELOW the description box */}
-                <div className="flex justify-center items-center py-4">
-                  <img 
-                    src="/healthcare-status-icon.png" 
-                    alt="Icono médico" 
-                    className="w-[120px] h-[120px] object-contain"
-                    referrerPolicy="no-referrer"
-                  />
+                <div className="flex justify-center items-center py-2">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-primary/10 blur-[60px] rounded-full scale-125" />
+                    <img 
+                      src="/healthcare-status.png" 
+                      alt="Icono médico" 
+                      className="w-[160px] h-[160px] object-contain relative drop-shadow-3xl"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-auto pt-4 flex flex-col gap-3">
+              <div className="mt-auto pt-2">
                 <Button 
                   onClick={() => useAppStore.getState().setActiveTab('report')}
-                  className="w-full bg-primary hover:bg-primary/90 text-white rounded-2xl py-6 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full h-18 text-base font-black tracking-tight shadow-xl shadow-primary/20"
                 >
                   Ver Informe Detallado
+                  <ArrowRight className="ml-3 w-5 h-5" />
                 </Button>
               </div>
             </CardContent>
@@ -1389,9 +1542,9 @@ export function Dashboard() {
             <div className="absolute inset-8 bg-white/10 rounded-full ethereal-blur border border-white/20" />
             <div className="absolute inset-0 flex items-center justify-center">
               <img 
-                src="/mental-process-icon.png" 
-                alt="Proceso mental" 
-                className="w-48 h-48 drop-shadow-2xl"
+                src="/IA-thinking-process.png" 
+                alt="Pensamiento IA" 
+                className="w-48 h-48 drop-shadow-2xl object-contain"
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -1418,26 +1571,26 @@ export function Dashboard() {
 
       {/* Evolución Temporal - BP Trend + Analysis */}
       {showTrends && (
-        <section className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <Card className="bg-surface-low border-none shadow-none rounded-[2rem] h-full">
+        <section className="mt-12 grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-3 gap-8 items-stretch">
+          <div className="xl:col-span-2">
+            <Card className="bg-white dark:bg-card border-border/50 shadow-aura-light dark:shadow-aura-dark rounded-[2rem] h-full">
               <CardHeader className="pb-2">
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-2xl font-bold text-on-surface">Evolución Temporal</CardTitle>
-                    <CardDescription className="text-on-surface-variant text-sm mt-1">Seguimiento de tendencias de presión arterial ({trendData.label})</CardDescription>
+                  <div className="flex flex-col gap-1">
+                    <CardDescription className="text-primary">PROGRESIÓN CLÍNICA</CardDescription>
+                    <CardTitle className="text-2xl font-black text-foreground">Evolución de Tensión</CardTitle>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     {/* Filter Toggle */}
-                    <div className="flex bg-surface p-1 rounded-full border border-border">
+                    <div className="flex bg-surface-low p-1 rounded-full border border-border/50">
                       <button
                         onClick={() => setChartFilter('both')}
                         className={cn(
-                          "px-4 py-1.5 text-xs font-bold rounded-full transition-colors",
+                          "px-4 py-1.5 text-[10px] uppercase tracking-widest font-black rounded-full transition-all duration-300",
                           chartFilter === 'both' 
-                            ? "bg-primary text-white shadow-sm" 
-                            : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high"
+                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                            : "text-on-surface-variant hover:text-primary"
                         )}
                       >
                         Ambas
@@ -1445,10 +1598,10 @@ export function Dashboard() {
                       <button
                         onClick={() => setChartFilter('pas')}
                         className={cn(
-                          "px-4 py-1.5 text-xs font-bold rounded-full transition-colors",
+                          "px-4 py-1.5 text-[10px] uppercase tracking-widest font-black rounded-full transition-all duration-300",
                           chartFilter === 'pas' 
-                            ? "bg-primary text-white shadow-sm" 
-                            : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high"
+                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                            : "text-on-surface-variant hover:text-primary"
                         )}
                       >
                         Sistólica
@@ -1456,64 +1609,40 @@ export function Dashboard() {
                       <button
                         onClick={() => setChartFilter('pad')}
                         className={cn(
-                          "px-4 py-1.5 text-xs font-bold rounded-full transition-colors",
+                          "px-4 py-1.5 text-[10px] uppercase tracking-widest font-black rounded-full transition-all duration-300",
                           chartFilter === 'pad' 
-                            ? "bg-primary text-white shadow-sm" 
-                             : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high"
+                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                             : "text-on-surface-variant hover:text-primary"
                         )}
                       >
                         Diastólica
                       </button>
                     </div>
-
-                    {/* Period Toggle */}
-                    <div className="flex bg-surface p-1 rounded-full border border-border">
-                      <button 
-                        onClick={() => setTrendPeriod('today')}
-                        className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", trendPeriod === 'today' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
-                      >
-                        1D
-                      </button>
-                      <button 
-                        onClick={() => setTrendPeriod('period')}
-                        className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", trendPeriod === 'period' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
-                      >
-                        5D
-                      </button>
-                      <button 
-                        onClick={() => setTrendPeriod('week')}
-                        className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", trendPeriod === 'week' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
-                      >
-                        1S
-                      </button>
-                      <button 
-                        onClick={() => setTrendPeriod('month')}
-                        className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", trendPeriod === 'month' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
-                      >
-                        1M
-                      </button>
-                    </div>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="px-2 sm:px-6 flex flex-col gap-6">
+              <CardContent className="px-2 sm:px-6 flex flex-col gap-8">
                 {/* Floating Averages */}
-                <div className="flex flex-wrap gap-4 mt-2">
-                  <div className="bg-white/80 backdrop-blur-md rounded-2xl p-3 shadow-sm border border-white/20 flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary" />
+                <div className="flex flex-wrap gap-4 mt-4">
+                  <div className="bg-surface-low rounded-2xl p-4 border border-border/30 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    </div>
                     <div>
-                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Promedio Sistólica</p>
-                      <p className="text-xl font-bold text-on-surface leading-none mt-1">
-                        {trendData.avgSys} <span className="text-xs font-medium text-on-surface-variant">mmHg</span>
+                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Media Sistólica</p>
+                      <p className="text-xl font-display font-black text-foreground">
+                        {trendData.avgSys} <span className="text-[10px] font-bold text-on-surface-variant uppercase">mmHg</span>
                       </p>
                     </div>
                   </div>
-                  <div className="bg-white/80 backdrop-blur-md rounded-2xl p-3 shadow-sm border border-white/20 flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary-container" />
+                  <div className="bg-surface-low rounded-2xl p-4 border border-border/30 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-primary/40" />
+                    </div>
                     <div>
-                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Promedio Diastólica</p>
-                      <p className="text-xl font-bold text-on-surface leading-none mt-1">
-                        {trendData.avgDia} <span className="text-xs font-medium text-on-surface-variant">mmHg</span>
+                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Media Diastólica</p>
+                      <p className="text-xl font-display font-black text-foreground">
+                        {trendData.avgDia} <span className="text-[10px] font-bold text-on-surface-variant uppercase">mmHg</span>
                       </p>
                     </div>
                   </div>
@@ -1521,83 +1650,97 @@ export function Dashboard() {
 
                 <div className="h-72 sm:h-96 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
+                    <AreaChart
                       data={trendData.data}
                       margin={{ top: 20, right: 10, left: -20, bottom: 20 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <defs>
+                        <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={isDarkMode ? '#B89FFF' : '#6750A4'} stopOpacity={0.15}/>
+                          <stop offset="95%" stopColor={isDarkMode ? '#B89FFF' : '#6750A4'} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#ffffff05' : '#00000005'} />
                       <XAxis 
                         dataKey="tooltipLabel" 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: 'var(--on-surface-variant)', fontSize: 12, fontWeight: 700 }}
+                        tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10, fontWeight: 700 }}
                       />
                       <YAxis 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: 'var(--on-surface-variant)', fontSize: 10 }} 
+                        tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10 }} 
                         domain={['auto', 'auto']}
                       />
                       <Tooltip 
-                        cursor={{ stroke: 'var(--border)', strokeWidth: 2, strokeDasharray: '5 5' }}
+                        cursor={{ stroke: isDarkMode ? '#ffffff10' : '#34313A10', strokeWidth: 2 }}
                         content={<CustomTooltip />}
                       />
-                      <Legend content={() => null} />
                       
-                      {/* Normal Ranges */}
                       {(chartFilter === 'both' || chartFilter === 'pas') && (
-                        <ReferenceArea 
-                          y1={100} 
-                          y2={129} 
-                          fill="var(--surface-high)" 
-                          fillOpacity={0.4} 
-                          ifOverflow="extendDomain"
-                        />
-                      )}
-                      {(chartFilter === 'both' || chartFilter === 'pad') && (
-                        <ReferenceArea 
-                          y1={60} 
-                          y2={79} 
-                          fill="var(--surface-high)" 
-                          fillOpacity={0.6} 
-                          ifOverflow="extendDomain"
-                        />
-                      )}
-
-                      {(chartFilter === 'both' || chartFilter === 'pas') && (
-                        <Line 
+                        <Area 
                           type="monotone" 
                           dataKey="pas" 
-                          name="Sistólica (PAS)" 
                           stroke="var(--primary)" 
-                          strokeWidth={3} 
-                          dot={false}
-                          activeDot={(props) => renderCustomDot(props, 'pas')}
+                          strokeWidth={4} 
+                          fill="url(#trendGradient)"
+                          animationDuration={1500}
                         />
                       )}
                       {(chartFilter === 'both' || chartFilter === 'pad') && (
-                        <Line 
+                        <Area 
                           type="monotone" 
                           dataKey="pad" 
-                          name="Diastólica (PAD)" 
-                          stroke="var(--primary-container)" 
-                          strokeWidth={3} 
-                          dot={false}
-                          activeDot={(props) => renderCustomDot(props, 'pad')}
+                          stroke="rgba(103, 80, 165, 0.4)" 
+                          strokeWidth={2} 
+                          fill="transparent"
+                          animationDuration={2000}
                         />
                       )}
-                    </LineChart>
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
+                
+                {/* Complementary Metrics Footer (Fills empty space) */}
+                {trendData.data.length > 0 && (
+                  <div className="mt-4 pt-6 flex flex-col md:flex-row flex-wrap gap-4 items-center justify-between border-t border-border/50">
+                    <div className="flex gap-4 w-full md:w-auto">
+                      <div className="bg-surface-lowest px-6 py-4 rounded-3xl border border-border/40 flex-1 md:flex-none">
+                        <div className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant/60 flex items-center gap-1.5 mb-1"><Target className="w-3.5 h-3.5" /> En Objetivo</div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-display font-black text-primary">{trendData.timeInTarget}%</span>
+                          <span className="text-[10px] text-on-surface-variant/40 font-bold uppercase">de las tomas</span>
+                        </div>
+                      </div>
+                      <div className="hidden sm:block bg-surface-lowest px-6 py-4 rounded-3xl border border-border/40 flex-1 md:flex-none">
+                        <div className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant/60 mb-1">Rango Sistólico</div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-display font-black text-foreground">{trendData.sysMin} ~ {trendData.sysMax}</span>
+                        </div>
+                      </div>
+                      <div className="hidden sm:block bg-surface-lowest px-6 py-4 rounded-3xl border border-border/40 flex-1 md:flex-none">
+                        <div className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant/60 mb-1">Rango Diastólico</div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-display font-black text-foreground">{trendData.diaMin} ~ {trendData.diaMax}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-surface-high/50 text-on-surface-variant/60 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                      <TrendingUp className="w-3 h-3" />
+                      {trendData.comparisonTrend === 'up' ? 'Tendencia General al Alza' : trendData.comparisonTrend === 'down' ? 'Tendencia General a la Baja' : 'Tendencia General Estable'}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
-          <div className="lg:col-span-1">
+          <div className="xl:col-span-1">
             <AnalysisCard 
               title="Análisis de Tensión"
-              subtitle="Obtén diagnósticos predictivos basados en tus tendencias de presión."
-              imageSeed="medical-bp"
+              subtitle="Diagnósticos predictivos basados en tendencias de presión."
               customImageUrl="/tension.png"
+              imageSeed="medical-tension"
               statisticalAnalysis={trendData.trendAnalysis}
               aiAnalysis={aiAnalysisBp}
               isGenerating={isGeneratingBp}
@@ -1605,7 +1748,7 @@ export function Dashboard() {
               comparisonText={trendData.comparisonText}
               comparisonTrend={trendData.comparisonTrend}
               periodLabel={trendData.periodDaysLabel}
-              icon="analytics"
+              icon={<Activity size={20} />}
             />
           </div>
         </section>
@@ -1613,80 +1756,39 @@ export function Dashboard() {
 
       {/* Dedicated Pulse Chart + Analysis */}
       {showTrends && (
-        <section className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <Card className="bg-white border-none shadow-none rounded-[2rem] h-full">
+        <section className="mt-8 grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-3 gap-8 items-stretch">
+          <div className="xl:col-span-2">
+            <Card className="bg-white dark:bg-card border-border/50 shadow-aura-light dark:shadow-aura-dark rounded-[2rem] h-full">
               <CardHeader className="pb-2">
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-2xl font-bold text-on-surface">Evolución del Pulso</CardTitle>
-                    <CardDescription className="text-on-surface-variant text-sm mt-1">Frecuencia cardíaca diaria ({pulseData.label})</CardDescription>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    {/* Period Toggle */}
-                    <div className="flex bg-surface p-1 rounded-full border border-border">
-                      <button 
-                        onClick={() => setPulsePeriod('today')}
-                        className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", pulsePeriod === 'today' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
-                      >
-                        1D
-                      </button>
-                      <button 
-                        onClick={() => setPulsePeriod('period')}
-                        className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", pulsePeriod === 'period' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
-                      >
-                        5D
-                      </button>
-                      <button 
-                        onClick={() => setPulsePeriod('week')}
-                        className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", pulsePeriod === 'week' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
-                      >
-                        1S
-                      </button>
-                      <button 
-                        onClick={() => setPulsePeriod('month')}
-                        className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", pulsePeriod === 'month' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
-                      >
-                        1M
-                      </button>
-                    </div>
+                  <div className="flex flex-col gap-1">
+                    <CardDescription className="text-primary">REGISTRO CARDÍACO</CardDescription>
+                    <CardTitle className="text-2xl font-black text-foreground">Evolución del Pulso</CardTitle>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="px-2 sm:px-6 flex flex-col gap-6">
+              <CardContent className="px-2 sm:px-6 flex flex-col gap-8">
                 {/* Floating Averages & Max/Min */}
-                <div className="flex flex-wrap gap-4 mt-2">
-                  <div className="bg-surface-low rounded-2xl p-3 shadow-sm border border-border flex items-center gap-3">
-                    <div className="w-8 h-8 shrink-0 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                      <Heart className="text-[18px]" />
+                <div className="flex flex-wrap gap-4 mt-4">
+                  <div className="bg-surface-low rounded-2xl p-4 border border-border/30 flex items-center gap-3">
+                    <div className="w-10 h-10 shrink-0 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                      <Heart className="w-5 h-5 fill-primary/20" />
                     </div>
                     <div>
-                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Pulso Promedio</p>
-                      <p className="text-xl font-bold text-on-surface leading-none mt-1">
-                        {pulseData.avg} <span className="text-xs font-medium text-on-surface-variant">PPM</span>
+                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Media Pulso</p>
+                      <p className="text-xl font-display font-black text-foreground leading-none mt-1">
+                        {pulseData.avg} <span className="text-[10px] font-bold text-on-surface-variant uppercase">PPM</span>
                       </p>
                     </div>
                   </div>
-                  <div className="bg-surface-low rounded-2xl p-3 shadow-sm border border-border flex items-center gap-3">
-                    <div className="w-8 h-8 shrink-0 bg-destructive/10 rounded-xl flex items-center justify-center text-destructive">
-                      <TrendingUp className="text-[18px]" />
+                  <div className="bg-surface-low rounded-2xl p-4 border border-border/30 flex items-center gap-3">
+                    <div className="w-10 h-10 shrink-0 bg-destructive/10 rounded-full flex items-center justify-center text-destructive">
+                      <TrendingUp className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Máximo</p>
-                      <p className="text-xl font-bold text-on-surface leading-none mt-1">
-                        {pulseData.max} <span className="text-xs font-medium text-on-surface-variant">PPM</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="bg-surface-low rounded-2xl p-3 shadow-sm border border-border flex items-center gap-3">
-                    <div className="w-8 h-8 shrink-0 bg-primary-container/10 rounded-xl flex items-center justify-center text-primary-container">
-                      <TrendingDown className="text-[18px]" />
-                    </div>
-                    <div>
-                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Mínimo</p>
-                      <p className="text-xl font-bold text-on-surface leading-none mt-1">
-                        {pulseData.min} <span className="text-xs font-medium text-on-surface-variant">PPM</span>
+                      <p className="text-xl font-display font-black text-foreground leading-none mt-1">
+                        {pulseData.max} <span className="text-[10px] font-bold text-on-surface-variant uppercase">PPM</span>
                       </p>
                     </div>
                   </div>
@@ -1698,36 +1800,24 @@ export function Dashboard() {
                       data={pulseData.data}
                       margin={{ top: 20, right: 10, left: -20, bottom: 20 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#ffffff05' : '#00000005'} />
                       <XAxis 
                         dataKey="tooltipLabel" 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: 'var(--on-surface-variant)', fontSize: 12, fontWeight: 700 }}
+                        tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10, fontWeight: 700 }}
                         dy={10}
                       />
                       <YAxis 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: 'var(--on-surface-variant)', fontSize: 10 }} 
+                        tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10 }} 
                         domain={[40, 140]}
                       />
                       <Tooltip 
-                        cursor={{ stroke: 'var(--border)', strokeWidth: 2, strokeDasharray: '5 5' }}
+                        cursor={{ stroke: isDarkMode ? '#ffffff10' : '#34313A10', strokeWidth: 2 }}
                         content={<CustomTooltip />}
                       />
-                      
-                      {/* Normal Ranges */}
-                      <ReferenceArea 
-                        y1={60} 
-                        y2={100} 
-                        fill="var(--surface-low)" 
-                        fillOpacity={0.6} 
-                        ifOverflow="extendDomain"
-                      />
-
-                      <ReferenceLine y={100} stroke="#EF4444" strokeDasharray="3 3" label={{ position: 'insideTopLeft', value: 'TAQUICARDIA >100', fill: '#EF4444', fontSize: 10, fontWeight: 800, opacity: 0.8 }} />
-                      <ReferenceLine y={60} stroke="#06B6D4" strokeDasharray="3 3" label={{ position: 'insideBottomLeft', value: 'BRADICARDIA <60', fill: '#06B6D4', fontSize: 10, fontWeight: 800, opacity: 0.8 }} />
                       
                       <Line 
                         type="monotone" 
@@ -1737,20 +1827,53 @@ export function Dashboard() {
                         strokeWidth={4} 
                         dot={{ r: 4, fill: 'var(--primary)', strokeWidth: 0 }}
                         activeDot={{ r: 6, fill: 'var(--primary)', stroke: 'white', strokeWidth: 2 }}
-                        label={{ position: 'top', fill: 'var(--on-surface-variant)', fontSize: 10, fontWeight: 700, dy: -10 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+
+                {/* Complementary Metrics Footer (Fills empty space) */}
+                {pulseData.data.length > 0 && (
+                  <div className="mt-4 pt-6 flex flex-col md:flex-row flex-wrap gap-4 items-center justify-between border-t border-border/50">
+                    <div className="flex gap-4 w-full md:w-auto">
+                      <div className="bg-surface-lowest px-6 py-4 rounded-3xl border border-border/40 flex-1 md:flex-none">
+                        <div className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant/60 flex items-center gap-1.5 mb-1"><Target className="w-3.5 h-3.5" /> En Objetivo</div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-display font-black text-primary">{pulseData.timeInTarget}%</span>
+                          <span className="text-[10px] text-on-surface-variant/40 font-bold uppercase">de las tomas</span>
+                        </div>
+                      </div>
+                      <div className="hidden sm:block bg-surface-lowest px-6 py-4 rounded-3xl border border-border/40 flex-1 md:flex-none">
+                        <div className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant/60 flex items-center gap-1.5 mb-1"><HeartPulse className="w-3.5 h-3.5" /> Rango de Pulso</div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-display font-black text-foreground">{pulseData.min} ~ {pulseData.max}</span>
+                          <span className="text-[10px] ml-1 text-on-surface-variant/40 font-bold uppercase">ppm</span>
+                        </div>
+                      </div>
+                      <div className="hidden sm:block bg-surface-lowest px-6 py-4 rounded-3xl border border-border/40 flex-1 md:flex-none">
+                        <div className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant/60 flex items-center gap-1.5 mb-1"><AlertCircle className="w-3.5 h-3.5" /> Desviaciones</div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-display font-black text-warning">{pulseData.anomaliesCount}</span>
+                          <span className="text-[10px] ml-1 text-on-surface-variant/40 font-bold uppercase">{pulseData.anomaliesCount === 1 ? 'registro' : 'registros'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-surface-high/50 text-on-surface-variant/60 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                      <TrendingUp className="w-3 h-3" />
+                      {pulseData.comparisonTrend === 'up' ? 'Ritmo Medio al Alza' : pulseData.comparisonTrend === 'down' ? 'Ritmo Medio a la Baja' : 'Ritmo Cardíaco Estable'}
+                    </div>
+                  </div>
+                )}
+
               </CardContent>
             </Card>
           </div>
-          <div className="lg:col-span-1">
+          <div className="xl:col-span-1">
             <AnalysisCard 
               title="Análisis de Pulso"
-              subtitle="Obtén diagnósticos predictivos basados en tus tendencias de frecuencia cardíaca."
-              imageSeed="medical-pulse"
+              subtitle="Diagnósticos predictivos basados en tendencias de frecuencia cardíaca."
               customImageUrl="/pulso.png"
+              imageSeed="medical-pulse"
               statisticalAnalysis={pulseData.analysis}
               aiAnalysis={aiAnalysisPulse}
               isGenerating={isGeneratingPulse}
@@ -1758,7 +1881,7 @@ export function Dashboard() {
               comparisonText={pulseData.comparisonText}
               comparisonTrend={pulseData.comparisonTrend}
               periodLabel={pulseData.periodDaysLabel}
-              icon="bar_chart"
+              icon={<Heart size={20} />}
             />
           </div>
         </section>

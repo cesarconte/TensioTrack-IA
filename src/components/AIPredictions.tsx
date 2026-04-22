@@ -198,7 +198,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           dataQuality: 98,
           findings: [
             { type: 'success', title: activeFilters.isComparative ? 'Descenso tensional' : 'Ritmo circadiano saludable', desc: activeFilters.isComparative ? 'Se registra una bajada media de 4 mmHg.' : 'Su presión desciende adecuadamente.', icon: null },
-            { type: 'info', title: 'Registros consistentes', desc: 'Ha completado todas las tomas del periodo correctamente.', icon: null }
+            { type: 'info', title: 'Registros consistentes', desc: 'Ha completado todas las lecturas del periodo correctamente.', icon: null }
           ],
           recommendation: "Continúe con sus hábitos actuales y mantenga la regularidad.",
           impact: "Mantenimiento estable",
@@ -246,7 +246,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         // biológica (Standard Deviation). Un paciente con hipertensión lábil tendrá datos
         // muy dispares, pero si siguió el protocolo, la "calidad de su muestra" es perfecta.
         // La Calidad en AMPA se basa estrictamente en la **Adherencia al Protocolo**.
-        // Como el sistema ha bloqueado generar este reporte hasta tener 10/10 sesiones (30 tomas),
+        // Como el sistema ha bloqueado generar este reporte hasta tener 10/10 sesiones (30 lecturas),
         // matemáticamente la fiabilidad base es del 100% (Gold Standard).
         // Se le asigna un 99% para dejar un 1% de margen de error humano intradía.
         generatedData.dataQuality = 99;
@@ -541,7 +541,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         </motion.div>
 
         <div className="text-center space-y-4 max-w-lg mx-auto">
-          <h2 className="text-3xl font-display font-black text-on-surface tracking-tight">Interrupción en el Análisis</h2>
+          <h2 className="text-display-md font-display font-black text-on-surface tracking-tight">Interrupción en el Análisis</h2>
           <p className="text-on-surface-variant/70 text-lg leading-relaxed font-medium">
             {error.message}
           </p>
@@ -579,7 +579,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         {/* Selection Area / Advanced Filter Button */}
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-2">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl text-primary">
+            <div className="p-2 bg-primary/10 rounded-full text-primary">
               <Calendar size={20} />
             </div>
             <div>
@@ -629,8 +629,8 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               {canAnalyze ? 'Análisis Predictivo IA' : 'Sesiones Incompletas'}
             </div>
             
-            <h1 className="text-[2.75rem] font-display font-black text-on-surface leading-[1.1] tracking-tight mb-6 max-w-xl">
-              {canAnalyze ? (activeFilters.cycleId === 'current' ? 'Periodo actual validado' : 'Ciclo histórico seleccionado') : 'Requisitos no alcanzados'}
+            <h1 className="text-display-lg font-display font-black text-on-surface leading-[1.1] tracking-tight mb-6 max-w-xl">
+              {canAnalyze ? (activeFilters.cycleId === 'current' ? 'Periodo actual validado' : 'Ciclo clínico seleccionado') : 'Requisitos no alcanzados'}
             </h1>
             
             <p className="text-on-surface-variant/70 text-lg font-medium leading-relaxed max-w-2xl mx-auto mb-10">
@@ -720,7 +720,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                 })()}
               </div>
               <div className={cn(
-                "w-16 h-16 rounded-[1.8rem] flex items-center justify-center transition-all",
+                "w-16 h-16 rounded-full flex items-center justify-center transition-all",
                 canAnalyze ? "bg-primary/5 text-primary shadow-inner" : "bg-warning/5 text-warning"
               )}>
                 <Activity size={26} strokeWidth={1.5} />
@@ -763,7 +763,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                 isLoadingHistory && "opacity-50 pointer-events-none"
               )}
             >
-              {isLoadingHistory ? 'Cargando...' : 'Ver histórico'}
+              {isLoadingHistory ? 'Cargando...' : 'Ver análisis guardados'}
               <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </motion.div>

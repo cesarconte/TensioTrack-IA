@@ -240,7 +240,7 @@ export function AnalysisFilterModal({
                                   {c.label}
                                 </span>
                                 <span className="text-[10px] text-on-surface-variant/50 font-medium">
-                                  {c.id === 'current' ? 'Fase de recolección activa' : 'Archivo histórico verificado'}
+                                  {c.id === 'current' ? 'Fase de recolección activa' : 'Registro clínico verificado'}
                                 </span>
                               </div>
                             </div>
@@ -262,7 +262,7 @@ export function AnalysisFilterModal({
             <div className="bg-surface-low p-8 rounded-[2.5rem] border border-border">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                  <div className="p-2 bg-primary/10 rounded-full text-primary">
                     <BrainCircuit className="text-[20px]" />
                   </div>
                   <div>

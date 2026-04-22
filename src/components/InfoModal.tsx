@@ -70,10 +70,10 @@ export function InfoModal({ onClose }: InfoModalProps) {
   ];
 
   const steps = [
-    { icon: <Clock className="text-[20px]" />, text: 'Reposa sentado al menos 5 minutos antes de la toma.' },
+    { icon: <Clock className="text-[20px]" />, text: 'Reposa sentado al menos 5 minutos antes de la lectura.' },
     { icon: <Coffee className="text-[20px]" />, text: 'Evita café, tabaco o ejercicio 30 min. antes.' },
     { icon: <Heart className="text-[20px]" />, text: 'Espalda apoyada y brazo a la altura del corazón.' },
-    { icon: <CheckCircle2 className="text-[20px]" />, text: 'Realiza 3 tomas seguidas con 1 min. de descanso entre ellas.' },
+    { icon: <CheckCircle2 className="text-[20px]" />, text: 'Realiza 3 lecturas seguidas con 1 min. de descanso entre ellas.' },
   ];
 
   return (
@@ -85,7 +85,7 @@ export function InfoModal({ onClose }: InfoModalProps) {
       >
         <div className="p-6 flex items-center justify-between bg-surface-low/50">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm shrink-0">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-sm shrink-0">
               <Book className="text-[24px]" />
             </div>
             <div className="min-w-0">
@@ -139,12 +139,12 @@ export function InfoModal({ onClose }: InfoModalProps) {
           </section>
 
           <section className="space-y-6">
-            <h3 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Pasos para una toma correcta</h3>
+            <h3 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Pasos para una lectura correcta</h3>
             <div className="bg-surface-low rounded-[2.5rem] p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {steps.map((step, idx) => (
                   <div key={idx} className="flex gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-primary/10 shadow-sm flex items-center justify-center text-primary shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 shadow-sm flex items-center justify-center text-primary shrink-0">
                       {step.icon}
                     </div>
                     <p className="text-xs text-on-surface-variant font-medium leading-relaxed">{step.text}</p>

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import { Button } from "./ui/Button";
+import { Footer } from "./Footer";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { Toaster } from "sonner";
 
@@ -251,6 +252,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
 
             {children}
+            <Footer />
           </div>
         </main>
       </div>

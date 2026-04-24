@@ -1420,17 +1420,6 @@ export function SettingsPage() {
             </div>
 
             {/* Image grid removed as per revert request */}
-
-            <div className="pt-8 mt-8 flex flex-col items-center justify-center gap-4 w-full border-t border-surface-highest/10">
-              <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-black text-on-surface-variant uppercase tracking-widest whitespace-nowrap">
-                <span>Hecho con</span>
-                <Heart className="text-[14px] sm:text-[16px] text-destructive fill-current shrink-0" />
-                <span>en Gijón, Asturias</span>
-              </div>
-              <p className="text-[9px] sm:text-[10px] text-on-surface-variant font-medium max-w-xs sm:max-w-md text-center">
-                TensioTrack es una marca registrada. Todos los derechos reservados © 2026.
-              </p>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

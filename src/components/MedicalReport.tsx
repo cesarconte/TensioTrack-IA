@@ -372,32 +372,32 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
       <div className="grid grid-cols-1 gap-6 lg:gap-8 items-stretch">
         
         {/* Resumen Global (Full width) */}
-        <Card className="bg-surface shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border-border/10 rounded-[2rem] p-8 lg:p-10 flex flex-col justify-center">
+        <Card className="bg-surface shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border-border/10 rounded-[2rem] p-8 lg:p-10 flex flex-col justify-center overflow-hidden">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <BarChart3 size={20} />
             </div>
             <h3 className="text-xl font-display font-black text-foreground whitespace-nowrap">Resumen Global</h3>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-10">
-            <div className="flex flex-col sm:flex-row items-start gap-8 sm:gap-20 w-full sm:w-auto">
-              <div className="flex flex-col gap-9 min-w-[140px]">
-                <p className="text-[11px] font-bold text-on-surface-variant/60 uppercase tracking-widest leading-none">
+          <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-10 xl:gap-6 2xl:gap-10">
+            <div className="flex flex-col sm:flex-row items-start lg:items-center gap-12 sm:gap-16 xl:gap-8 2xl:gap-16 w-full xl:w-auto relative min-w-0">
+              <div className="flex flex-col gap-6 sm:gap-10 min-w-0 sm:min-w-[140px] w-full sm:w-auto">
+                <p className="text-[11px] font-bold text-on-surface-variant/60 uppercase tracking-widest leading-none shrink-0">
                   Promedio Tensión<br className="hidden sm:block" /> Arterial
                 </p>
-                <div className="flex items-baseline gap-1 relative">
-                  <span className="text-5xl font-black font-display tracking-tighter text-foreground whitespace-nowrap shrink-0">
+                <div className="flex items-baseline gap-2 relative">
+                  <span className="text-5xl sm:text-6xl lg:text-7xl xl:text-5xl 2xl:text-6xl font-black font-display tracking-tighter text-foreground whitespace-nowrap shrink-0">
                     {activeCycle?.finalAverage ? `${activeCycle.finalAverage.systolic}/${activeCycle.finalAverage.diastolic}` : '--/--'}
                   </span>
-                  <span className="text-sm font-bold text-on-surface-variant/40 tracking-widest uppercase mb-1">mmHg</span>
+                  <span className="text-xs sm:text-sm font-bold text-on-surface-variant/40 tracking-widest uppercase mb-2 shrink-0">mmHg</span>
                   
                   {trends && (
                     <div className={cn(
-                      "absolute -top-8 left-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black shadow-[0_1px_2px_rgba(0,0,0,0.05)] border",
+                      "absolute -top-6 -right-2 sm:left-0 sm:-top-8 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-black shadow-sm border bg-background",
                       trends.systolic > 0 
-                        ? "text-destructive bg-destructive/10 border-destructive/20" 
-                        : "text-success bg-success/10 border-success/20"
+                        ? "text-destructive border-destructive/20" 
+                        : "text-success border-success/20"
                     )}>
                       {trends.systolic > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                       {Math.abs(trends.systolic).toFixed(1)}
@@ -406,22 +406,24 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-9 min-w-[140px]">
-                <p className="text-[11px] font-bold text-on-surface-variant/60 uppercase tracking-widest leading-none">
-                  Promedio Frecuencia<br className="hidden sm:block" /> Cardíaca
+              <div className="hidden sm:block w-[1px] h-24 bg-border/40 relative top-4 shrink-0"></div>
+
+              <div className="flex flex-col gap-6 sm:gap-10 min-w-0 sm:min-w-[140px] w-full sm:w-auto">
+                <p className="text-[11px] font-bold text-on-surface-variant/60 uppercase tracking-widest leading-none shrink-0">
+                  Promedio<br className="hidden sm:block" /> Frecuencia Cardíaca
                 </p>
-                <div className="flex items-baseline gap-1 relative">
-                  <span className="text-5xl font-black font-display tracking-tighter text-foreground whitespace-nowrap shrink-0">
+                <div className="flex items-baseline gap-2 relative">
+                  <span className="text-5xl sm:text-6xl lg:text-7xl xl:text-5xl 2xl:text-6xl font-black font-display tracking-tighter text-foreground whitespace-nowrap shrink-0">
                     {activeCycle?.finalAverage?.heartRate || '--'}
                   </span>
-                  <span className="text-sm font-bold text-on-surface-variant/40 tracking-widest uppercase mb-1">PPM</span>
+                  <span className="text-xs sm:text-sm font-bold text-on-surface-variant/40 tracking-widest uppercase mb-2 shrink-0">PPM</span>
                   
                   {trends && (
                     <div className={cn(
-                      "absolute -top-8 left-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black shadow-[0_1px_2px_rgba(0,0,0,0.05)] border",
+                      "absolute -top-6 -right-2 sm:left-0 sm:-top-8 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-black shadow-sm border bg-background",
                       trends.heartRate > 0 
-                        ? "text-warning bg-warning/10 border-warning/20" 
-                        : "text-success bg-success/10 border-success/20"
+                        ? "text-warning border-warning/20" 
+                        : "text-success border-success/20"
                     )}>
                       {trends.heartRate > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                       {Math.abs(trends.heartRate)}
@@ -431,7 +433,8 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
               </div>
             </div>
 
-            <div className="flex-shrink-0 bg-primary/5 rounded-[2rem] w-full sm:w-[240px] h-[180px] flex items-center justify-center border border-primary/5">
+            <div className="shrink-0 bg-primary/5 rounded-[2.5rem] w-full xl:w-auto xl:flex-1 xl:max-w-[320px] min-h-[180px] h-auto xl:h-[240px] flex items-center justify-center border border-primary/10 py-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-linear-to-b from-transparent to-primary/5 rounded-[2.5rem]" />
                <CircularProgress status={globalStyle} />
             </div>
           </div>

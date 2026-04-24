@@ -802,7 +802,7 @@ export function History() {
           </button>
         </div>
 
-        <div className="bg-surface-low rounded-[2.5rem] p-8 sm:p-12 flex flex-col justify-between h-full min-h-[300px]">
+        <Card className="p-8 sm:p-12 flex flex-col justify-between h-full min-h-[300px]">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-8">
             <Stethoscope className="text-[28px]" />
           </div>
@@ -812,7 +812,7 @@ export function History() {
               Registros completados {analyzedData.label}
             </p>
           </div>
-        </div>
+        </Card>
       </div>
       
       <AnimatePresence>

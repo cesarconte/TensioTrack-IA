@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { cn } from "../../lib/utils";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { AIPredictions } from "../AIPredictions";
 import { 
   BarChart, 
@@ -28,7 +28,7 @@ import {
 import { getCachedAnalysis, generateAndCacheAnalysis } from '../../services/aiService';
 import { toast } from 'sonner';
 import { getBloodPressureStatus, getBloodPressureStyle, getPulseStatus, getPulseStyle } from "../../domain/health";
-import { Sparkles, Loader2, LayoutDashboard, Target, HeartPulse, AlertCircle, Plus, Info, Clock, CalendarCheck, Calendar, ChevronDown, UserCheck, BarChart3, ShieldCheck, Check, ArrowRight, BrainCircuit, Activity, Heart, TrendingUp, TrendingDown, Minus, Sun, Moon } from "lucide-react";
+import { Sparkles, Loader2, LayoutDashboard, Target, HeartPulse, AlertCircle, Plus, Info, Clock, CalendarCheck, Calendar, ChevronDown, UserCheck, BarChart3, ShieldCheck, Check, ArrowRight, BrainCircuit, Activity, Heart, TrendingUp, TrendingDown, Minus, Sun, Moon, Stethoscope } from "lucide-react";
 
 const LocalPulseStatusDisplay = ({ hr }: { hr: number | null | undefined }) => {
   if (!hr) return <Badge variant="secondary" className="bg-surface-low text-on-surface-variant/40 px-2 py-0.5 border-none text-[10px] uppercase font-bold tracking-widest leading-none">--</Badge>;
@@ -128,12 +128,15 @@ const AnalysisCard = ({
         <Button 
           onClick={onGenerate}
           disabled={isGenerating}
-          className="w-full rounded-full py-6 bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          className="w-full rounded-full py-6 bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           {isGenerating ? (
             <Loader2 className="animate-spin text-[20px]" />
           ) : (
-            'Generar Informe IA'
+            <>
+              <Sparkles className="w-4 h-4" />
+              Generar Informe IA
+            </>
           )}
         </Button>
       </div>
@@ -166,35 +169,36 @@ export function Dashboard() {
 
   const timeContext = React.useMemo(() => {
     const hour = new Date().getHours();
-    // Spanish Custom Time slots:
-    // Madrugada: 00:00 - 06:00
-    // Mañana: 06:00 - 13:00
-    // Tarde: 13:00 - 20:30
-    // Noche: 20:30 - 23:59
     
-    if (hour >= 6 && hour < 13) {
+    // Time slots definition:
+    // Morning: 06:00 - 12:00
+    // Afternoon: 12:00 - 18:00
+    // Evening: 18:00 - 21:00
+    // Night: 21:00 - 06:00
+    
+    if (hour >= 6 && hour < 12) {
       return {
         greeting: "Buenos días",
-        image: "https://picsum.photos/seed/morning-warm-light/1200/400",
-        message: "Comience el día con una sonrisa y salud."
+        image: "/tensiotrack-morning.png",
+        message: "Comience el día con una sonrisa y salud cardiovascular."
       };
-    } else if (hour >= 13 && hour < 21) {
+    } else if (hour >= 12 && hour < 18) {
       return {
         greeting: "Buenas tardes",
-        image: "https://picsum.photos/seed/afternoon-serene-landscape/1200/400",
-        message: "Continúe con sus hábitos saludables hoy."
+        image: "/tensiotrack-afternoon.png",
+        message: "Continúe con sus hábitos saludables y mantenga la energía."
       };
-    } else if (hour >= 21 || hour < 6) {
+    } else if (hour >= 18 && hour < 21) {
       return {
-        greeting: "Buenas noches",
-        image: "https://picsum.photos/seed/night-peaceful-stars/1200/400",
-        message: "Es momento de descansar y relajarse."
+        greeting: "Buen atardecer",
+        image: "/tensiotrack-evening.png",
+        message: "Un momento para la calma y la reflexión del día."
       };
     } else {
       return {
-        greeting: "Hola",
-        image: "https://picsum.photos/seed/early-morning-calm/1200/400",
-        message: "Bienvenido de nuevo a su seguimiento."
+        greeting: "Buenas noches",
+        image: "/tensiotrack-night.png",
+        message: "Es momento de descansar y preparar el cuerpo para mañana."
       };
     }
   }, []);
@@ -983,12 +987,19 @@ export function Dashboard() {
     <div className="space-y-10 pb-20 sm:pb-0">
       {/* Welcome Banner with Image */}
       <section className="relative rounded-[2rem] overflow-hidden group shadow-2xl shadow-primary/10">
-        <img 
-          src={timeContext.image} 
-          alt={timeContext.greeting} 
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-          referrerPolicy="no-referrer"
-        />
+        <AnimatePresence mode="wait">
+          <motion.img 
+            key={timeContext.image}
+            src={timeContext.image} 
+            alt={timeContext.greeting} 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            referrerPolicy="no-referrer"
+          />
+        </AnimatePresence>
         <div className="absolute inset-0 bg-linear-to-r from-card/90 via-card/40 to-transparent" />
         
         <div className="relative p-7 sm:p-10 md:p-12 flex flex-col justify-center min-h-[14rem] sm:min-h-[16rem]">
@@ -1046,7 +1057,7 @@ export function Dashboard() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Level 1: Last Session */}
           <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
             <div className="flex items-start justify-between mb-6">
@@ -1063,20 +1074,20 @@ export function Dashboard() {
 
             <div className="flex flex-col mb-6">
               <span className="text-5xl sm:text-6xl font-black font-display text-foreground tracking-tighter leading-none shrink-0">
-                {latestSession ? `${latestSession.avgSystolic}/${latestSession.avgDiastolic}` : '--/--'}
+                {latestSession ? `${Math.round(latestSession.avgSystolic)}/${Math.round(latestSession.avgDiastolic)}` : '--/--'}
               </span>
               <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mt-3 ml-1 opacity-60 shrink-0">MMHG</span>
             </div>
 
             <div className="mt-auto space-y-4">
               <div className="grid grid-cols-2 gap-3 mb-2">
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                <div className="bg-surface-low rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
                   <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">LECTURAS</span>
                   <span className="text-sm sm:text-md font-black text-primary">{latestSession?.readings.length || 0} / 3</span>
                 </div>
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                <div className="bg-surface-low rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
                   <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">PULSO MEDIO</span>
-                  <span className="text-sm sm:text-md font-black text-primary">{latestSession?.avgHeartRate || '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
+                  <span className="text-sm sm:text-md font-black text-primary">{latestSession?.avgHeartRate ? Math.round(latestSession.avgHeartRate) : '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
                 </div>
               </div>
               <div className="pt-2">
@@ -1120,8 +1131,8 @@ export function Dashboard() {
             </div>
 
             <div className="flex flex-col mb-6">
-              <span className="text-display-lg font-black font-display text-foreground tracking-tighter leading-none shrink-0">
-                {dashboard?.today?.avgSystolic ? `${dashboard.today.avgSystolic}/${dashboard.today.avgDiastolic}` : '--/--'}
+              <span className="text-5xl sm:text-6xl font-black font-display text-foreground tracking-tighter leading-none shrink-0">
+                {dashboard?.today?.avgSystolic ? `${Math.round(dashboard.today.avgSystolic)}/${Math.round(dashboard.today.avgDiastolic)}` : '--/--'}
               </span>
               <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mt-3 ml-1 opacity-60 shrink-0">MMHG</span>
             </div>
@@ -1131,27 +1142,27 @@ export function Dashboard() {
                 <div className="flex items-center justify-between text-xs font-bold px-1">
                   <span className="text-on-surface-variant uppercase tracking-widest text-[9px] w-16">MAÑANA</span>
                   <div className="flex gap-4">
-                    <span className="text-foreground">{morningSession?.avgSystolic ? `${morningSession.avgSystolic}/${morningSession.avgDiastolic}` : '--/--'}</span>
-                    <span className="text-on-surface-variant opacity-60 w-12 text-right">{morningSession?.avgHeartRate ? `${morningSession.avgHeartRate} PPM` : '--'}</span>
+                    <span className="text-foreground">{morningSession?.avgSystolic ? `${Math.round(morningSession.avgSystolic)}/${Math.round(morningSession.avgDiastolic)}` : '--/--'}</span>
+                    <span className="text-on-surface-variant opacity-60 w-12 text-right">{morningSession?.avgHeartRate ? `${Math.round(morningSession.avgHeartRate)} PPM` : '--'}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-xs font-bold px-1">
                   <span className="text-on-surface-variant uppercase tracking-widest text-[9px] w-16">NOCHE</span>
                   <div className="flex gap-4">
-                    <span className="text-foreground">{eveningSession?.avgSystolic ? `${eveningSession.avgSystolic}/${eveningSession.avgDiastolic}` : '--/--'}</span>
-                    <span className="text-on-surface-variant opacity-60 w-12 text-right">{eveningSession?.avgHeartRate ? `${eveningSession.avgHeartRate} PPM` : '--'}</span>
+                    <span className="text-foreground">{eveningSession?.avgSystolic ? `${Math.round(eveningSession.avgSystolic)}/${Math.round(eveningSession.avgDiastolic)}` : '--/--'}</span>
+                    <span className="text-on-surface-variant opacity-60 w-12 text-right">{eveningSession?.avgHeartRate ? `${Math.round(eveningSession.avgHeartRate)} PPM` : '--'}</span>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-2">
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                <div className="bg-surface-low rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
                   <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">LECTURAS</span>
                   <span className="text-sm sm:text-md font-black text-primary">{(morningSession?.readings.length || 0) + (eveningSession?.readings.length || 0)} / 6</span>
                 </div>
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                <div className="bg-surface-low rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
                   <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">PULSO MEDIO</span>
-                  <span className="text-sm sm:text-md font-black text-primary">{dashboard?.today?.avgHeartRate || '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
+                  <span className="text-sm sm:text-md font-black text-primary">{dashboard?.today?.avgHeartRate ? Math.round(dashboard.today.avgHeartRate) : '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
                 </div>
               </div>
 
@@ -1189,7 +1200,7 @@ export function Dashboard() {
             </div>
 
             <div className="flex flex-col mb-6">
-              <span className="text-display-lg font-black font-display text-foreground tracking-tighter leading-none shrink-0">
+              <span className="text-5xl sm:text-6xl font-black font-display text-foreground tracking-tighter leading-none shrink-0">
                 {periodAvgSystolic ? `${periodAvgSystolic}/${periodAvgDiastolic}` : '--/--'}
               </span>
               <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mt-3 ml-1 opacity-60 shrink-0">MMHG</span>
@@ -1214,11 +1225,11 @@ export function Dashboard() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-2">
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                <div className="bg-surface-low rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
                   <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">LECTURAS</span>
                   <span className="text-sm sm:text-md font-black text-primary">{periodReadingsCount || 0} / 30</span>
                 </div>
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                <div className="bg-surface-low rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
                   <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">PULSO MEDIO</span>
                   <span className="text-sm sm:text-md font-black text-primary">{Math.round((dashboard?.stats.periodAverages.morning?.heartRate || 0) / 2 + (dashboard?.stats.periodAverages.evening?.heartRate || 0) / 2) || '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
                 </div>
@@ -1271,7 +1282,7 @@ export function Dashboard() {
             </div>
 
             <div className="flex flex-col mb-6">
-              <span className="text-display-lg font-black font-display text-foreground tracking-tighter leading-none shrink-0">
+              <span className="text-5xl sm:text-6xl font-black font-display text-foreground tracking-tighter leading-none shrink-0">
                 {finalResultData.avgSys ? `${finalResultData.avgSys}/${finalResultData.avgDia}` : '--/--'}
               </span>
               <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mt-3 ml-1 opacity-60 shrink-0">MMHG</span>
@@ -1284,11 +1295,11 @@ export function Dashboard() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-2">
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                <div className="bg-surface-low rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
                   <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">LECTURAS TOTALES</span>
                   <span className="text-sm sm:text-md font-black text-primary">{finalResultData.count}</span>
                 </div>
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
+                <div className="bg-surface-low rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-border/10 transition-colors">
                   <span className="text-[8px] sm:text-[9px] font-black opacity-60 uppercase tracking-widest mb-1">PULSO MEDIO</span>
                   <span className="text-sm sm:text-md font-black text-primary">{finalResultData.avgHr || '--'} <span className="text-[10px] opacity-60 font-black">PPM</span></span>
                 </div>
@@ -1318,7 +1329,7 @@ export function Dashboard() {
       {/* Charts & Status Section - Refined for better proportions */}
       <section className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-3 gap-8 items-stretch">
         <div className="xl:col-span-2">
-          <Card className="h-full bg-white dark:bg-card rounded-[2rem] border-border/50 shadow-aura-light dark:shadow-aura-dark">
+          <Card className="h-full bg-card rounded-[2rem] border-border/50 shadow-aura-light dark:shadow-aura-dark">
             <CardHeader className="pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">
@@ -1410,7 +1421,7 @@ export function Dashboard() {
               {/* Comparison Insight */}
               {morningPas > 0 && eveningPas > 0 && (
                 <div className="mt-8 p-8 rounded-[2rem] bg-surface-low flex flex-col sm:flex-row items-start gap-6 border border-border/50">
-                  <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0">
+                  <div className="w-14 h-14 rounded-full bg-surface-low shadow-sm flex items-center justify-center shrink-0">
                     <BarChart3 className="text-primary w-6 h-6" />
                   </div>
                   <div className="flex-1 space-y-2">
@@ -1427,7 +1438,7 @@ export function Dashboard() {
 
         {/* Overall Status Card - Redesigned for Aura Weightless */}
         <div className="xl:col-span-1">
-          <Card className="h-full bg-white dark:bg-card shadow-aura rounded-[2.5rem] overflow-hidden relative flex flex-col">
+          <Card className="h-full bg-card shadow-aura rounded-[2.5rem] overflow-hidden relative flex flex-col">
             {/* Decorative Background Icon - Standardized size and color to match others exactly */}
             <div className="absolute top-6 right-6 pointer-events-none z-0">
               <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
@@ -1468,7 +1479,7 @@ export function Dashboard() {
                   {isControlled ? "Presión Controlada" : "Atención Requerida"}
                 </h4>
 
-                <div className="bg-surface-low dark:text-[#0B0E14] rounded-[2rem] p-6 border border-border/10 relative shadow-sm">
+                <div className="bg-surface-low rounded-[2rem] p-6 border border-border/10 relative shadow-sm">
                   <p className="text-base text-on-surface-variant font-black leading-relaxed">
                     {dashboard?.stats.finalAverage 
                       ? (isControlled
@@ -1494,10 +1505,10 @@ export function Dashboard() {
               <div className="mt-auto pt-2">
                 <Button 
                   onClick={() => useAppStore.getState().setActiveTab('report')}
-                  className="w-full h-18 text-base font-black tracking-tight shadow-xl shadow-primary/20"
+                  className="w-full h-14 sm:h-16 text-sm sm:text-base font-black tracking-tight shadow-xl shadow-primary/20"
                 >
                   Ver Informe Detallado
-                  <ArrowRight className="ml-3 w-5 h-5" />
+                  <ArrowRight className="ml-2 w-5 h-5 shrink-0" />
                 </Button>
               </div>
             </CardContent>
@@ -1528,42 +1539,152 @@ export function Dashboard() {
           <div className="pt-4">
             <button 
               onClick={() => useAppStore.getState().setActiveTab('ai')}
-              className="group flex items-center gap-3 bg-white text-primary px-8 py-4 rounded-full font-black font-display text-sm tracking-widest transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+              className="group whitespace-nowrap flex items-center gap-3 bg-white text-primary px-8 py-4 rounded-full font-black font-display text-sm tracking-widest transition-all hover:scale-105 hover:shadow-xl active:scale-95"
             >
               EXPLORAR AHORA
-              <ArrowRight className="transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="transition-transform group-hover:translate-x-1 shrink-0" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 relative z-10 w-full max-w-md aspect-square flex items-center justify-center">
-          <div className="relative w-full h-full">
+        <div className="flex-1 relative z-10 w-full max-w-xs sm:max-w-md aspect-square flex items-center justify-center">
+          <div className="relative w-full h-full scale-[0.8] sm:scale-100">
             <div className="absolute inset-0 bg-white/5 rounded-full ethereal-blur border border-white/10 animate-pulse" />
-            <div className="absolute inset-8 bg-white/10 rounded-full ethereal-blur border border-white/20" />
+            <div className="absolute inset-6 sm:inset-8 bg-white/10 rounded-full ethereal-blur border border-white/20" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <img 
+              <motion.img 
                 src="/IA-thinking-process.png" 
                 alt="Pensamiento IA" 
-                className="w-48 h-48 drop-shadow-2xl object-contain"
+                className="w-32 h-32 md:w-48 md:h-48 drop-shadow-2xl object-contain z-20"
+                animate={{ 
+                  y: [0, -10, 0],
+                  scale: [1, 1.08, 1.03, 1.12, 1], // Realistic double heartbeat pattern
+                  filter: [
+                    "drop-shadow(0 0 15px rgba(103,80,165,0.1))",
+                    "drop-shadow(0 0 45px rgba(103,80,165,0.45))",
+                    "drop-shadow(0 0 15px rgba(103,80,165,0.1))"
+                  ]
+                }}
+                transition={{ 
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  scale: {
+                    times: [0, 0.12, 0.24, 0.4, 1], // "Thump-thump" rhythm at the start of the 5s cycle
+                    ease: "circOut"
+                  }
+                }}
                 referrerPolicy="no-referrer"
               />
             </div>
+
+            {/* Intersection Reaction: Shockwave Ripple - Slower & Synced with Head (5s cycle) */}
+            {[0, 1].map((index) => (
+              <motion.div 
+                key={index}
+                className="absolute inset-0 rounded-full border-2 border-primary/30 pointer-events-none"
+                animate={{ 
+                  scale: [1, 1.3, 1.5],
+                  opacity: [0, 0.3, 0],
+                  borderWidth: ["1px", "4px", "1px"]
+                }}
+                transition={{ 
+                  duration: 10, 
+                  repeat: Infinity, 
+                  ease: "easeOut",
+                  delay: index * 5 // Pulsing every 5 seconds, matching the head's float cycle
+                }}
+              />
+            ))}
             
-            {/* Small orbiting floating chips */}
+            {/* Subtle central core heartbeat - Synced with Head */}
             <motion.div 
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-10 right-0 bg-white/20 backdrop-blur-md p-3 rounded-2xl border border-white/30 shadow-lg"
+              className="absolute inset-0 rounded-full bg-primary/10 pointer-events-none shadow-[0_0_50px_rgba(103,80,165,0.3)]"
+              animate={{ 
+                scale: [0.95, 1.05, 0.95],
+                opacity: [0.2, 0.5, 0.2]
+              }}
+              transition={{ 
+                duration: 5, // Matching the head's float duration
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+            />
+            
+            {/* Orbiting floating chips */}
+            {/* Orbit 1: Stethoscope (Outer Lane - Clockwise) */}
+            <motion.div 
+              className="absolute inset-0 pointer-events-none rounded-full"
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 43, repeat: Infinity, ease: "linear" }}
             >
-              <BrainCircuit className="text-white text-2xl" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <motion.div
+                  className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-xl md:rounded-2xl border border-white/30 shadow-lg"
+                  animate={{ 
+                    rotate: [0, -360],
+                    scale: [1, 1.1, 1],
+                    backgroundColor: ["rgba(255,255,255,0.2)", "rgba(103,80,165,0.3)", "rgba(255,255,255,0.2)"]
+                  }}
+                  transition={{ 
+                    rotate: { duration: 43, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 7, repeat: Infinity, ease: "easeInOut" },
+                    backgroundColor: { duration: 7, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                >
+                  <Stethoscope className="text-white text-lg md:text-2xl" />
+                </motion.div>
+              </div>
             </motion.div>
             
+            {/* Orbit 2: Activity (Mid-Outer Lane - Counter-Clockwise) */}
             <motion.div 
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute bottom-10 left-0 bg-white/20 backdrop-blur-md p-3 rounded-2xl border border-white/30 shadow-lg"
+              className="absolute inset-4 md:inset-3 pointer-events-none rounded-full"
+              animate={{ rotate: [360, 0] }}
+              transition={{ duration: 59, repeat: Infinity, ease: "linear" }}
             >
-              <Activity className="text-white" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <motion.div
+                  className="bg-white/20 backdrop-blur-md p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/30 shadow-lg"
+                  animate={{ 
+                    rotate: [-360, 0],
+                    scale: [1, 1.15, 1],
+                    backgroundColor: ["rgba(255,255,255,0.2)", "rgba(103,80,165,0.3)", "rgba(255,255,255,0.2)"]
+                  }}
+                  transition={{ 
+                    rotate: { duration: 59, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 9, repeat: Infinity, ease: "easeInOut" },
+                    backgroundColor: { duration: 9, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                >
+                  <Activity className="text-white text-base md:text-xl" />
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Orbit 3: Heart (Inner ring - Counter-Clockwise) */}
+            <motion.div 
+              className="absolute inset-12 md:inset-10 pointer-events-none rounded-full"
+              animate={{ rotate: [360, 0] }}
+              transition={{ duration: 31, repeat: Infinity, ease: "linear" }}
+            >
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <motion.div
+                  className="bg-white/20 backdrop-blur-md p-1.5 md:p-2 rounded-lg md:rounded-xl border border-white/30 shadow-lg"
+                  animate={{ 
+                    rotate: [-360, 0],
+                    scale: [1, 1.25, 1],
+                    boxShadow: ["0 0 0px rgba(103,80,165,0)", "0 0 15px rgba(103,80,165,0.4)", "0 0 0px rgba(103,80,165,0)"]
+                  }}
+                  transition={{ 
+                    rotate: { duration: 31, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+                    boxShadow: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                >
+                  <HeartPulse className="text-white" size={14} />
+                </motion.div>
+              </div>
             </motion.div>
           </div>
         </div>

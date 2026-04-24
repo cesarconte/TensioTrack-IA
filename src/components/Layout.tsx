@@ -57,14 +57,14 @@ export function Layout({ children }: LayoutProps) {
         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
         className={cn(
           "flex items-center rounded-full bg-white dark:bg-card shadow-sm border border-border hover:border-primary/50 transition-all active:scale-95",
-          isMobile ? "w-10 h-10 justify-center p-0" : "p-1.5 pr-5 gap-3"
+          isMobile ? "w-12 h-12 justify-center p-0" : "p-1.5 pr-5 gap-3"
         )}
         aria-expanded={isUserMenuOpen}
         aria-haspopup="true"
       >
         <div className={cn(
           "rounded-full bg-primary/10 text-primary flex items-center justify-center font-black overflow-hidden bg-cover bg-center shrink-0",
-          isMobile ? "w-8 h-8" : "w-9 h-9"
+          isMobile ? "w-9 h-9" : "w-9 h-9"
         )}>
           {user?.photoURL ? (
             <img 
@@ -74,7 +74,7 @@ export function Layout({ children }: LayoutProps) {
               referrerPolicy="no-referrer"
             />
           ) : (
-            user?.displayName?.charAt(0).toUpperCase() || <User size={isMobile ? 16 : 18} />
+            user?.displayName?.charAt(0).toUpperCase() || <User size={isMobile ? 18 : 18} />
           )}
         </div>
         {!isMobile && (
@@ -196,10 +196,10 @@ export function Layout({ children }: LayoutProps) {
                 <>
                   <button 
                     onClick={() => toggleDarkMode()}
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-low text-on-surface-variant hover:text-primary transition-all active:scale-95"
+                    className="w-12 h-12 flex items-center justify-center rounded-full bg-surface-low text-on-surface-variant hover:text-primary transition-all active:scale-95"
                     aria-label="Alternar tema"
                   >
-                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                    {isDarkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
                   </button>
                   {renderUserMenu(mobileUserMenuRef, true)}
                 </>

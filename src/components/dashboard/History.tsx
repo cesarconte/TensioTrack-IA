@@ -305,7 +305,7 @@ export function History() {
         <motion.div 
           key={reading.id}
           layout
-          className="flex flex-col lg:flex-row bg-white rounded-[2rem] shadow-sm border-l-[6px] border-primary overflow-hidden relative"
+          className="flex flex-col lg:flex-row bg-card rounded-[2rem] shadow-sm border-l-[6px] border-primary overflow-hidden relative"
         >
           <div className="flex-1 p-6 lg:p-8">
             <div className="flex justify-between items-start mb-8">
@@ -356,7 +356,7 @@ export function History() {
               <StickyNote className="text-on-surface-variant text-[20px]" />
               <span className="text-sm font-bold text-foreground">Notas del Paciente</span>
             </div>
-            <div className="bg-white rounded-2xl p-5 mb-6 flex-1 shadow-sm border border-border/50">
+            <div className="bg-surface-low rounded-2xl p-5 mb-6 flex-1 shadow-sm border border-border/50">
               <p className="text-sm text-on-surface-variant italic leading-relaxed">
                 {reading.notes ? `"${reading.notes}"` : "Sin notas adicionales."}
               </p>
@@ -403,7 +403,7 @@ export function History() {
         className="flex flex-col sm:flex-row sm:items-center justify-between bg-surface-low rounded-[2rem] p-5 sm:p-6 hover:bg-surface-high transition-all cursor-pointer gap-4 sm:gap-6 border-none"
       >
         <div className="flex items-center gap-4 sm:w-1/3">
-          <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-on-surface-variant shrink-0 shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-surface-lowest flex items-center justify-center text-on-surface-variant shrink-0 shadow-sm">
             {isMorning ? <Sun className="w-[24px] h-[24px]" /> : <Moon className="w-[24px] h-[24px]" />}
           </div>
           <div>
@@ -486,7 +486,7 @@ export function History() {
           
           <div className="flex flex-wrap gap-2">
             {activeFilters.periodId && (
-              <Badge className="bg-white text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
+              <Badge className="bg-surface-lowest text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
                 Período {activeFilters.periodId}
                 <button onClick={() => setActiveFilters(prev => ({ ...prev, periodId: undefined }))} className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none">
                   <X className="text-[16px]" />
@@ -495,7 +495,7 @@ export function History() {
             )}
 
             {!activeFilters.periodId && (activeFilters.dateFrom || activeFilters.dateTo) && (
-              <Badge className="bg-white text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
+              <Badge className="bg-surface-lowest text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
                 <Calendar className="text-[14px]" />
                 {activeFilters.dateFrom || '?'} — {activeFilters.dateTo || '?'}
                 <button onClick={() => setActiveFilters(prev => ({ ...prev, dateFrom: undefined, dateTo: undefined }))} className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none">
@@ -505,7 +505,7 @@ export function History() {
             )}
 
             {!activeFilters.periodId && !activeFilters.dateFrom && !activeFilters.dateTo && activeFilters.quickSelector !== '1 semana' && (
-              <Badge className="bg-white text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
+              <Badge className="bg-surface-lowest text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
                 <Activity className="text-[14px]" />
                 {activeFilters.quickSelector}
                 <button onClick={() => setActiveFilters(prev => ({ ...prev, quickSelector: '1 semana' }))} className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none">
@@ -515,7 +515,7 @@ export function History() {
             )}
 
             {activeFilters.slot !== 'all' && (
-              <Badge className="bg-white text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
+              <Badge className="bg-surface-lowest text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
                 {activeFilters.slot === 'morning' ? <Sun className="text-[14px]" /> : <Moon className="text-[14px]" />}
                 {activeFilters.slot === 'morning' ? 'MAÑANA' : 'NOCHE'}
                 <button onClick={() => setActiveFilters(prev => ({ ...prev, slot: 'all' }))} className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none">

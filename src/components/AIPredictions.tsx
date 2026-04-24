@@ -18,6 +18,7 @@ import {
   Moon, 
   Lightbulb, 
   Download, 
+  ChevronLeft,
   Share2,
   TrendingUp,
   Activity,
@@ -28,7 +29,8 @@ import {
   Clock,
   ArrowLeft,
   Search,
-  FileDown
+  FileDown,
+  History
 } from "lucide-react";
 
 const PDFIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
@@ -416,7 +418,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
   // Force a professional clinical loading state
   if (isLoadingData || !dashboard || !dashboard.stats) {
     return (
-      <div className="flex-1 min-h-[70vh] flex flex-col items-center justify-center p-12 bg-white rounded-[3rem] border border-border/40 relative">
+      <div className="flex-1 min-h-[70vh] flex flex-col items-center justify-center p-12 bg-surface-low rounded-[3rem] border border-border/40 relative">
         <Brain className="text-primary animate-pulse" size={48} />
         <h2 className="mt-8 text-2xl font-display font-black text-on-surface">Validando Muestra</h2>
         <p className="mt-2 text-on-surface-variant/60 text-sm font-medium">Procesando registros clínicos bajo estándares AMPA...</p>
@@ -459,7 +461,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           <motion.div 
             animate={{ rotate: 360 }}
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-            className="relative w-48 h-48 rounded-full border border-primary/20 flex items-center justify-center p-4 bg-white/40 backdrop-blur-xl shadow-2xl"
+            className="relative w-48 h-48 rounded-full border border-primary/20 flex items-center justify-center p-4 bg-surface-highest/10 backdrop-blur-xl shadow-2xl"
           >
             <div className="relative flex items-center justify-center">
               <Brain className="text-primary w-16 h-16" strokeWidth={1.5} />
@@ -557,9 +559,10 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           </Button>
           <Button 
             variant="ghost"
-            className="rounded-full px-10 py-7 text-on-surface-variant hover:bg-surface-high transition-all font-black tracking-widest uppercase text-xs"
+            className="rounded-full px-10 py-7 text-on-surface-variant hover:bg-surface-high transition-all font-black tracking-widest uppercase text-xs items-center gap-3"
             onClick={() => setError(null)}
           >
+            <ChevronLeft size={18} />
             Volver a Configuración
           </Button>
         </div>
@@ -615,7 +618,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2.5rem] bg-white border border-border shadow-[0_8px_40px_rgba(0,0,0,0.02)] p-12 text-center"
+          className="relative overflow-hidden rounded-[2.5rem] bg-surface-low border border-border shadow-xl shadow-surface-highest/5 p-12 text-center"
         >
           {/* Subtle Background Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
@@ -678,7 +681,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="md:col-span-8 bg-white rounded-[2.5rem] p-10 border border-border flex flex-col justify-between"
+            className="md:col-span-8 bg-surface-low rounded-[2.5rem] p-10 border border-border flex flex-col justify-between"
           >
             <div>
               <p className="text-[10px] font-black tracking-[0.2em] text-on-surface-variant uppercase mb-3">Integridad de la Muestra</p>
@@ -711,7 +714,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                           transition={{ duration: 1.5, ease: "easeOut" }}
                           className={cn(
                             "h-full rounded-full transition-all shadow-[0_0_15px_rgba(156,142,217,0.3)]",
-                            canAnalyze ? "bg-[#4CAF50]" : "bg-primary"
+                            canAnalyze ? "bg-success" : "bg-primary"
                           )}
                         />
                       </div>
@@ -732,7 +735,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="md:col-span-4 bg-[#F2F0F7] rounded-[2.5rem] p-10 border border-border/50 flex flex-col justify-between"
+            className="md:col-span-4 bg-surface-high rounded-[2.5rem] p-10 border border-border/50 flex flex-col justify-between"
           >
             <div className="p-4 bg-primary/5 rounded-2xl w-fit mb-6">
               <FileText size={24} className="text-primary/60" />
@@ -755,17 +758,22 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               </p>
             </div>
             
-            <button 
+            <Button 
               onClick={fetchHistory}
               disabled={isLoadingHistory}
-              className={cn(
-                "flex items-center gap-2 text-primary font-black text-[10px] tracking-widest uppercase mt-6 group select-none",
-                isLoadingHistory && "opacity-50 pointer-events-none"
-              )}
+              variant="outline"
+              className="mt-6 w-full text-[10px] tracking-widest uppercase group"
             >
-              {isLoadingHistory ? 'Cargando...' : 'Ver análisis guardados'}
-              <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </button>
+              {isLoadingHistory ? (
+                'Cargando...'
+              ) : (
+                <>
+                  <History size={16} className="shrink-0" />
+                  Ver análisis guardados
+                </>
+              )}
+              <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform shrink-0" />
+            </Button>
           </motion.div>
         </div>
 
@@ -775,10 +783,10 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="relative rounded-[2.5rem] bg-surface-low border border-primary/5 overflow-hidden h-44 flex items-center justify-center bg-cover bg-center shadow-sm"
+            className="relative rounded-[2.5rem] bg-surface-low border border-primary/10 overflow-hidden h-44 flex items-center justify-center bg-cover bg-center shadow-lg"
             style={{ backgroundImage: 'url(/bg-health-network.png)' }}
           >
-            <div className="absolute inset-0 bg-white/50 backdrop-blur-[4px]"></div>
+            <div className="absolute inset-0 bg-surface/70 backdrop-blur-[6px]"></div>
             
             <div className="text-center space-y-3 px-10 relative z-10 w-full">
               {latestReport ? (
@@ -813,9 +821,28 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                   </p>
                 </>
               ) : (
-                <div className="space-y-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto">
-                    <Brain size={24} />
+                <div className="space-y-5">
+                  <div className="flex items-center justify-center gap-1.5 h-12 mx-auto mt-2">
+                    {[
+                      { h: ['40%', '80%', '40%'], d: 3.2, delay: 0 },
+                      { h: ['20%', '100%', '20%'], d: 3.8, delay: 0.4 },
+                      { h: ['60%', '100%', '60%'], d: 2.8, delay: 0.8 },
+                      { h: ['80%', '30%', '80%'], d: 3.5, delay: 0.2 },
+                      { h: ['30%', '70%', '30%'], d: 3.0, delay: 0.6 },
+                    ].map((anim, i) => (
+                      <motion.div
+                        key={i}
+                        className={cn("w-1.5 rounded-full", i === 2 ? "bg-primary" : "bg-primary/50")}
+                        animate={{ height: anim.h }}
+                        transition={{
+                          duration: anim.d,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: anim.delay,
+                        }}
+                        style={{ height: anim.h[0] }}
+                      />
+                    ))}
                   </div>
                   <div className="space-y-1">
                     <h4 className="text-lg font-display font-bold text-on-surface">Optimización de Salud con IA</h4>
@@ -839,10 +866,10 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               onClick={() => setView('preparation')}
               className="flex items-center gap-2 text-primary font-black text-[10px] tracking-widest uppercase mb-4 hover:translate-x-[-4px] transition-transform"
             >
-              <ArrowLeft size={14} />
+              <ChevronLeft size={14} />
               Volver
             </button>
-            <h1 className="text-[2.5rem] font-display font-black text-[#1A1A1A] leading-tight flex items-center gap-4">
+            <h1 className="text-[2.5rem] font-display font-black text-foreground leading-tight flex items-center gap-4">
               Historial de Informes IA
               <div className="px-4 py-1.5 bg-primary/10 rounded-full text-primary text-xs font-black tracking-widest uppercase">
                 {historicalReports.length} {historicalReports.length === 1 ? 'Informe' : 'Informes'}
@@ -853,8 +880,8 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         </header>
 
         {historicalReports.length === 0 ? (
-          <div className="bg-white rounded-[2.5rem] border border-border p-20 flex flex-col items-center text-center space-y-6">
-            <div className="w-20 h-20 bg-[#F8F7FB] rounded-3xl flex items-center justify-center text-on-surface-variant/40">
+          <div className="bg-surface-low rounded-[2.5rem] border border-border p-20 flex flex-col items-center text-center space-y-6">
+            <div className="w-20 h-20 bg-surface-low rounded-3xl flex items-center justify-center text-on-surface-variant/40">
               <Clock size={40} />
             </div>
             <div className="space-y-2">
@@ -871,7 +898,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               <motion.div 
                 key={report.id}
                 whileHover={{ y: -5 }}
-                className="bg-white rounded-[2rem] border border-border p-8 flex flex-col justify-between space-y-8 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all cursor-pointer group"
+                className="bg-surface-low rounded-[2rem] border border-border p-8 flex flex-col justify-between space-y-8 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all cursor-pointer group"
                 onClick={() => viewHistoricalReport(report)}
               >
                 <div className="space-y-4">
@@ -894,13 +921,13 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                     <span className="text-on-surface-variant/60 uppercase tracking-widest text-[9px]">Fiabilidad IA</span>
                     <span className="text-primary">{report.dataQuality}%</span>
                   </div>
-                  <div className="h-1.5 w-full bg-[#F8F7FB] rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-surface-low rounded-full overflow-hidden">
                     <div className="h-full bg-primary/60" style={{ width: `${report.dataQuality}%` }} />
                   </div>
                   
                   <div className="flex items-center justify-between pt-2">
                     {report.isComparative && (
-                      <div className="flex items-center gap-1.5 px-3 py-1 bg-[#EBF7F0] text-[#4CAF50] rounded-full text-[9px] font-black uppercase tracking-widest">
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-widest">
                         <TrendingUp size={10} />
                         Evolutivo
                       </div>
@@ -928,40 +955,40 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             onClick={() => setView(historicalReports.length > 0 ? 'history' : 'preparation')}
             className="flex items-center gap-2 text-primary font-black text-[10px] tracking-widest uppercase mb-4 hover:translate-x-[-4px] transition-transform"
           >
-            <ArrowLeft size={14} />
+            <ChevronLeft size={14} />
             Volver
           </button>
-          <h1 className="text-[2.5rem] font-display font-black text-[#1A1A1A] leading-tight tracking-tight">
+          <h1 className="text-[2.5rem] font-display font-black text-foreground leading-tight tracking-tight">
             Informe de Análisis Inteligente
           </h1>
-          <p className="text-[#6B6B6B] text-sm font-medium">
+          <p className="text-on-surface-variant text-sm font-medium">
             Generado el {prediction.createdAt ? new Date(prediction.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
       </header>
 
-      <div id="ai-report-content" className="space-y-8 bg-[#FCFBFF]">
+      <div id="ai-report-content" className="space-y-8 bg-background">
       {/* Hero Summary Card - matching image exactly */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-[#9C8ED9] rounded-[2.5rem] p-12 text-white overflow-hidden shadow-lg shadow-[#9C8ED9]/10"
+        className="relative bg-primary rounded-[2.5rem] p-12 text-white overflow-hidden shadow-lg shadow-primary/10"
       >
         {/* Subtle radial highlights for depth */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-[120px] -mr-[300px] -mt-[300px]" />
         
         <div className="relative z-10 space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-md border border-white/10">
             <Sparkles size={12} fill="white" />
             Resumen Ejecutivo
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-[2.8rem] font-display font-black leading-[1.1] tracking-tight max-w-2xl">
+            <h2 className="text-[2.8rem] font-display font-black leading-[1.1] tracking-tight max-w-2xl text-white">
               {prediction.title}
             </h2>
             
-            <p className="text-white/90 text-xl leading-[1.6] max-w-3xl font-medium">
+            <p className="text-white/95 text-xl leading-[1.6] max-w-3xl font-medium">
               {prediction.executiveSummary}
             </p>
           </div>
@@ -1003,7 +1030,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-[#6B6B6B] text-[13px] leading-relaxed font-medium">
+          <p className="text-on-surface-variant text-[13px] leading-relaxed font-medium">
             Predicción de estabilidad continua si se mantienen los hábitos actuales de hidratación y descanso.
           </p>
         </CardDesign>
@@ -1017,7 +1044,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                   stroke="currentColor"
                   strokeWidth="8"
                   fill="transparent"
-                  className="text-[#EFEFEF]"
+                  className="text-primary-foreground/80"
                 />
                 <motion.circle
                   cx="70" cy="70" r="62"
@@ -1029,18 +1056,18 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                   animate={{ strokeDashoffset: 390 - (390 * prediction.dataQuality / 100) }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
                   strokeLinecap="round"
-                  className="text-[#514295]"
+                  className="text-primary"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[2.2rem] font-display font-black text-[#1A1A1A] leading-none mb-0.5">{prediction.dataQuality}%</span>
-                <span className="text-[9px] font-black tracking-[0.1em] text-[#514295] uppercase">
+                <span className="text-[2.2rem] font-display font-black text-foreground leading-none mb-0.5">{prediction.dataQuality}%</span>
+                <span className="text-[9px] font-black tracking-[0.1em] text-primary uppercase">
                   {prediction.dataQuality >= 90 ? 'Excelente' : prediction.dataQuality >= 75 ? 'Óptimo' : prediction.dataQuality >= 50 ? 'Aceptable' : 'Baja'}
                 </span>
               </div>
             </div>
             
-            <p className="text-[#6B6B6B] text-[13px] leading-relaxed text-center max-w-[280px] mt-10 font-medium">
+            <p className="text-on-surface-variant text-[13px] leading-relaxed text-center max-w-[280px] mt-10 font-medium">
               Al haber registrado estrictamente el 100% de la matriz exigida (10 sesiones), la muestra adquiere una fiabilidad de Clase A (Gold Standard) para este análisis.
             </p>
           </div>
@@ -1051,10 +1078,10 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start pt-4">
         <div className="md:col-span-7 space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <span className="p-1 text-[#514295] bg-[#F3F1FB] rounded-lg">
+            <span className="p-1 text-primary bg-primary/10 rounded-lg">
               <Activity size={18} />
             </span>
-            <h3 className="text-[1.3rem] font-display font-bold text-[#1A1A1A]">Hallazgos Clave</h3>
+            <h3 className="text-[1.3rem] font-display font-bold text-foreground">Hallazgos Clave</h3>
           </div>
           
           <div className="space-y-4">
@@ -1066,19 +1093,19 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * i }}
                   key={i} 
-                  className="flex gap-6 p-6 bg-white rounded-[1.5rem] border border-[#F5F5F5] shadow-sm hover:shadow-md transition-shadow group cursor-default"
+                  className="flex gap-6 p-6 bg-surface-low rounded-[1.5rem] border border-border shadow-sm hover:shadow-md transition-shadow group cursor-default"
                 >
                   <div className={cn(
                     "shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105",
-                    f.type === 'success' ? "bg-[#EBF7F0] text-[#4CAF50]" : 
-                    f.type === 'warning' ? "bg-[#FFF4F2] text-[#F36D61]" : 
-                    "bg-[#F3F1FB] text-[#7E6FD3]"
+                    f.type === 'success' ? "bg-success/10 text-success" : 
+                    f.type === 'warning' ? "bg-destructive/10 text-destructive" : 
+                    "bg-primary/10 text-primary"
                   )}>
                     <Icon size={22} />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-[1.1rem] font-display font-bold text-[#1A1A1A]">{f.title}</h4>
-                    <p className="text-[#6B6B6B] text-sm leading-relaxed font-medium">{f.desc}</p>
+                    <h4 className="text-[1.1rem] font-display font-bold text-foreground">{f.title}</h4>
+                    <p className="text-on-surface-variant/80 text-sm leading-relaxed font-medium">{f.desc}</p>
                   </div>
                 </motion.div>
               );
@@ -1089,30 +1116,30 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="md:col-span-5 bg-[#F4F1FB] rounded-[2.5rem] p-10 border border-[#EDEAFA]"
+          className="md:col-span-5 bg-surface-low rounded-[2.5rem] p-10 border border-border"
         >
           <div className="flex items-center gap-3 mb-8">
-            <Lightbulb className="text-[#514295]" size={22} fill="#514295" />
-            <h3 className="text-[1.3rem] font-display font-bold text-[#1A1A1A]">Recomendación IA</h3>
+            <Lightbulb className="text-primary" size={22} fill="currentColor" />
+            <h3 className="text-[1.3rem] font-display font-bold text-foreground">Recomendación IA</h3>
           </div>
           
-          <div className="bg-white rounded-[1.5rem] p-10 mb-10 shadow-sm border border-white">
-            <p className="text-[#1A1A1A] font-body font-medium leading-[1.6] text-[1.1rem] text-center italic">
+          <div className="bg-primary/5 rounded-[1.5rem] p-10 mb-10 shadow-inner border border-primary/10">
+            <p className="text-on-surface font-body font-medium leading-[1.6] text-[1.1rem] text-center italic">
               "{prediction.recommendation}"
             </p>
           </div>
 
           <div className="space-y-5 px-4">
-            <div className="flex items-center gap-4 text-[#6B6B6B] group">
-              <Activity size={16} className="text-[#514295]/40 transition-colors group-hover:text-[#514295]" />
+            <div className="flex items-center gap-4 text-on-surface-variant group">
+              <Activity size={16} className="text-primary/40 transition-colors group-hover:text-primary" />
               <p className="text-[13px] font-medium leading-none">
-                Impacto estimado: <span className="text-[#1A1A1A] font-bold">{prediction.impact}</span>
+                Impacto estimado: <span className="text-foreground font-bold">{prediction.impact}</span>
               </p>
             </div>
-            <div className="flex items-center gap-4 text-[#6B6B6B] group">
-              <Calendar size={16} className="text-[#514295]/40 transition-colors group-hover:text-[#514295]" />
+            <div className="flex items-center gap-4 text-on-surface-variant group">
+              <Calendar size={16} className="text-primary/40 transition-colors group-hover:text-primary" />
               <p className="text-[13px] font-medium leading-none">
-                Siguiente revisión: <span className="text-[#1A1A1A] font-bold">{prediction.nextReview}</span>
+                Siguiente revisión: <span className="text-foreground font-bold">{prediction.nextReview}</span>
               </p>
             </div>
           </div>
@@ -1121,11 +1148,11 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
       </div>
 
       {/* Footer Actions - Matching Buttons in image */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 py-12 border-t border-[#F0F0F0] mt-16 pb-24">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 py-12 border-t border-border/50 mt-16 pb-24">
         <Button 
           variant="primary"
           size="lg"
-          className="rounded-full px-10 sm:px-12 bg-linear-to-br from-[#6750A5] to-[#BBA2FD] text-white transition-all font-black tracking-widest text-[10px] sm:text-xs uppercase flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.98]"
+          className="rounded-full px-10 sm:px-12 bg-linear-to-br from-primary to-secondary text-primary-foreground transition-all font-black tracking-widest text-[10px] sm:text-xs uppercase flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.98]"
           onClick={handleDownloadPDF}
           isLoading={isDownloading}
         >
@@ -1135,7 +1162,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         <Button 
           variant="secondary"
           size="lg"
-          className="rounded-full px-10 sm:px-12 bg-[#E9E6F0] text-[#1A1A1A] transition-all font-black tracking-widest text-[10px] sm:text-xs uppercase flex items-center justify-center shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] border-none"
+          className="rounded-full px-10 sm:px-12 bg-surface-highest text-foreground transition-all font-black tracking-widest text-[10px] sm:text-xs uppercase flex items-center justify-center shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] border-none"
           onClick={() => setIsShareModalOpen(true)}
         >
           <Share2 className="mr-3" size={20} />
@@ -1154,11 +1181,11 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
 function CardDesign({ title, badge, children }: { title: string, badge?: string, children: React.ReactNode }) {
   return (
-    <div className="bg-[#F8F7FB] rounded-[2.5rem] p-10 border border-[#F0EDF7] flex flex-col transition-all hover:shadow-sm">
+    <div className="bg-surface-low rounded-[2.5rem] p-10 border border-border flex flex-col transition-all hover:shadow-sm">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[1.2rem] font-display font-bold text-[#1A1A1A]">{title}</h3>
+        <h3 className="text-[1.2rem] font-display font-bold text-foreground">{title}</h3>
         {badge && (
-          <div className="px-3 py-1.5 bg-[#E8E4F5] text-[#514295] text-[9px] font-black tracking-widest rounded-full uppercase">
+          <div className="px-3 py-1.5 bg-surface-highest text-primary text-[9px] font-black tracking-widest rounded-full uppercase">
             {badge}
           </div>
         )}

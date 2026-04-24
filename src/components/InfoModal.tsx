@@ -176,8 +176,13 @@ export function InfoModal({ onClose }: InfoModalProps) {
           </section>
         </div>
 
-        <div className="p-6">
-          <Button className="w-full h-14 rounded-full" onClick={onClose}>
+        <div className="p-6 bg-surface-low/50 sm:bg-transparent mt-auto sticky bottom-0">
+          <Button 
+            size="lg"
+            className="w-full h-14 sm:h-16 rounded-full text-xs sm:text-sm font-black tracking-[0.2em] uppercase bg-linear-to-br from-primary to-primary-container text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 border-none" 
+            onClick={onClose}
+          >
+            <CheckCircle2 className="w-5 h-5" />
             Entendido
           </Button>
         </div>

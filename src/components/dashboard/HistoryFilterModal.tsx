@@ -2,7 +2,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
-import { X, LayoutList, Circle, Activity, SlidersHorizontal, CheckCircle2, Calendar, Clock, RefreshCw } from "lucide-react";
+import { X, LayoutList, Circle, Activity, SlidersHorizontal, CheckCircle2, Calendar, Clock, RefreshCw, Check, Sun, Moon } from "lucide-react";
 
 export interface HistoryFilters {
   quickSelector: string;
@@ -237,23 +237,27 @@ export function HistoryFilterModal({ onClose, onApply, initialFilters, available
               </div>
               <div className="bg-surface-high p-2 rounded-[1.25rem] flex gap-2">
                 {[
-                  { id: 'all', label: 'AMBAS' },
-                  { id: 'morning', label: 'MAÑANA' },
-                  { id: 'evening', label: 'NOCHE' }
-                ].map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => setSlot(t.id as any)}
-                    className={cn(
-                      "flex-1 py-4 text-xs font-black tracking-widest rounded-xl transition-all border-none",
-                      slot === t.id 
-                        ? "bg-white text-primary shadow-sm" 
-                        : "text-on-surface-variant hover:text-on-surface"
-                    )}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+                  { id: 'all', label: 'AMBAS', icon: Activity },
+                  { id: 'morning', label: 'MAÑANA', icon: Sun },
+                  { id: 'evening', label: 'NOCHE', icon: Moon }
+                ].map(t => {
+                  const Icon = t.icon;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setSlot(t.id as any)}
+                      className={cn(
+                        "flex-1 py-4 text-xs font-black tracking-widest rounded-xl transition-all border-none flex items-center justify-center gap-2",
+                        slot === t.id 
+                          ? "bg-surface-lowest text-primary shadow-sm" 
+                          : "text-on-surface-variant hover:text-on-surface"
+                      )}
+                    >
+                      <Icon size={14} className={cn(slot === t.id ? "text-primary" : "text-on-surface-variant/40")} />
+                      {t.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -272,14 +276,16 @@ export function HistoryFilterModal({ onClose, onApply, initialFilters, available
           <button 
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-8 py-4 text-xs font-black tracking-widest uppercase text-on-surface-variant hover:bg-surface-high rounded-full transition-colors order-last sm:order-none"
+            className="w-full sm:w-auto px-8 py-4 text-xs font-black tracking-widest uppercase text-on-surface-variant hover:bg-surface-high rounded-full transition-colors order-last sm:order-none flex items-center justify-center gap-2"
           >
+            <X className="text-sm" />
             Cancelar
           </button>
           <Button 
-            className="w-full sm:flex-1 bg-primary text-white rounded-full py-6 px-12 text-xs font-black tracking-widest uppercase transition-all shadow-xl shadow-primary/25 hover:scale-105 active:scale-95"
+            className="w-full sm:flex-1 bg-primary text-white rounded-full py-6 px-12 text-xs font-black tracking-widest uppercase transition-all shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
             onClick={handleApply}
           >
+            <Check className="text-sm" />
             Aplicar Filtros
           </Button>
         </div>

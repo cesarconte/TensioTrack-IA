@@ -393,16 +393,16 @@ export function SettingsPage() {
   return (
     <div className="flex flex-col gap-6 md:gap-8 min-h-[calc(100vh-12rem)] animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Top Navigation Tabs (Desktop/Tablet) - Adaptive MD3 Rail-style Header */}
+      {/* Top Navigation Tabs (Desktop/Tablet & Mobile) - Adaptive MD3 Rail-style Header */}
       <TooltipProvider delayDuration={0}>
-        <div className="hidden sm:flex items-center justify-between w-full border-b border-surface-highest/10 pt-1 pb-4 px-2 md:px-4 gap-2">
+        <div className="flex items-center justify-between w-full border-b border-surface-highest/10 pt-1 pb-4 px-2 md:px-4 gap-2">
           {/* Left: Global Back Action */}
           <div className="flex items-center">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button 
                   onClick={() => setActiveTab('dashboard')}
-                  className="flex items-center justify-center gap-2 px-3 md:px-4 h-11 rounded-full text-sm font-black text-on-surface-variant hover:bg-surface-high transition-all active:scale-95 group"
+                  className="flex items-center justify-center gap-2 px-3 md:px-4 h-12 rounded-full text-sm font-black text-on-surface-variant hover:bg-surface-high transition-all active:scale-95 group"
                   aria-label="Volver al Panel Principal"
                 >
                   <ArrowLeft className="text-[20px] group-hover:-translate-x-0.5 transition-transform" />
@@ -414,7 +414,7 @@ export function SettingsPage() {
           </div>
 
           {/* Center: Section Navigation */}
-          <div className="flex items-center p-1.5 bg-surface-low rounded-[2rem] gap-1 shadow-inner border border-surface-highest/5">
+          <div className="flex items-center p-1.5 bg-surface-low rounded-[2rem] gap-1 shadow-inner border border-surface-highest/5 overflow-x-auto scrollbar-hide snap-x">
             {sections.map((section) => {
               const isActive = activeSection === section.id;
               const Icon = section.icon;
@@ -427,7 +427,7 @@ export function SettingsPage() {
                     <button
                       onClick={() => setActiveSection(section.id)}
                       className={cn(
-                        "flex items-center justify-center transition-all duration-300 relative h-10 rounded-full active:scale-95",
+                        "flex items-center justify-center transition-all duration-300 relative h-12 rounded-full active:scale-95 snap-center shrink-0",
                         isActive 
                           ? "bg-primary text-white shadow-md shadow-primary/20 px-4 md:px-6 ring-2 ring-primary/20" 
                           : "text-on-surface-variant hover:bg-surface-high px-3 md:px-4"
@@ -436,17 +436,17 @@ export function SettingsPage() {
                     >
                       <Icon className={cn("text-[20px] transition-transform", isActive ? "scale-105" : "scale-100")} strokeWidth={isActive ? 2.5 : 2} />
                       
-                      {/* MD3 Logic: Active item always shows text on tablet/desktop. Others show text only on larger screens. */}
+                      {/* MD3 Logic: Active item always shows text on tablet/desktop. Others show text only on larger screens. On mobile, all items show text if space allows, but rely on horizontal scroll. */}
                       <span className={cn(
                         "whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out",
                         isActive 
-                          ? "ml-2 opacity-100 max-w-[120px] font-bold text-xs md:text-sm" // Fully visible when active
-                          : "ml-0 opacity-0 max-w-0 md:ml-2 md:opacity-100 md:max-w-[120px] lg:max-w-none text-xs md:text-sm" // Hidden on small tablet, visible on md (tablet landscape) and desktop
+                          ? "ml-1.5 md:ml-2 opacity-100 max-w-[120px] font-bold text-[11px] sm:text-xs md:text-sm" // Fully visible when active
+                          : "ml-0 opacity-0 max-w-0 sm:ml-2 sm:opacity-100 sm:max-w-[120px] lg:max-w-none text-[11px] sm:text-xs md:text-sm" // Hidden on mobile unless active, visible on sm (tablet) and desktop
                       )}>
                         {isActive ? shortLabel : (
                           <>
                             <span className="hidden xl:inline">{section.label}</span>
-                            <span className="hidden md:inline xl:hidden">{shortLabel}</span>
+                            <span className="hidden sm:inline xl:hidden">{shortLabel}</span>
                           </>
                         )}
                       </span>
@@ -466,7 +466,7 @@ export function SettingsPage() {
               <TooltipTrigger asChild>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center justify-center gap-2 px-3 md:px-5 h-11 rounded-full text-xs md:text-sm font-bold text-destructive hover:bg-destructive/10 transition-all active:scale-95"
+                  className="flex items-center justify-center gap-2 px-3 md:px-5 h-12 rounded-full text-xs md:text-sm font-bold text-destructive hover:bg-destructive/10 transition-all active:scale-95"
                   aria-label="Cerrar Sesión"
                 >
                   <LogOut className="text-[20px]" />
@@ -479,49 +479,7 @@ export function SettingsPage() {
         </div>
       </TooltipProvider>
 
-      {/* Mobile Bottom Navigation (Portrait only) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-[50] bg-surface-low/95 backdrop-blur-xl pb-safe shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-        <div className="grid grid-cols-5 h-20 w-full">
-          {sections.map((section) => {
-            const IconComponent = section.icon;
-            const isActive = activeSection === section.id;
-            return (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 transition-all relative active:scale-90",
-                  isActive ? "text-primary" : "text-on-surface-variant"
-                )}
-                aria-label={section.label}
-              >
-                <div className={cn(
-                  "relative w-16 h-8 rounded-full flex items-center justify-center transition-all duration-300",
-                  isActive ? "bg-primary/10" : "bg-transparent hover:bg-surface-low"
-                )}>
-                  <IconComponent className={cn("text-[24px] transition-transform", isActive ? "scale-110" : "scale-100")} />
-                </div>
-                <span className={cn(
-                  "text-[10px] font-bold tracking-tight transition-all truncate w-full px-1 text-center",
-                  isActive ? "font-black" : "font-medium"
-                )}>
-                  {section.id === 'profile' ? 'Salud' : section.id === 'about' ? 'Info' : section.label}
-                </span>
-              </button>
-            );
-          })}
-          <button
-            onClick={handleLogout}
-            className="flex flex-col items-center justify-center gap-1 text-destructive active:scale-90 transition-all"
-            aria-label="Cerrar Sesión"
-          >
-            <div className="w-16 h-8 rounded-full flex items-center justify-center hover:bg-destructive/10 transition-all">
-              <LogOut className="text-[24px]" />
-            </div>
-            <span className="text-[10px] font-bold tracking-tight">Salir</span>
-          </button>
-        </div>
-      </nav>
+      {/* Mobile Bottom Navigation (Portrait only) REMOVED - Using unified top rail */}
 
       {/* Main Content Area */}
       <div className="flex-1 pb-32 sm:pb-0">
@@ -578,7 +536,7 @@ export function SettingsPage() {
                   <button 
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingAvatar}
-                    className="absolute bottom-1 right-1 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-[#2D2A32] transform transition-transform hover:scale-110 active:scale-95 z-20 border border-surface-highest/10"
+                    className="absolute bottom-1 right-1 w-12 h-12 bg-surface-lowest rounded-2xl shadow-xl flex items-center justify-center text-foreground transform transition-transform hover:scale-110 active:scale-95 z-20 border border-border/50"
                     aria-label="Subir foto de perfil"
                   >
                     <Camera size={20} strokeWidth={2.5} />
@@ -651,7 +609,7 @@ export function SettingsPage() {
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
                             sex === s 
-                              ? "bg-white shadow-sm font-bold text-primary" 
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -665,7 +623,7 @@ export function SettingsPage() {
                 {/* Age, Weight, Height, BMI Grid - 4x1 on Desktop, Responsive 2x2/1x1 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
                   {/* Edad Card */}
-                  <div className="bg-white rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
+                  <div className="bg-card rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
                     <div className="flex items-start justify-between mb-6">
                       <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:rotate-12">
                         <Cake size={22} strokeWidth={2.5} />
@@ -688,7 +646,7 @@ export function SettingsPage() {
                   </div>
 
                   {/* Weight Card */}
-                  <div className="bg-white rounded-[2.5rem] p-6 flex flex-col justify-between shadow-sm transition-all duration-300 hover:shadow-xl h-full group relative overflow-hidden active:scale-[0.98]">
+                  <div className="bg-card rounded-[2.5rem] p-6 flex flex-col justify-between shadow-sm transition-all duration-300 hover:shadow-xl h-full group relative overflow-hidden active:scale-[0.98]">
                     <div className="flex items-start justify-between mb-6">
                       <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:rotate-12">
                         <Scale size={22} strokeWidth={2.5} />
@@ -714,7 +672,7 @@ export function SettingsPage() {
                   </div>
 
                   {/* Altura Card */}
-                  <div className="bg-white rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
+                  <div className="bg-card rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
                     <div className="flex items-start justify-between mb-6">
                       <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:rotate-12">
                         <Ruler size={22} strokeWidth={2.5} />
@@ -736,7 +694,7 @@ export function SettingsPage() {
                   </div>
 
                   {/* IMC Card */}
-                  <div className="bg-white rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
+                  <div className="bg-card rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl shadow-sm h-full group relative overflow-hidden active:scale-[0.98]">
                     <div className="flex items-start justify-between mb-6">
                       <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-sm shrink-0 transition-transform group-hover:rotate-12">
                         <Activity size={22} strokeWidth={2.5} />
@@ -775,7 +733,7 @@ export function SettingsPage() {
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
                             activityLevel === level 
-                              ? "bg-white shadow-sm font-bold text-primary" 
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -795,7 +753,7 @@ export function SettingsPage() {
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
                             alcoholConsumption === level 
-                              ? "bg-white shadow-sm font-bold text-primary" 
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -817,7 +775,7 @@ export function SettingsPage() {
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
                             saltIntake === level 
-                              ? "bg-white shadow-sm font-bold text-primary" 
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -837,7 +795,7 @@ export function SettingsPage() {
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
                             stressLevel === level 
-                              ? "bg-white shadow-sm font-bold text-primary" 
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -859,7 +817,7 @@ export function SettingsPage() {
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
                             sleepQuality === level 
-                              ? "bg-white shadow-sm font-bold text-primary" 
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -879,7 +837,7 @@ export function SettingsPage() {
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
                             caffeineIntake === level 
-                              ? "bg-white shadow-sm font-bold text-primary" 
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -938,7 +896,7 @@ export function SettingsPage() {
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
                             unitSystem === sys 
-                              ? "bg-white shadow-sm font-bold text-primary" 
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -1317,7 +1275,7 @@ export function SettingsPage() {
                 </div>
 
                 {/* Account Security Card (Firebase) */}
-                <div className="bg-surface-low rounded-[2.5rem] p-8 space-y-8">
+                <div className="bg-surface-low rounded-[2.5rem] p-8 space-y-8 shadow-sm">
                   <h4 className="text-xl font-display font-black text-foreground">Seguridad de la Cuenta</h4>
                   <p className="text-xs text-on-surface-variant font-medium">Su cuenta está protegida por los sistemas de seguridad de Google.</p>
                   

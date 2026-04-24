@@ -2,7 +2,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
-import { Filter, Calendar, ChevronRight, X, Search } from "lucide-react";
+import { Filter, Calendar, ChevronRight, X, Search, Check } from "lucide-react";
 import { Cycle } from "../../types";
 
 interface PredictionsFilterModalProps {
@@ -180,15 +180,17 @@ export function PredictionsFilterModal({
         <div className="p-8 border-t border-border bg-surface-low flex gap-4">
           <Button 
             variant="secondary"
-            className="flex-1 rounded-full py-6 font-bold text-xs uppercase tracking-widest"
+            className="flex-1 rounded-full py-6 font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2"
             onClick={onClose}
           >
+            <X size={16} />
             Cancelar
           </Button>
           <Button 
-            className="flex-[2] rounded-full py-6 font-black text-xs uppercase tracking-widest"
+            className="flex-[2] rounded-full py-6 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
             onClick={handleApply}
           >
+            <Check size={16} />
             Confirmar Selección
           </Button>
         </div>

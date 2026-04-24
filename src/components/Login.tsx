@@ -57,11 +57,11 @@ export function Login() {
               La herramienta profesional para el seguimiento de su presión arterial, diseñada para ser sencilla, segura y precisa.
             </p>
             <div className="flex gap-4 pt-4">
-              <div className="px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center gap-3">
+              <div className="px-6 py-3 bg-surface-highest/10 backdrop-blur-md rounded-2xl border border-border/20 flex items-center gap-3">
                 <Shield className="text-[20px] text-success" />
                 <span className="text-sm font-bold">Datos Cifrados</span>
               </div>
-              <div className="px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center gap-3">
+              <div className="px-6 py-3 bg-surface-highest/10 backdrop-blur-md rounded-2xl border border-border/20 flex items-center gap-3">
                 <CheckCircle2 className="text-[20px] text-primary-container" />
                 <span className="text-sm font-bold">Protocolo AMPA</span>
               </div>

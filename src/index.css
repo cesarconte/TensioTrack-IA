@@ -147,15 +147,15 @@
   --popover: #11141D;
   --popover-foreground: #F1F5F9;
   
-  --primary: #6322E0; 
+  --primary: #854CF4; 
   --primary-foreground: #FFFFFF;
-  --primary-container: rgba(99, 34, 224, 0.15);
+  --primary-container: rgba(133, 76, 244, 0.15);
   
-  --secondary: #7C3AED;
-  --secondary-foreground: #F8FAFC;
+  --secondary: #904CF4;
+  --secondary-foreground: #FFFFFF;
   
   --muted: #1A1F2E;
-  --muted-foreground: #94A3B8;
+  --muted-foreground: #CBD5E1; /* Increased contrast for readability */
   
   --accent: #1E293B;
   --accent-foreground: #F8FAFC;
@@ -167,15 +167,15 @@
   --warning: #FBBF24;
   --info: #60A5FA;
   
-  --border: rgba(255, 255, 255, 0.06);
-  --input: rgba(255, 255, 255, 0.06);
-  --ring: #6322E0;
+  --border: rgba(255, 255, 255, 0.12); /* Slightly stronger border for definition */
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #854CF4;
 
-  /* Custom: In Dark Mode, the "low surface" (inner cards) as per IMAGE is a very light blue/lavender tint for high visibility */
-  --surface-low: #C3DAFF;
-  --surface-high: #1A1F2E;
-  --surface-highest: #1E293B;
-  --surface-lowest: #11141D;
+  /* Custom: Surfaces updated to deep lavender/blue tints to maintain AAA contrast while preserving the aesthetic */
+  --surface-low: #161B2B; /* Deep tinted background, legible with white text */
+  --surface-high: #1D2438;
+  --surface-highest: #262F47;
+  --surface-lowest: #0F121A;
 }
 
 body {
@@ -247,9 +247,13 @@ h1, h2, h3, h4, h5, h6, .font-display {
   display: none;
 }
 
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.no-scrollbar, .scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .markdown-body {

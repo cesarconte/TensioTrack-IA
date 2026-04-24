@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
 import { Cycle, DayStats } from "../../types";
-import { X, Check, BrainCircuit, ArrowLeftRight, ArrowRightLeft, Activity, TrendingUp, Utensils, Moon } from "lucide-react";
+import { X, Check, BrainCircuit, ArrowLeftRight, ArrowRightLeft, Activity, TrendingUp, Utensils, Moon, Calendar, Clock } from "lucide-react";
 
 export interface AnalysisFilters {
   cycleId: string; // "current" or startDate
@@ -145,7 +145,7 @@ export function AnalysisFilterModal({
 
           <div className="space-y-6">
             {/* Hierarchical Filter Card */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-border shadow-sm">
+            <div className="bg-surface-low rounded-[2.5rem] p-8 border border-border shadow-sm">
               <div className="space-y-8">
                 {/* Year Selector (Top Level Tabs) */}
                 <div>
@@ -163,12 +163,13 @@ export function AnalysisFilterModal({
                           if (firstMonth) setSelectedMonth(firstMonth);
                         }}
                         className={cn(
-                          "px-6 py-2 rounded-full text-xs font-black tracking-widest uppercase transition-all",
+                          "px-6 py-2 rounded-full text-xs font-black tracking-widest uppercase transition-all flex items-center gap-2",
                           selectedYear === year 
                             ? "bg-primary text-white shadow-lg shadow-primary/20" 
                             : "bg-surface-high text-on-surface-variant hover:text-on-surface"
                         )}
                       >
+                        <Clock size={12} className={cn(selectedYear === year ? "text-white" : "text-on-surface-variant/40")} />
                         {year}
                       </button>
                     ))}
@@ -190,12 +191,13 @@ export function AnalysisFilterModal({
                           if (firstInMonth) setSelectedCycleId(firstInMonth.id);
                         }}
                         className={cn(
-                          "px-6 py-4 rounded-2xl text-sm font-bold transition-all border",
+                          "px-6 py-4 rounded-2xl text-sm font-bold transition-all border flex items-center gap-3",
                           selectedMonth === m 
-                            ? "bg-white border-primary text-primary shadow-sm" 
+                            ? "bg-surface-lowest border-primary text-primary shadow-sm" 
                             : "bg-surface-high/30 border-transparent text-on-surface-variant hover:border-border"
                         )}
                       >
+                        <Calendar size={16} className={cn(selectedMonth === m ? "text-primary" : "text-on-surface-variant/40")} />
                         {getMonthName(m)}
                       </button>
                     ))}
@@ -276,7 +278,7 @@ export function AnalysisFilterModal({
                   onClick={() => setIsComparative(!isComparative)}
                   className={cn(
                     "flex items-center gap-2 p-3 rounded-2xl border transition-all select-none group",
-                    isComparative ? "bg-primary text-white border-primary" : "bg-white border-border text-on-surface-variant hover:bg-surface-high"
+                    isComparative ? "bg-primary text-white border-primary" : "bg-surface-low border-border text-on-surface-variant hover:bg-surface-high"
                   )}
                 >
                   {isComparative ? <ArrowLeftRight className="text-[18px]" /> : <ArrowRightLeft className="text-[18px]" />}
@@ -302,7 +304,7 @@ export function AnalysisFilterModal({
                       "flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 sm:gap-3 p-4 rounded-2xl text-center sm:text-left border-none transition-all min-h-[100px] sm:min-h-0",
                       healthFocus === focus.id
                         ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
-                        : "bg-white text-on-surface-variant hover:bg-surface-high shadow-sm border border-border/10"
+                        : "bg-surface-low text-on-surface-variant hover:bg-surface-high shadow-sm border border-border/10"
                     )}
                   >
                     <IconComp className="text-[20px] sm:text-[18px] opacity-80" />
@@ -321,14 +323,16 @@ export function AnalysisFilterModal({
           <button 
             type="button"
             onClick={onClose}
-            className="flex-1 py-4 text-xs font-black tracking-widest uppercase text-on-surface-variant hover:bg-surface-high rounded-full transition-colors"
+            className="flex-1 py-4 text-xs font-black tracking-widest uppercase text-on-surface-variant hover:bg-surface-high rounded-full transition-colors flex items-center justify-center gap-2"
           >
+            <X size={16} />
             Cerrar
           </button>
           <Button 
-            className="flex-[2] bg-primary text-white rounded-full py-6 px-12 text-xs font-black tracking-widest uppercase transition-all shadow-xl shadow-primary/25 hover:scale-105 active:scale-95"
+            className="flex-[2] bg-primary text-white rounded-full py-6 px-12 text-xs font-black tracking-widest uppercase transition-all shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
             onClick={handleApply}
           >
+            <Check size={16} />
             Aplicar Configuración
           </Button>
         </div>

@@ -29,7 +29,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "inline-flex items-center justify-center rounded-full font-bold transition-all duration-300 ease-[cubic-bezier(0,0,0,1)] hover:scale-[1.02] active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none disabled:scale-100 gap-2 cursor-pointer",
+          "inline-flex items-center justify-center rounded-full font-bold whitespace-nowrap transition-all duration-300 ease-[cubic-bezier(0,0,0,1)] hover:scale-[1.02] active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none disabled:scale-100 gap-2 cursor-pointer",
           variants[variant],
           sizes[size],
           className

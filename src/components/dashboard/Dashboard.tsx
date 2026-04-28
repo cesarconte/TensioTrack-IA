@@ -146,16 +146,16 @@ const AnalysisCard = ({
 
 export function Dashboard() {
   const { data: dashboard, isLoading } = useDashboard();
-  const { 
-    user, 
-    isDarkMode, 
-    setReadingFormOpen, 
-    setInfoModalOpen,
-    unitSystem,
-    autoBmi,
-    showTrends,
-    measurementFrequency
-  } = useAppStore();
+  
+  // Atomic Selectors for Performance (O(1) renders)
+  const user = useAppStore(s => s.user);
+  const setReadingFormOpen = useAppStore(s => s.setReadingFormOpen);
+  const setInfoModalOpen = useAppStore(s => s.setInfoModalOpen);
+  const unitSystem = useAppStore(s => s.unitSystem);
+  const autoBmi = useAppStore(s => s.autoBmi);
+  const showTrends = useAppStore(s => s.showTrends);
+  const measurementFrequency = useAppStore(s => s.measurementFrequency);
+  const isDarkMode = useAppStore(s => s.isDarkMode);
   const [chartFilter, setChartFilter] = React.useState<'both' | 'pas' | 'pad'>('both');
   const [chartPeriod, setChartPeriod] = React.useState<'today' | 'period' | '15d' | 'month'>('month');
   const [finalPeriod, setFinalPeriod] = React.useState<'period' | 'fortnight' | 'month' | 'quarter' | 'semester' | 'year' | 'total'>('month');

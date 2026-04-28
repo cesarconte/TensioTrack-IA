@@ -273,7 +273,12 @@ export const useDashboard = () => {
     queryKey: ['dashboard', auth.currentUser?.uid],
     enabled: !!auth.currentUser,
     queryFn: async () => {
-      const allReadings = await firebaseService.getReadings();
+      // 6-Month Temporal Boundary for Dashboard Performance
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const dateFrom = sixMonthsAgo.toISOString().split('T')[0];
+
+      const allReadings = await firebaseService.getReadings({ dateFrom });
 
       // Group readings by date and slot
       const readingsByDate: Record<string, Record<'morning' | 'evening', Reading[]>> = {};

@@ -372,7 +372,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
       <div className="grid grid-cols-1 gap-6 lg:gap-8 items-stretch">
         
         {/* Resumen Global (Full width) */}
-        <Card className="bg-surface shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border-border/10 rounded-[2rem] p-8 lg:p-10 flex flex-col justify-center overflow-hidden">
+        <Card className="@container bg-surface shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border-border/10 rounded-[2rem] p-8 lg:p-10 flex flex-col justify-center overflow-hidden">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <BarChart3 size={20} />
@@ -380,14 +380,14 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
             <h3 className="text-xl font-display font-black text-foreground whitespace-nowrap">Resumen Global</h3>
           </div>
 
-          <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-10 xl:gap-6 2xl:gap-10">
-            <div className="flex flex-col sm:flex-row items-start lg:items-center gap-12 sm:gap-16 xl:gap-8 2xl:gap-16 w-full xl:w-auto relative min-w-0">
+          <div className="flex flex-col @4xl:flex-row items-start @4xl:items-center justify-between gap-10 @4xl:gap-6 @6xl:gap-10">
+            <div className="flex flex-col sm:flex-row items-start lg:items-center gap-12 sm:gap-16 @4xl:gap-8 @6xl:gap-16 w-full @4xl:w-auto relative min-w-0">
               <div className="flex flex-col gap-6 sm:gap-10 min-w-0 sm:min-w-[140px] w-full sm:w-auto">
                 <p className="text-[11px] font-bold text-on-surface-variant/60 uppercase tracking-widest leading-none shrink-0">
                   Promedio Tensión<br className="hidden sm:block" /> Arterial
                 </p>
                 <div className="flex items-baseline gap-2 relative">
-                  <span className="text-5xl sm:text-6xl lg:text-7xl xl:text-5xl 2xl:text-6xl font-black font-display tracking-tighter text-foreground whitespace-nowrap shrink-0">
+                  <span className="text-5xl sm:text-6xl lg:text-7xl @4xl:text-5xl @6xl:text-6xl font-black font-display tracking-tighter text-foreground whitespace-nowrap shrink-0">
                     {activeCycle?.finalAverage ? `${activeCycle.finalAverage.systolic}/${activeCycle.finalAverage.diastolic}` : '--/--'}
                   </span>
                   <span className="text-xs sm:text-sm font-bold text-on-surface-variant/40 tracking-widest uppercase mb-2 shrink-0">mmHg</span>
@@ -413,7 +413,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
                   Promedio<br className="hidden sm:block" /> Frecuencia Cardíaca
                 </p>
                 <div className="flex items-baseline gap-2 relative">
-                  <span className="text-5xl sm:text-6xl lg:text-7xl xl:text-5xl 2xl:text-6xl font-black font-display tracking-tighter text-foreground whitespace-nowrap shrink-0">
+                  <span className="text-5xl sm:text-6xl lg:text-7xl @4xl:text-5xl @6xl:text-6xl font-black font-display tracking-tighter text-foreground whitespace-nowrap shrink-0">
                     {activeCycle?.finalAverage?.heartRate || '--'}
                   </span>
                   <span className="text-xs sm:text-sm font-bold text-on-surface-variant/40 tracking-widest uppercase mb-2 shrink-0">PPM</span>
@@ -433,7 +433,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
               </div>
             </div>
 
-            <div className="shrink-0 bg-primary/5 rounded-[2.5rem] w-full xl:w-auto xl:flex-1 xl:max-w-[320px] min-h-[180px] h-auto xl:h-[240px] flex items-center justify-center border border-primary/10 py-6 relative overflow-hidden">
+            <div className="shrink-0 bg-primary/5 rounded-[2.5rem] w-full @4xl:w-auto @4xl:flex-1 @4xl:max-w-[320px] min-h-[180px] h-auto @4xl:h-[240px] flex items-center justify-center border border-primary/10 py-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-linear-to-b from-transparent to-primary/5 rounded-[2.5rem]" />
                <CircularProgress status={globalStyle} />
             </div>

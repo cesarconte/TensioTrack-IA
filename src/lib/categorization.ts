@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { firebaseService } from "./api";
 
 export const categorizeNote = async (note: string | null | undefined): Promise<string | null> => {
   if (!note || note.trim() === '') return null;
@@ -15,6 +16,10 @@ export const categorizeNote = async (note: string | null | undefined): Promise<s
       Nota: "${note}".
       Responde solo con la palabra de la categoría en minúsculas.`,
     });
+
+    if (response.usageMetadata?.totalTokenCount) {
+      firebaseService.updateAITokenUsage(response.usageMetadata.totalTokenCount).catch(console.error);
+    }
 
     const category = response.text?.trim().toLowerCase();
     const validCategories = ['estrés', 'dieta', 'sueño', 'ejercicio', 'medicación', 'alcohol/tabaco', 'otro'];

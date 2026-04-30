@@ -28,7 +28,7 @@ import {
 import { getCachedAnalysis, generateAndCacheAnalysis } from '../../services/aiService';
 import { toast } from 'sonner';
 import { getBloodPressureStatus, getBloodPressureStyle, getPulseStatus, getPulseStyle } from "../../domain/health";
-import { Sparkles, Loader2, LayoutDashboard, Target, HeartPulse, AlertCircle, Plus, Info, Clock, CalendarCheck, Calendar, ChevronDown, UserCheck, BarChart3, ShieldCheck, Check, ArrowRight, BrainCircuit, Activity, Heart, TrendingUp, TrendingDown, Minus, Sun, Moon, Stethoscope } from "lucide-react";
+import { Sparkles, Loader2, LayoutDashboard, Target, HeartPulse, AlertCircle, Plus, Info, Clock, CalendarCheck, Calendar, ChevronDown, UserCheck, BarChart3, ShieldCheck, Check, ArrowRight, BrainCircuit, Activity, Heart, TrendingUp, TrendingDown, Minus, Sun, Moon, Stethoscope, FileText } from "lucide-react";
 
 const LocalPulseStatusDisplay = ({ hr }: { hr: number | null | undefined }) => {
   if (!hr) return <Badge variant="secondary" className="bg-surface-low text-on-surface-variant/40 px-2 py-0.5 border-none text-[10px] uppercase font-bold tracking-widest leading-none">--</Badge>;
@@ -156,6 +156,39 @@ export function Dashboard() {
   const showTrends = useAppStore(s => s.showTrends);
   const measurementFrequency = useAppStore(s => s.measurementFrequency);
   const isDarkMode = useAppStore(s => s.isDarkMode);
+  
+  // Custom scroll tracking for floating items (MD3 autohide)
+  const [isFabHidden, setIsFabHidden] = React.useState(false);
+  
+  React.useEffect(() => {
+    const mainEl = document.getElementById('main-scroll-container');
+    if (!mainEl) return;
+    
+    let lastScroll = mainEl.scrollTop;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScroll = mainEl.scrollTop;
+          
+          if (currentScroll > lastScroll && currentScroll > 100) {
+            setIsFabHidden(true);
+          } else if (currentScroll < lastScroll || currentScroll <= 50) {
+            setIsFabHidden(false);
+          }
+          
+          lastScroll = currentScroll;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainEl.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const [chartFilter, setChartFilter] = React.useState<'both' | 'pas' | 'pad'>('both');
   const [chartPeriod, setChartPeriod] = React.useState<'today' | 'period' | '15d' | 'month'>('month');
   const [finalPeriod, setFinalPeriod] = React.useState<'period' | 'fortnight' | 'month' | 'quarter' | 'semester' | 'year' | 'total'>('month');
@@ -1033,8 +1066,15 @@ export function Dashboard() {
       {/* Mobile & Tablet Floating Action Button (FAB) - MD3 Style */}
       <motion.div 
         initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="lg:hidden fixed bottom-[11rem] right-4 sm:right-6 z-50 hover:scale-105 transition-transform"
+        animate={{ 
+          scale: isFabHidden ? 0 : 1, 
+          opacity: isFabHidden ? 0 : 1 
+        }}
+        className={cn(
+          "lg:hidden fixed bottom-[11rem] right-4 sm:right-6 z-50 transition-all duration-300",
+          !isFabHidden && "hover:scale-105",
+          isFabHidden && "pointer-events-none"
+        )}
       >
         <Button 
           onClick={() => setReadingFormOpen(true)}
@@ -1507,8 +1547,8 @@ export function Dashboard() {
                   onClick={() => useAppStore.getState().setActiveTab('report')}
                   className="w-full h-14 sm:h-16 text-sm sm:text-base font-black tracking-tight shadow-xl shadow-primary/20"
                 >
-                  Ver Informe Detallado
-                  <ArrowRight className="ml-2 w-5 h-5 shrink-0" />
+                  <FileText className="mr-2 w-5 h-5 shrink-0" />
+                  Ver Informe
                 </Button>
               </div>
             </CardContent>
@@ -1557,8 +1597,7 @@ export function Dashboard() {
                 alt="Pensamiento IA" 
                 className="w-32 h-32 md:w-48 md:h-48 drop-shadow-2xl object-contain z-20"
                 animate={{ 
-                  y: [0, -10, 0],
-                  scale: [1, 1.08, 1.03, 1.12, 1], // Realistic double heartbeat pattern
+                  scale: [1, 1.05, 1],
                   filter: [
                     "drop-shadow(0 0 15px rgba(103,80,165,0.1))",
                     "drop-shadow(0 0 45px rgba(103,80,165,0.45))",
@@ -1566,19 +1605,15 @@ export function Dashboard() {
                   ]
                 }}
                 transition={{ 
-                  duration: 5,
+                  duration: 4,
                   repeat: Infinity,
-                  ease: "easeInOut",
-                  scale: {
-                    times: [0, 0.12, 0.24, 0.4, 1], // "Thump-thump" rhythm at the start of the 5s cycle
-                    ease: "circOut"
-                  }
+                  ease: "easeInOut"
                 }}
                 referrerPolicy="no-referrer"
               />
             </div>
 
-            {/* Intersection Reaction: Shockwave Ripple - Slower & Synced with Head (5s cycle) */}
+            {/* Intersection Reaction: Shockwave Ripple - Slower & Synced with Head (4s cycle) */}
             {[0, 1].map((index) => (
               <motion.div 
                 key={index}
@@ -1589,10 +1624,10 @@ export function Dashboard() {
                   borderWidth: ["1px", "4px", "1px"]
                 }}
                 transition={{ 
-                  duration: 10, 
+                  duration: 8, 
                   repeat: Infinity, 
                   ease: "easeOut",
-                  delay: index * 5 // Pulsing every 5 seconds, matching the head's float cycle
+                  delay: index * 4 // Pulsing every 4 seconds, matching the head's float cycle
                 }}
               />
             ))}
@@ -1605,7 +1640,7 @@ export function Dashboard() {
                 opacity: [0.2, 0.5, 0.2]
               }}
               transition={{ 
-                duration: 5, // Matching the head's float duration
+                duration: 4, // Matching the head's float duration
                 repeat: Infinity, 
                 ease: "easeInOut" 
               }}
@@ -1620,7 +1655,7 @@ export function Dashboard() {
             >
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
                 <motion.div
-                  className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-xl md:rounded-2xl border border-white/30 shadow-lg"
+                  className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full border border-white/30 shadow-lg"
                   animate={{ 
                     rotate: [0, -360],
                     scale: [1, 1.1, 1],
@@ -1637,15 +1672,15 @@ export function Dashboard() {
               </div>
             </motion.div>
             
-            {/* Orbit 2: Activity (Mid-Outer Lane - Counter-Clockwise) */}
+            {/* Orbit 2: Activity (Outer Lane - Counter-Clockwise) */}
             <motion.div 
-              className="absolute inset-4 md:inset-3 pointer-events-none rounded-full"
+              className="absolute inset-0 pointer-events-none rounded-full"
               animate={{ rotate: [360, 0] }}
               transition={{ duration: 59, repeat: Infinity, ease: "linear" }}
             >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-auto">
                 <motion.div
-                  className="bg-white/20 backdrop-blur-md p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/30 shadow-lg"
+                  className="bg-white/20 backdrop-blur-md p-3 md:p-4 rounded-full border border-white/30 shadow-lg"
                   animate={{ 
                     rotate: [-360, 0],
                     scale: [1, 1.15, 1],
@@ -1664,13 +1699,13 @@ export function Dashboard() {
 
             {/* Orbit 3: Heart (Inner ring - Counter-Clockwise) */}
             <motion.div 
-              className="absolute inset-12 md:inset-10 pointer-events-none rounded-full"
+              className="absolute inset-6 sm:inset-8 pointer-events-none rounded-full"
               animate={{ rotate: [360, 0] }}
               transition={{ duration: 31, repeat: Infinity, ease: "linear" }}
             >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+              <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
                 <motion.div
-                  className="bg-white/20 backdrop-blur-md p-1.5 md:p-2 rounded-lg md:rounded-xl border border-white/30 shadow-lg"
+                  className="bg-white/20 backdrop-blur-md p-1.5 md:p-2 rounded-full border border-white/30 shadow-lg"
                   animate={{ 
                     rotate: [-360, 0],
                     scale: [1, 1.25, 1],

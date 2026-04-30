@@ -16,14 +16,18 @@ interface AppState {
   setActiveTab: (tab: 'dashboard' | 'history' | 'report' | 'ai' | 'settings') => void;
   
   // Settings sub-navigation
-  activeSettingsSection: 'profile' | 'data' | 'privacy' | 'about';
-  setActiveSettingsSection: (section: 'profile' | 'data' | 'privacy' | 'about') => void;
+  activeSettingsSection: 'profile' | 'data' | 'privacy' | 'about' | 'ai';
+  setActiveSettingsSection: (section: 'profile' | 'data' | 'privacy' | 'about' | 'ai') => void;
   
   // Modals
   isReadingFormOpen: boolean;
   setReadingFormOpen: (open: boolean) => void;
   isInfoModalOpen: boolean;
   setInfoModalOpen: (open: boolean) => void;
+
+  // Scroll State
+  isScrollingDown: boolean;
+  setScrollingDown: (isScrollingDown: boolean) => void;
 
   // Editing
   editingReading: Reading | null;
@@ -60,6 +64,9 @@ export const useAppStore = create<AppState>()(
       setReadingFormOpen: (isReadingFormOpen) => set({ isReadingFormOpen }),
       isInfoModalOpen: false,
       setInfoModalOpen: (isInfoModalOpen) => set({ isInfoModalOpen }),
+
+      isScrollingDown: false,
+      setScrollingDown: (isScrollingDown) => set({ isScrollingDown }),
 
       editingReading: null,
       setEditingReading: (editingReading) => set({ editingReading }),

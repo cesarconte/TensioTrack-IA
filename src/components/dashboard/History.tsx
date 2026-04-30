@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Reading } from "../../types";
 import { HistoryFilterModal, HistoryFilters } from "./HistoryFilterModal";
 import { getBloodPressureStatus, getBloodPressureStyle } from "../../domain/health";
-import { StickyNote, Edit3, Trash2, X, ChevronRight, Filter, Plus, SlidersHorizontal, Calendar, Activity, History as HistoryIcon, ChevronLeft, Sun, Moon, PieChart, Stethoscope, Heart } from "lucide-react";
+import { StickyNote, Edit3, Trash2, X, ChevronRight, Filter, Plus, SlidersHorizontal, Calendar, Activity, History as HistoryIcon, ChevronLeft, Sun, Moon, PieChart, Stethoscope, Heart, FileText } from "lucide-react";
 
 export function History() {
   const [activeFilters, setActiveFilters] = React.useState<HistoryFilters>({
@@ -796,9 +796,10 @@ export function History() {
           </div>
           <button 
             onClick={() => setActiveTab('report')}
-            className="bg-white/20 hover:bg-white/30 text-white rounded-full py-3.5 px-8 text-sm font-bold w-fit transition-colors"
+            className="bg-white/20 hover:bg-white/30 text-white rounded-full py-3.5 px-8 text-sm font-bold w-fit transition-colors flex items-center justify-center"
           >
-            Ver Informe Completo
+            <FileText className="w-5 h-5 mr-2 shrink-0" />
+            Ver Informe
           </button>
         </div>
 

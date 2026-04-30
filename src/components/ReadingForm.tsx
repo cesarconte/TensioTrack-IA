@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { Badge } from "./ui/Badge";
 import { toast } from "sonner";
 import { GoogleGenAI, Type } from "@google/genai";
+import { firebaseService } from "../lib/api";
 import { getBloodPressureStatus, getBloodPressureStyle, getPulseStatus, getPulseStyle } from "../domain/health";
 import { X, Camera, Minus, Plus, RefreshCw, Save, Trash2, Heart, Mic, MicOff } from "lucide-react";
 
@@ -211,6 +212,11 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
         const prompt = `Extrae PAS (sistólica), PAD (diastólica), FC (pulso) y cualquier comentario o nota relevante de: "${transcript}". 
         Responde solo JSON: {"systolic": number, "diastolic": number, "pulse": number|null, "notes": string|null}`;
         const result = await model.generateContent(prompt);
+        
+        if (result.response?.usageMetadata?.totalTokenCount) {
+          firebaseService.updateAITokenUsage(result.response.usageMetadata.totalTokenCount).catch(console.error);
+        }
+
         const data = JSON.parse(result.response.text().replace(/```json|```/g, ''));
         
         if (data.systolic) setSystolic(data.systolic.toString());
@@ -253,6 +259,10 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
         { inlineData: { data: base64, mimeType: file.type } }
       ]);
       
+      if (result.response?.usageMetadata?.totalTokenCount) {
+        firebaseService.updateAITokenUsage(result.response.usageMetadata.totalTokenCount).catch(console.error);
+      }
+
       const text = result.response.text();
       const data = JSON.parse(text.replace(/```json|```/g, ''));
       

@@ -237,6 +237,56 @@ export const firebaseService = {
     }
   },
 
+  async updateAITokenUsage(tokensUsed: number, totalLimit: number = 50000): Promise<void> {
+    if (!auth.currentUser) return;
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    try {
+      const dbInfoStr = localStorage.getItem('tensiotrack-user');
+      const now = new Date();
+      let currentTokens = 0;
+      let resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString(); // 1st of next month
+
+      const store = useAppStore.getState();
+      const user = store.user;
+
+      if (user && user.aiUsage) {
+        if (new Date(user.aiUsage.resetDate) > now) {
+          currentTokens = user.aiUsage.tokensUsed;
+          resetDate = user.aiUsage.resetDate;
+        }
+      }
+      
+      const newTokens = currentTokens + tokensUsed;
+      
+      try {
+        await setDoc(userRef, {
+          aiUsage: {
+            tokensUsed: newTokens,
+            limit: totalLimit,
+            resetDate
+          }
+        }, { merge: true });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
+        throw error;
+      }
+      
+      // We also update local store gently via the app store
+      if (store.user) {
+        store.setUser({
+          ...store.user,
+          aiUsage: {
+            tokensUsed: newTokens,
+            limit: totalLimit,
+            resetDate
+          }
+        });
+      }
+    } catch (error) {
+       console.error("Failed to track AI usage", error);
+    }
+  },
+
   async deleteAccount(): Promise<void> {
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');

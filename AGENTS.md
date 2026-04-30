@@ -22,6 +22,7 @@ Proporcionar una herramienta profesional, privada y extremadamente fácil de usa
 ## 🏗️ Arquitectura Técnica Actual
 - **Framework**: React 18 + Vite.
 - **Backend/DB**: Firebase (Firestore + Auth).
+  - *Futura Migración AI*: Las peticiones a la API de Gemini (actualmente en cliente con variables de entorno) deberán migrar a **Firebase Cloud Functions** (plan Blaze) antes de producción. Esto protegerá la `GEMINI_API_KEY` y permitirá gestionar/limitar el uso por usuario.
 - **Estilo**: Tailwind CSS v4 + Framer Motion (animaciones).
 - **Estado**: Zustand (UI & Auth) + TanStack Query (Sincronización Firestore).
 - **Iconos**: Lucide React.

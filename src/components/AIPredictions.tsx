@@ -1,4 +1,5 @@
 import * as React from "react";
+import { firebaseService } from "../lib/api";
 import { GoogleGenAI } from "@google/genai";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
@@ -142,7 +143,8 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
     }, 450);
     
     try {
-      const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
+      const envProcess = typeof process !== 'undefined' ? process.env : undefined;
+      const apiKey = envProcess?.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
       
       // Get Comparison Period if active
       let previousData = null;
@@ -238,6 +240,11 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
         const text = result.text;
         if (!text) throw new Error("No response from AI engine");
+        
+        if (result.usageMetadata?.totalTokenCount) {
+          firebaseService.updateAITokenUsage(result.usageMetadata.totalTokenCount).catch(console.error);
+        }
+
         const jsonStr = text.replace(/```json|```/g, '').trim();
         generatedData = JSON.parse(jsonStr);
         generatedData.projectionData = promptData.days.map(d => ({ val: d.daily?.systolic || d.morning?.systolic || 120 }));
@@ -274,7 +281,15 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           projectionData: Array.isArray(generatedData.projectionData) ? generatedData.projectionData : (promptData as any).days?.map((d: any) => ({ val: d.daily?.systolic || d.morning?.systolic || 120 })) || []
         };
         
-        await addDoc(collection(db, 'users', auth.currentUser.uid, 'ai_reports'), reportData);
+        try {
+          await addDoc(collection(db, 'users', auth.currentUser.uid, 'ai_reports'), reportData);
+        } catch (e: any) {
+          console.error("AI Report Save Error Details:", e);
+          if (e.message?.includes('permission')) {
+             throw new Error("Error de permisos guardando el informe: " + e.message);
+          }
+          throw e; // Relying on our error boundary
+        }
       }
 
       setPrediction(generatedData);
@@ -783,12 +798,12 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="relative rounded-[2.5rem] bg-surface-low border border-primary/10 overflow-hidden h-44 flex items-center justify-center bg-cover bg-center shadow-lg"
+            className="relative rounded-[2.5rem] bg-surface-low border border-primary/10 overflow-hidden min-h-[11rem] py-8 flex items-center justify-center bg-cover bg-center shadow-lg"
             style={{ backgroundImage: 'url(/bg-health-network.png)' }}
           >
             <div className="absolute inset-0 bg-surface/70 backdrop-blur-[6px]"></div>
             
-            <div className="text-center space-y-3 px-10 relative z-10 w-full">
+            <div className="text-center space-y-4 px-6 sm:px-10 relative z-10 w-full">
               {latestReport ? (
                 <>
                   <div className="flex justify-center items-center gap-3 mb-4">
@@ -844,9 +859,9 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                       />
                     ))}
                   </div>
-                  <div className="space-y-1">
-                    <h4 className="text-lg font-display font-bold text-on-surface">Optimización de Salud con IA</h4>
-                    <p className="text-on-surface-variant/60 text-sm font-medium">Genere su primer análisis para obtener proyecciones y puntos de control personalizados.</p>
+                  <div className="space-y-2">
+                    <h4 className="text-lg sm:text-xl font-display font-bold text-on-surface text-balance">Optimización de Salud con IA</h4>
+                    <p className="text-on-surface-variant/80 text-sm font-medium text-balance max-w-md mx-auto leading-relaxed">Genere su primer análisis para obtener proyecciones y puntos de control personalizados.</p>
                   </div>
                 </div>
               )}

@@ -210,7 +210,7 @@ export function Layout({ children }: LayoutProps) {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-[#090B11] p-0 pb-28 sm:p-6 sm:pb-28 lg:p-12">
+        <main id="main-scroll-container" className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-[#090B11] p-0 pb-28 sm:p-6 sm:pb-28 lg:p-12">
           <div className="max-w-7xl mx-auto px-6 sm:px-0 pt-6 sm:pt-0">
             {/* Desktop Header */}
             <div className="hidden lg:flex items-center justify-between mb-12 relative z-30">
@@ -222,6 +222,7 @@ export function Layout({ children }: LayoutProps) {
                       const sectionNames = {
                         profile: 'Salud',
                         data: 'Datos',
+                        ai: 'Energía IA',
                         privacy: 'Privacidad',
                         about: 'Acerca de'
                       };

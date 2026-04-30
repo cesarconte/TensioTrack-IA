@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import { kgToLb, lbToKg, cmToIn, inToCm, calculateBMI, getBMICategory } from "../lib/conversions";
-import { LogOut, ArrowLeft, Upload, Trash2, Camera, User, Cake, Scale, TrendingUp, Ruler, Activity, ChevronDown, History, Heart, Clock, Save, Download, Globe, AlertTriangle, FlaskConical, Server, ShieldCheck, CheckCircle2, Lock, Shield, Fingerprint, Flag, Gavel, Pill, Ambulance, Database, Info, FileText } from "lucide-react";
+import { LogOut, ArrowLeft, Upload, Trash2, Camera, User, Cake, Scale, TrendingUp, Ruler, Activity, ChevronDown, History, Heart, Clock, Save, Download, Globe, AlertTriangle, FlaskConical, Server, ShieldCheck, CheckCircle2, Lock, Shield, Fingerprint, Flag, Gavel, Pill, Ambulance, Database, Info, FileText, Zap } from "lucide-react";
 
 const PDFIcon = ({ size = 18, className = "" }: { size?: number, className?: string }) => (
   <svg 
@@ -58,6 +58,7 @@ export function SettingsPage() {
   const sections = [
     { id: 'profile', label: 'Datos de Salud', icon: Heart },
     { id: 'data', label: 'Datos', icon: Database },
+    { id: 'ai', label: 'Energía IA', icon: Zap },
     { id: 'privacy', label: 'Privacidad', icon: Shield },
     { id: 'about', label: 'Acerca de', icon: Info },
   ] as const;
@@ -1232,6 +1233,79 @@ export function SettingsPage() {
             </AnimatePresence>
           </motion.div>
         )}
+
+          {activeSection === 'ai' && (
+            <motion.div
+              key="ai"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-8"
+            >
+              <div className="space-y-2">
+                <h3 className="text-3xl font-display font-black text-foreground">Energía IA</h3>
+                <p className="text-on-surface-variant">
+                  Consulta cuánta energía de Inteligencia Artificial tienes disponible este mes. Cada vez que generas un análisis o le hablas al asistente, se consume energía.
+                </p>
+              </div>
+
+              <div className="bg-surface-low rounded-[2rem] p-6 lg:p-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                  <Zap size={160} />
+                </div>
+                
+                <h4 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+                  <Activity size={20} className="text-primary-base" /> Consumo Mensual
+                </h4>
+
+                {(() => {
+                  const used = user?.aiUsage?.tokensUsed || 0;
+                  const limit = user?.aiUsage?.limit || 50000;
+                  const percent = Math.min(100, Math.max(0, (used / limit) * 100));
+                  
+                  let barColor = 'bg-primary-base';
+                  if (percent > 75) barColor = 'bg-amber-500';
+                  if (percent > 90) barColor = 'bg-red-500';
+
+                  // Using LocaleString for nicer big numbers
+                  const fUsed = used.toLocaleString('es-ES');
+                  const fLimit = limit.toLocaleString('es-ES');
+                  const resetStr = user?.aiUsage?.resetDate 
+                    ? new Date(user.aiUsage.resetDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
+                    : '1 del próximo mes';
+
+                  return (
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-end">
+                        <div className="space-y-1">
+                          <span className="text-4xl font-black font-display text-foreground">{percent.toFixed(1)}%</span>
+                          <span className="text-sm font-medium text-on-surface-variant block">Energía utilizada</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-lg font-bold text-foreground block">{fUsed} / {fLimit}</span>
+                          <span className="text-sm font-medium text-on-surface-variant">Unidades IA</span>
+                        </div>
+                      </div>
+
+                      <div className="h-4 w-full bg-surface-high rounded-full overflow-hidden flex">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percent}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className={cn("h-full", barColor)}
+                        />
+                      </div>
+
+                      <div className="text-sm text-on-surface-variant flex items-center gap-2 bg-surface p-4 rounded-2xl">
+                        <Clock size={16} className="text-primary-base shrink-0" />
+                        Tu límite se restablecerá automáticamente el <strong>{resetStr}</strong>.
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          )}
 
           {activeSection === 'privacy' && (
             <motion.div

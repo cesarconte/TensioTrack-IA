@@ -98,6 +98,13 @@ export interface UserProfile {
   caffeineIntake?: 'none' | 'low' | 'moderate' | 'high';
   hasHighCholesterol?: boolean;
   hasKidneyDisease?: boolean;
+  
+  // AI Usage
+  aiUsage?: {
+    tokensUsed: number;
+    limit: number;
+    resetDate: string;
+  };
 }
 
 export interface AIReport {

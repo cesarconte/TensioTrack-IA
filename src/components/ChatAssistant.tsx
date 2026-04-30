@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { Button } from "./ui/Button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { useAppStore } from "../store/useAppStore";
+import { firebaseService } from "../lib/api";
 import { TrendingUp, Heart, CalendarDays, MessageCircle, Bot, ChevronDown, User, RefreshCw, Send, Sparkles } from "lucide-react";
 
 interface Message {
@@ -22,6 +23,39 @@ interface ChatAssistantProps {
 export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
   const { activeTab } = useAppStore();
   const [isOpen, setIsOpen] = React.useState(false);
+  
+  // Custom scroll tracking for floating items (MD3 autohide)
+  const [isFabHidden, setIsFabHidden] = React.useState(false);
+  
+  React.useEffect(() => {
+    const mainEl = document.getElementById('main-scroll-container');
+    if (!mainEl) return;
+    
+    let lastScroll = mainEl.scrollTop;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScroll = mainEl.scrollTop;
+          
+          if (currentScroll > lastScroll && currentScroll > 100) {
+            setIsFabHidden(true);
+          } else if (currentScroll < lastScroll || currentScroll <= 50) {
+            setIsFabHidden(false);
+          }
+          
+          lastScroll = currentScroll;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainEl.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const [messages, setMessages] = React.useState<Message[]>([
     { 
       role: 'assistant', 
@@ -51,7 +85,10 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
     setIsLoading(true);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
+      // Safely access env vars
+      const envProcess = typeof process !== 'undefined' ? process.env : undefined;
+      const apiKey = envProcess?.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
+      
       if (!apiKey) {
         setMessages(prev => [...prev, { 
           role: 'assistant', 
@@ -61,8 +98,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
         return;
       }
 
-      const ai = new GoogleGenAI(apiKey) as any;
-      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const ai = new GoogleGenAI({ apiKey });
       
       const recentReadings = readings.slice(0, 30).map(r => 
         `- ${new Date(r.recordedAt).toLocaleString()}: ${r.systolic}/${r.diastolic} mmHg, ${r.heartRate || '--'} ppm`
@@ -92,24 +128,29 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
       ${recentReadings}
       `;
 
-      const chat = model.startChat({
-        history: messages.map(m => ({
-          role: m.role === 'user' ? 'user' : 'model',
-          parts: [{ text: m.content }]
-        })),
-        generationConfig: {
-          maxOutputTokens: 1000,
-        },
-      });
+      // We need to use generateContent instead of startChat because the new SDK handles chat history differently via contents array
+      const historyContents = messages.map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }]
+      }));
+      
+      historyContents.push({ role: 'user', parts: [{ text: messageContent }] });
 
-      // Insert system instruction as a prefix to the first message if it's the start, 
-      // or just as context for the model. 
-      // For simplicity with startChat, we'll just send the message.
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: historyContents,
+        config: {
+          systemInstruction,
+        }
+      });
       
-      const result = await chat.sendMessage(messageContent);
-      const responseText = result.response.text();
+      if (response.usageMetadata?.totalTokenCount) {
+        firebaseService.updateAITokenUsage(response.usageMetadata.totalTokenCount).catch(console.error);
+      }
       
-      setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
+      const responseText = response.text;
+      
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText || "Mensaje vacío" }]);
 
     } catch (error) {
       console.error("Chat error:", error);
@@ -144,7 +185,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
               // Positioning logic:
               // Mobile/Tablet: nav bar is visible up to lg (lg:hidden). So it should be bottom-24 up to lg, and bottom-6 from lg up.
               "bottom-24 lg:bottom-6",
-              isOpen && "scale-0 opacity-0 pointer-events-none"
+              (isOpen || isFabHidden) && "scale-0 opacity-0 pointer-events-none"
             )}
             aria-label="Abrir asistente de IA"
           >

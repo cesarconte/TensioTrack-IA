@@ -104,6 +104,7 @@ export function AdminPanel() {
   const patientCount = users?.filter(u => u.role === 'patient').length || 0;
   const doctorCount = users?.filter(u => u.role === 'doctor').length || 0;
   const adminCount = users?.filter(u => u.role === 'admin').length || 0;
+  const missingRoleCount = users?.filter(u => !u.role).length || 0;
 
   return (
     <div className="flex flex-col gap-6 md:gap-8 min-h-[calc(100vh-12rem)] animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 sm:pb-0">
@@ -122,7 +123,7 @@ export function AdminPanel() {
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-surface-low rounded-[2rem] p-6 flex flex-col gap-4 border border-surface-highest/10">
           <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
             <User size={20} />
@@ -148,6 +149,29 @@ export function AdminPanel() {
           <div>
             <h3 className="text-on-surface-variant text-sm font-bold uppercase tracking-wider">Admins</h3>
             <p className="text-3xl font-display font-black text-foreground">{adminCount}</p>
+          </div>
+        </div>
+        <div className={cn(
+          "rounded-[2rem] p-6 flex flex-col gap-4 border",
+          missingRoleCount > 0 
+            ? "bg-error/5 border-error/20" 
+            : "bg-surface-low border-surface-highest/10"
+        )}>
+          <div className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center",
+            missingRoleCount > 0 ? "bg-error/10 text-error" : "bg-surface-high text-on-surface-variant"
+          )}>
+            <AlertTriangle size={20} />
+          </div>
+          <div>
+            <h3 className={cn(
+              "text-sm font-bold uppercase tracking-wider",
+              missingRoleCount > 0 ? "text-error" : "text-on-surface-variant"
+            )}>Sin Rol</h3>
+            <p className={cn(
+              "text-3xl font-display font-black",
+              missingRoleCount > 0 ? "text-error" : "text-foreground"
+            )}>{missingRoleCount}</p>
           </div>
         </div>
       </div>
@@ -176,10 +200,16 @@ export function AdminPanel() {
                    <td className="py-4 px-4 text-xs font-mono text-on-surface-variant">{u.id}</td>
                    <td className="py-4 px-4">
                      <select 
-                       value={u.role || 'patient'}
-                       onChange={(e) => handleRoleChange(u.id, u.role || 'patient', e.target.value)}
-                       className="bg-surface border border-surface-highest/20 text-sm rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
+                       value={u.role || ''}
+                       onChange={(e) => handleRoleChange(u.id, u.role || '', e.target.value)}
+                       className={cn(
+                         "border text-sm rounded-xl px-3 py-2 outline-none shadow-sm transition-colors",
+                         !u.role 
+                           ? "bg-error/10 border-error/30 text-error focus:border-error focus:ring-1 focus:ring-error" 
+                           : "bg-surface border-surface-highest/20 focus:border-primary focus:ring-1 focus:ring-primary"
+                       )}
                      >
+                       <option value="" disabled>Seleccionar rol...</option>
                        <option value="patient">Paciente</option>
                        <option value="doctor">Médico</option>
                        <option value="admin">Admin</option>

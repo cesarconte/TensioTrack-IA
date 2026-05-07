@@ -4,7 +4,7 @@ import { useUpdateUserProfile } from "../lib/api";
 import { motion } from "motion/react";
 import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
-import { Camera, Fingerprint, CheckCircle2, Lock, Zap, ArrowLeft } from "lucide-react";
+import { Camera, Fingerprint, CheckCircle2, Lock, Zap, ArrowLeft, MessageCircle, MessageSquare, Mail, Share2 } from "lucide-react";
 import { cn } from "../lib/utils";
 
 export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean }) {
@@ -203,30 +203,74 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
           transition={{ delay: 0.1 }}
           className="mt-8 px-2 sm:px-0"
         >
-          <div className="bg-primary/5 dark:bg-primary/10 ethereal-blur border border-primary/10 rounded-[3.5rem] p-8 overflow-hidden relative group">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-6">
-                <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Lock size={24} />
+          <div className="bg-surface-low border border-surface-highest/10 rounded-[3rem] p-8 sm:p-10 shadow-sm relative overflow-hidden group/share">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover/share:opacity-10 transition-opacity">
+              <Share2 size={160} className="text-primary" />
+            </div>
+
+            <div className="relative z-10 flex flex-col gap-8">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-primary/10 text-primary mb-6">
+                  <Share2 size={20} />
+                  <span className="text-[11px] font-black uppercase tracking-widest">Conexión Segura</span>
                 </div>
-                <div>
-                  <h4 className="text-xl font-display font-black text-on-surface">Seguridad Biométrica</h4>
-                  <p className="text-on-surface-variant text-sm font-medium opacity-70">Cifrado médico de extremo a extremo activo.</p>
-                </div>
+                <h4 className="text-3xl font-display font-black text-foreground mb-4">
+                  Invitación Digital
+                </h4>
+                <p className="text-on-surface-variant text-[15px] sm:text-base font-medium leading-relaxed opacity-90">
+                  Envía un mensaje directo a tu paciente. El enlace le permitirá confirmar la vinculación y compartir su historial médico y métricas contigo de forma cifrada desde cualquier dispositivo.
+                </p>
               </div>
-              <button 
-                onClick={() => {
-                  if (user?.uid) {
-                    navigator.clipboard.writeText(user.uid);
-                    toast.success("Código copiado al portapapeles", {
-                      icon: <CheckCircle2 className="text-success" size={18} />
-                    });
-                  }
-                }}
-                className="px-8 py-4 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-primary/30 hover:bg-primary-high transition-all active:scale-95"
-              >
-                Copiar Identificador
-              </button>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                <button 
+                  onClick={() => {
+                    const shareText = `Haz clic en el enlace para vincularme como tu médico en TensioTrack: ${window.location.origin}/?add_doctor=${user?.uid}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+                  }}
+                  className="group/btn flex flex-col items-center justify-center gap-4 p-6 sm:p-8 bg-white dark:bg-[#1C1B1F] hover:bg-[#25D366]/5 dark:hover:bg-[#25D366]/10 border border-[#25D366]/20 rounded-[2rem] shadow-sm hover:shadow-md transition-all hover:-translate-y-1 active:scale-[0.98]"
+                >
+                  <div className="w-14 h-14 rounded-full bg-[#25D366]/10 flex items-center justify-center text-[#25D366] group-hover/btn:scale-110 transition-transform">
+                    <MessageCircle size={28} />
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-[#128C7E] dark:text-[#25D366] font-black text-[13px] uppercase tracking-widest mb-1">WhatsApp</span>
+                    <span className="text-[#128C7E]/70 dark:text-[#25D366]/70 text-[11px] font-semibold uppercase tracking-wider">Mensaje Directo</span>
+                  </div>
+                </button>
+
+                <button 
+                  onClick={() => {
+                    const shareText = `Haz clic en el enlace para vincularme como tu médico en TensioTrack: ${window.location.origin}/?add_doctor=${user?.uid}`;
+                    window.location.href = `sms:?body=${encodeURIComponent(shareText)}`;
+                  }}
+                  className="group/btn flex flex-col items-center justify-center gap-4 p-6 sm:p-8 bg-white dark:bg-[#1C1B1F] hover:bg-blue-500/5 dark:hover:bg-blue-500/10 border border-blue-500/20 rounded-[2rem] shadow-sm hover:shadow-md transition-all hover:-translate-y-1 active:scale-[0.98]"
+                >
+                  <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/btn:scale-110 transition-transform">
+                    <MessageSquare size={28} />
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-blue-600 dark:text-blue-400 font-black text-[13px] uppercase tracking-widest mb-1">SMS</span>
+                    <span className="text-blue-600/70 dark:text-blue-400/70 text-[11px] font-semibold uppercase tracking-wider">Texto Móvil</span>
+                  </div>
+                </button>
+
+                <button 
+                  onClick={() => {
+                    const shareText = `Haz clic en el enlace para vincularme como tu médico en TensioTrack:\n\n${window.location.origin}/?add_doctor=${user?.uid}`;
+                    window.location.href = `mailto:?subject=Vincular Médico - TensioTrack&body=${encodeURIComponent(shareText)}`;
+                  }}
+                  className="group/btn flex flex-col items-center justify-center gap-4 p-6 sm:p-8 bg-white dark:bg-[#1C1B1F] hover:bg-primary/5 dark:hover:bg-primary/10 border border-primary/20 rounded-[2rem] shadow-sm hover:shadow-md transition-all hover:-translate-y-1 active:scale-[0.98]"
+                >
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:scale-110 transition-transform">
+                    <Mail size={28} />
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-primary font-black text-[13px] uppercase tracking-widest mb-1">Email</span>
+                    <span className="text-primary/70 text-[11px] font-semibold uppercase tracking-wider">Correo Seguro</span>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>

@@ -32,12 +32,26 @@ export function useAuth() {
             });
           } else {
             const userData = userSnap.data() as any;
-            let currentRole = userData.role || 'patient';
+            let currentRole = userData.role;
+            let updates: any = {};
+            
+            if (!currentRole) {
+              currentRole = 'patient';
+              updates.role = currentRole;
+            }
             
             // Auto-promote yugurta to admin if missing
             if (firebaseUser.email === 'yugurta@gmail.com' && currentRole !== 'admin') {
               currentRole = 'admin';
-              await setDoc(userRef, { role: 'admin' }, { merge: true });
+              updates.role = currentRole;
+            }
+            
+            if (Object.keys(updates).length > 0) {
+              try {
+                await setDoc(userRef, updates, { merge: true });
+              } catch (updateErr) {
+                console.error("Failed to auto-update missing role:", updateErr);
+              }
             }
             
             // Prioritize Firestore data over Google Auth data for custom changes

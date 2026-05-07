@@ -15,8 +15,8 @@ export function AddDoctorLinkModal() {
   useEffect(() => {
     if (!isAuthReady || !user) return;
     
-    // Only patients link doctors
-    if (user.role === 'doctor' || user.role === 'admin') return;
+    // Only patients link doctors (but allow admins to test)
+    if (user.role === 'doctor') return;
 
     const params = new URLSearchParams(window.location.search);
     const doctorParam = params.get('add_doctor');

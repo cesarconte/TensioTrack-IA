@@ -34,11 +34,23 @@ service cloud.firestore {
     
     // Tiered Identity Logic: RBAC using Custom Claims (Optimized Cost & Performance)
     function isAdmin() {
-      // Replaced get() with Custom Claims to save 100% of read costs and latency.
       return isSignedIn() && (
         request.auth.token.email == "yugurta@gmail.com" ||
-        request.auth.token.admin == true
+        request.auth.token.admin == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
       );
+    }
+
+    function isDoctor() {
+      return isSignedIn() && (
+        request.auth.token.doctor == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor'
+      );
+    }
+
+    function isAuthorizedDoctor(patientId) {
+      return isDoctor() && 
+        exists(/databases/$(database)/documents/authorizations/$(request.auth.uid + '_' + patientId));
     }
 
     // ===============================================================
@@ -46,9 +58,9 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return data.uid == request.auth.uid &&
-             data.email is string && data.email.size() <= 256 &&
-             data.createdAt is timestamp &&
+      return data.email is string && data.email.size() <= 256 &&
+             (data.createdAt is timestamp || data.createdAt is string) &&
+             (!('uid' in data) || data.uid is string) &&
              (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 256)) &&
              (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 200000)) &&
              (!('sex' in data) || data.sex in ['male', 'female', 'other']) &&
@@ -69,7 +81,7 @@ service cloud.firestore {
              (!('hasKidneyDisease' in data) || data.hasKidneyDisease is bool) &&
              (!('updatedAt' in data) || data.updatedAt is timestamp) &&
              (!('aiUsage' in data) || (data.aiUsage is map && ('tokensUsed' in data.aiUsage) && (data.aiUsage.tokensUsed is number) && ('limit' in data.aiUsage) && (data.aiUsage.limit is number) && ('resetDate' in data.aiUsage) && (data.aiUsage.resetDate is string))) &&
-             (!('role' in data) || data.role in ['user', 'admin']);
+             (!('role' in data) || data.role in ['patient', 'doctor', 'admin']);
     }
 
     function isValidReading(data) {
@@ -93,15 +105,15 @@ service cloud.firestore {
              data.createdAt is string &&
              data.cycleId is string &&
              data.title is string && data.title.size() <= 200 &&
-             data.executiveSummary is string && data.executiveSummary.size() <= 5000 &&
+             data.executiveSummary is string && data.executiveSummary.size() <= 6000 &&
              data.dataQuality is number && data.dataQuality >= 0 && data.dataQuality <= 100 &&
-             data.recommendation is string && data.recommendation.size() <= 2000 &&
-             data.impact is string && data.impact.size() <= 200 &&
+             (!('recommendation' in data) || (data.recommendation is string && data.recommendation.size() <= 2000)) &&
+             (!('impact' in data) || (data.impact is string && data.impact.size() <= 200)) &&
              (!('nextReview' in data) || data.nextReview is string) &&
              (!('healthFocus' in data) || data.healthFocus is string) &&
              (!('isComparative' in data) || data.isComparative is bool) &&
-             (data.findings is list && data.findings.size() <= 20 && (data.findings.size() == 0 || (data.findings[0] is map && data.findings[0].keys().hasAll(['type', 'title', 'desc'])))) &&
-             (data.projectionData is list && data.projectionData.size() <= 60 && (data.projectionData.size() == 0 || (data.projectionData[0] is map && data.projectionData[0].keys().hasAll(['val']))));
+             (data.findings is list && data.findings.size() <= 30) &&
+             (data.projectionData is list && data.projectionData.size() <= 60);
     }
 
     function isValidAiAnalysis(data) {
@@ -112,11 +124,40 @@ service cloud.firestore {
              data.createdAt is string;
     }
 
+    function isValidAuthorization(data) {
+      // Allow admin or the owner to create auth documents
+      return (data.patientId == request.auth.uid || isAdmin()) &&
+             data.doctorId is string && data.doctorId.size() <= 128 &&
+             data.patientId is string && data.patientId.size() <= 128 &&
+             (data.createdAt is timestamp || data.createdAt is string) &&
+             (!('status' in data) || data.status in ['active', 'revoked']) &&
+             (!('doctorName' in data) || data.doctorName is string) &&
+             (!('patientName' in data) || data.patientName is string) &&
+             (!('patientEmail' in data) || data.patientEmail is string);
+    }
+
+    // ===============================================================
+    // Root Collection: Authorizations
+    // ===============================================================
+    match /authorizations/{authId} {
+      allow read: if isSignedIn() && (request.auth.uid in authId.split('_') || isAdmin());
+      allow create: if isSignedIn() && 
+                    authId == incoming().doctorId + '_' + incoming().patientId &&
+                    incoming().keys().hasOnly(['patientId', 'doctorId', 'createdAt', 'status', 'doctorName', 'patientName', 'patientEmail']) &&
+                    incoming().keys().hasAll(['patientId', 'doctorId', 'createdAt']) &&
+                    isValidAuthorization(incoming());
+      allow update: if isSignedIn() && 
+                    (isOwner(existing().patientId) || isAdmin()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
+                    isValidAuthorization(incoming());
+      allow delete: if isSignedIn() && (isOwner(existing().patientId) || isAdmin());
+    }
+
     // ===============================================================
     // Root Collection: Users
     // ===============================================================
     match /users/{userId} {
-      allow read: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin() || isAuthorizedDoctor(userId) || resource.data.get('role', 'patient') == 'doctor');
       
       allow create: if isOwner(userId) && isVerified() && isValidId(userId) &&
                     // Prevent shadow writes with strict keys matching
@@ -124,12 +165,12 @@ service cloud.firestore {
                     incoming().keys().hasAll(['uid', 'email', 'createdAt']) && 
                     isValidUser(incoming());
       
-      allow update: if isOwner(userId) && isVerified() && isValidId(userId) &&
-                    incoming().uid == existing().uid &&
-                    incoming().createdAt == existing().createdAt &&
-                    (!incoming().diff(existing()).affectedKeys().hasAny(['role'])) && // No self-escalation
+      allow update: if (isOwner(userId) || isAdmin()) && isVerified() && isValidId(userId) &&
+                    incoming().get('uid', null) == existing().get('uid', null) &&
+                    incoming().get('createdAt', null) == existing().get('createdAt', null) &&
+                    (isAdmin() || !incoming().diff(existing()).affectedKeys().hasAny(['role'])) && // Admin can change roles
                     // Enforce allowed update fields to prevent shadow writes
-                    incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName', 'photoURL', 'sex', 'age', 'height', 'weight', 'isSmoker', 'hasDiabetes', 'isHypertensiveMedicated', 'activityLevel', 'alcoholConsumption', 'saltIntake', 'stressLevel', 'sleepQuality', 'familyHistory', 'caffeineIntake', 'hasHighCholesterol', 'hasKidneyDisease', 'updatedAt', 'aiUsage']) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName', 'photoURL', 'sex', 'age', 'height', 'weight', 'isSmoker', 'hasDiabetes', 'isHypertensiveMedicated', 'activityLevel', 'alcoholConsumption', 'saltIntake', 'stressLevel', 'sleepQuality', 'familyHistory', 'caffeineIntake', 'hasHighCholesterol', 'hasKidneyDisease', 'updatedAt', 'aiUsage', 'role']) &&
                     isValidUser(incoming());
       
       allow delete: if isAdmin(); // Extreme action
@@ -140,8 +181,8 @@ service cloud.firestore {
     // ===============================================================
     match /users/{userId}/readings/{readingId} {
       // Secure List Queries: Evaluation of resource.data is mandatory for allow list
-      allow list: if isOwner(userId); // Removed isAdmin for Medical Privacy Compliance
-      allow get: if isOwner(userId); // Removed isAdmin for Medical Privacy Compliance
+      allow list: if isSignedIn() && (isOwner(userId) || isAdmin() || isAuthorizedDoctor(userId));
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin() || isAuthorizedDoctor(userId));
       
       allow create: if isOwner(userId) && isVerified() && 
                     isValidId(readingId) &&
@@ -168,8 +209,8 @@ service cloud.firestore {
     // Sub-collection: AI Reports & Analysis
     // ===============================================================
     match /users/{userId}/ai_reports/{reportId} {
-      allow list: if isOwner(userId); // Removed isAdmin for Medical Privacy Compliance
-      allow get: if isOwner(userId); // Removed isAdmin for Medical Privacy Compliance
+      allow list: if isSignedIn() && (isOwner(userId) || isAdmin() || isAuthorizedDoctor(userId));
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin() || isAuthorizedDoctor(userId));
       
       allow create: if isOwner(userId) && isVerified() && 
                     isValidId(reportId) &&
@@ -182,7 +223,7 @@ service cloud.firestore {
     }
 
     match /users/{userId}/ai_analysis/{analysisId} {
-      allow get: if isOwner(userId); // Removed isAdmin for Medical Privacy Compliance
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin() || isAuthorizedDoctor(userId));
       allow create, update: if isOwner(userId) && isVerified() && 
                             isValidId(analysisId) &&
                             // Create keys check

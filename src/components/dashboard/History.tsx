@@ -98,7 +98,10 @@ export function History() {
   }, [activeFilters]);
 
   const { data: readings, isLoading } = useReadings(queryFilters);
-  const { isDarkMode, setReadingFormOpen, setEditingReading, setActiveTab } = useAppStore();
+  const { isDarkMode, setReadingFormOpen, setEditingReading, setActiveTab, user, activePatientId, activePatientName } = useAppStore();
+  
+  const isDoctor = user?.role === 'doctor';
+  const isViewingPatient = isDoctor && !!activePatientId;
   const [expandedReadingId, setExpandedReadingId] = React.useState<string | null>(null);
   const deleteReading = useDeleteReading();
 
@@ -305,7 +308,7 @@ export function History() {
         <motion.div 
           key={reading.id}
           layout
-          className="flex flex-col lg:flex-row bg-card rounded-[2rem] shadow-sm border-l-[6px] border-primary overflow-hidden relative"
+          className="flex flex-col lg:flex-row bg-surface-low rounded-[3rem] shadow-none overflow-hidden relative border-none"
         >
           <div className="flex-1 p-6 lg:p-8">
             <div className="flex justify-between items-start mb-8">
@@ -361,6 +364,7 @@ export function History() {
                 {reading.notes ? `"${reading.notes}"` : "Sin notas adicionales."}
               </p>
             </div>
+            {!isDoctor && (
             <div className="flex flex-col gap-3 mt-auto">
               <button 
                 onClick={(e) => {
@@ -384,6 +388,7 @@ export function History() {
                 Eliminar
               </button>
             </div>
+            )}
             <button 
               onClick={() => setExpandedReadingId(null)}
               className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface-high text-on-surface-variant hover:bg-surface-highest lg:hidden"
@@ -400,7 +405,7 @@ export function History() {
         key={reading.id}
         layout
         onClick={() => setExpandedReadingId(reading.id)}
-        className="flex flex-col sm:flex-row sm:items-center justify-between bg-surface-low rounded-[2rem] p-5 sm:p-6 hover:bg-surface-high transition-all cursor-pointer gap-4 sm:gap-6 border-none"
+        className="flex flex-col sm:flex-row sm:items-center justify-between bg-surface-low rounded-[2.5rem] p-5 sm:p-6 hover:bg-surface-high transition-all cursor-pointer gap-4 sm:gap-6 border-none"
       >
         <div className="flex items-center gap-4 sm:w-1/3">
           <div className="w-12 h-12 rounded-2xl bg-surface-lowest flex items-center justify-center text-on-surface-variant shrink-0 shadow-sm">
@@ -448,10 +453,46 @@ export function History() {
 
   return (
     <div className="space-y-8 pb-24 sm:pb-0">
+      {/* Consultation Mode Banner (Doctor viewing Patient) */}
+      <AnimatePresence>
+        {isViewingPatient && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-6 mb-2 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                  <Stethoscope className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-foreground tracking-tight">Modo Consulta Activo</h4>
+                  <p className="text-sm font-medium text-on-surface-variant">Revisando historial de <span className="text-primary font-bold">{activePatientName}</span></p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5"
+                onClick={() => useAppStore.getState().setActivePatientId(null, null)}
+              >
+                Cerrar Sesión
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <div>
-          <h2 className="text-3xl font-display font-black text-foreground mb-2">Historial Médico</h2>
-          <p className="text-sm font-medium text-on-surface-variant">Revisa y gestiona tus registros diarios de vitales.</p>
+          <h2 className="text-3xl font-display font-black text-foreground mb-2">
+            {isViewingPatient ? `Historial de ${activePatientName}` : "Historial Médico"}
+          </h2>
+          <p className="text-sm font-medium text-on-surface-variant">
+            {isViewingPatient ? `Registros médicos de ${activePatientName}` : "Revisa y gestiona tus registros diarios de vitales."}
+          </p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -466,6 +507,7 @@ export function History() {
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"></span>
             )}
           </Button>
+          {!isDoctor && (
           <Button 
             onClick={() => setReadingFormOpen(true)}
             className="bg-primary hover:bg-primary/90 text-white rounded-full px-6 py-4 sm:py-2 flex items-center justify-center gap-2 font-bold shadow-md shadow-primary/20"
@@ -473,6 +515,7 @@ export function History() {
             <Plus className="text-[20px]" />
             Nuevo Registro
           </Button>
+          )}
         </div>
       </section>
 
@@ -544,7 +587,7 @@ export function History() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-24 bg-card rounded-[2.5rem] animate-pulse border border-border" />
+              <div key={i} className="h-24 bg-surface-low rounded-[3rem] animate-pulse border-none" />
             ))}
           </div>
         ) : totalPages === 0 ? (

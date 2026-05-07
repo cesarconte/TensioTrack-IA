@@ -20,18 +20,31 @@ export function useAuth() {
           };
 
           if (!userSnap.exists()) {
+            const initialRole = firebaseUser.email === 'yugurta@gmail.com' ? 'admin' : 'patient';
             await setDoc(userRef, {
               ...profile,
+              role: initialRole,
               createdAt: serverTimestamp()
             });
-            setUser(profile);
+            setUser({
+              ...profile,
+              role: initialRole
+            });
           } else {
             const userData = userSnap.data() as any;
+            let currentRole = userData.role || 'patient';
+            
+            // Auto-promote yugurta to admin if missing
+            if (firebaseUser.email === 'yugurta@gmail.com' && currentRole !== 'admin') {
+              currentRole = 'admin';
+              await setDoc(userRef, { role: 'admin' }, { merge: true });
+            }
             
             // Prioritize Firestore data over Google Auth data for custom changes
             setUser({ 
               ...profile, 
               ...userData,
+              role: currentRole,
               displayName: userData.displayName || profile.displayName,
               photoURL: userData.photoURL || profile.photoURL,
               updatedAt: userData.updatedAt

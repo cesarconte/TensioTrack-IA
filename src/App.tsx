@@ -2,7 +2,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAppStore } from './store/useAppStore';
 import { useAuth } from './hooks/useAuth';
-import { useDashboard, useReadings } from './lib/api';
+import { useDashboard, useReadings, usePatientProfile } from './lib/api';
 import { Layout } from './components/Layout';
 import { Login } from './components/Login';
 import { Dashboard } from './components/dashboard/Dashboard';
@@ -11,8 +11,12 @@ import { MedicalReport } from './components/MedicalReport';
 import { AIPredictions } from './components/AIPredictions';
 import { ReadingForm } from './components/ReadingForm';
 import { SettingsPage } from './components/SettingsPage';
+import { VinculoPage } from './components/VinculoPage';
+import { PatientsList } from './components/PatientsList';
+import { AdminPanel } from './components/AdminPanel';
 import { InfoModal } from './components/InfoModal';
 import { ChatAssistant } from './components/ChatAssistant';
+import { AddDoctorLinkModal } from './components/AddDoctorLinkModal';
 import { Toaster, toast } from 'sonner';
 
 import { TooltipProvider } from './components/ui/Tooltip';
@@ -150,12 +154,40 @@ function AppContent() {
     user, 
     isAuthReady, 
     activeTab,
+    setActiveTab,
     isReadingFormOpen,
     setReadingFormOpen,
     isInfoModalOpen,
     setInfoModalOpen,
-    isDarkMode
+    isDarkMode,
+    activePatientId,
+    activePatientName
   } = useAppStore();
+
+  // Handle Tab transitions and access control
+  React.useEffect(() => {
+    if (!user) return;
+
+    if (user.role === 'doctor') {
+      if (activePatientId) {
+        // If doctor selects a patient, redirect from patients list to dashboard
+        if (activeTab === 'patients' || activeTab === 'vinculo') setActiveTab('dashboard');
+      } else {
+        // If no patient is selected, doctor can only be on patients, vinculo or settings
+        if (activeTab !== 'patients' && activeTab !== 'vinculo' && activeTab !== 'settings') {
+          setActiveTab('patients');
+        }
+      }
+    } else {
+      // Access control for patients/admins
+      if (activeTab === 'patients') {
+        setActiveTab('dashboard');
+      }
+      if (activeTab === 'admin' && user.role !== 'admin') {
+        setActiveTab('dashboard');
+      }
+    }
+  }, [user, activePatientId, activeTab, setActiveTab]);
 
   React.useEffect(() => {
     if (isDarkMode) {
@@ -169,6 +201,9 @@ function AppContent() {
 
   const { data: dashboard, isLoading: isDashboardLoading } = useDashboard();
   const { data: readings, isLoading: isReadingsLoading } = useReadings();
+  const { data: patientProfile } = usePatientProfile(activePatientId);
+
+  const effectiveProfile = activePatientId ? (patientProfile || { displayName: activePatientName, role: 'patient' }) : user;
 
   if (!isAuthReady) {
     return (
@@ -189,7 +224,8 @@ function AppContent() {
       {activeTab === 'report' && (
         <MedicalReport 
           dashboard={dashboard || null} 
-          allReadings={readings || null} 
+          allReadings={readings || null}
+          userProfile={effectiveProfile}
         />
       )}
       {activeTab === 'ai' && (
@@ -208,16 +244,20 @@ function AppContent() {
               historicalCycles: []
             }
           }} 
-          userProfile={user}
+          userProfile={effectiveProfile}
         />
       )}
       {activeTab === 'settings' && <SettingsPage />}
+      {activeTab === 'vinculo' && <VinculoPage />}
+      {activeTab === 'patients' && user?.role === 'doctor' && <PatientsList />}
+      {activeTab === 'admin' && user?.role === 'admin' && <AdminPanel />}
 
       {/* Modals */}
       {isReadingFormOpen && <ReadingForm onClose={() => setReadingFormOpen(false)} />}
       {isInfoModalOpen && <InfoModal onClose={() => setInfoModalOpen(false)} />}
+      <AddDoctorLinkModal />
       
-      <ChatAssistant readings={readings || []} userProfile={user} />
+      <ChatAssistant readings={readings || []} userProfile={effectiveProfile} />
     </Layout>
   );
 }

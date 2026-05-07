@@ -5,6 +5,7 @@ import { exportToExcel } from "../lib/exportExcel";
 import jsPDF from "jspdf";
 import { seedClinicalData } from "../lib/seeder";
 import { motion, AnimatePresence } from "motion/react";
+import { QRCodeCanvas } from "qrcode.react";
 import { Button } from "./ui/Button";
 import { cn } from "../lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/Tooltip";
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import { kgToLb, lbToKg, cmToIn, inToCm, calculateBMI, getBMICategory } from "../lib/conversions";
-import { LogOut, ArrowLeft, Upload, Trash2, Camera, User, Cake, Scale, TrendingUp, Ruler, Activity, ChevronDown, History, Heart, Clock, Save, Download, Globe, AlertTriangle, FlaskConical, Server, ShieldCheck, CheckCircle2, Lock, Shield, Fingerprint, Flag, Gavel, Pill, Ambulance, Database, Info, FileText, Zap } from "lucide-react";
+import { LogOut, ArrowLeft, Upload, Trash2, Camera, User, Cake, Scale, TrendingUp, Ruler, Activity, ChevronDown, History, Heart, Clock, Save, Download, Globe, AlertTriangle, FlaskConical, Server, ShieldCheck, CheckCircle2, Lock, Shield, Fingerprint, Flag, Gavel, Pill, Ambulance, Database, Info, FileText, Zap, Users } from "lucide-react";
 
 const PDFIcon = ({ size = 18, className = "" }: { size?: number, className?: string }) => (
   <svg 
@@ -35,6 +36,10 @@ const PDFIcon = ({ size = 18, className = "" }: { size?: number, className?: str
   </svg>
 );
 
+import { DoctorLinkManager } from "./DoctorLinkManager";
+
+import { VinculoPage } from "./VinculoPage";
+
 export function SettingsPage() {
   const { 
     user, 
@@ -55,13 +60,17 @@ export function SettingsPage() {
   
   const handleLogout = () => signOut(auth);
 
-  const sections = [
+  const sections = (user?.role === 'doctor' || user?.role === 'admin' ? [
+    { id: 'ai', label: 'Energía IA', icon: Zap },
+    { id: 'privacy', label: 'Privacidad', icon: Shield },
+    { id: 'about', label: 'Acerca de', icon: Info },
+  ] : [
     { id: 'profile', label: 'Datos de Salud', icon: Heart },
     { id: 'data', label: 'Datos', icon: Database },
     { id: 'ai', label: 'Energía IA', icon: Zap },
     { id: 'privacy', label: 'Privacidad', icon: Shield },
     { id: 'about', label: 'Acerca de', icon: Info },
-  ] as const;
+  ]);
   const clearData = useClearData();
   const updateUserProfile = useUpdateUserProfile();
   const deleteAccount = useDeleteAccount();
@@ -391,6 +400,8 @@ export function SettingsPage() {
     }
   };
 
+  const isDoctor = user?.role === 'doctor' || user?.role === 'admin';
+
   return (
     <div className="flex flex-col gap-6 md:gap-8 min-h-[calc(100vh-12rem)] animate-in fade-in slide-in-from-bottom-4 duration-700">
       
@@ -420,13 +431,15 @@ export function SettingsPage() {
               const isActive = activeSection === section.id;
               const Icon = section.icon;
               // Very short labels for cramped spaces
-              const shortLabel = section.id === 'profile' ? 'Salud' : section.id === 'about' ? 'Info' : section.label;
+              const shortLabel = section.id === 'profile' 
+                ? (isDoctor ? 'Vínculo' : 'Salud') 
+                : section.id === 'about' ? 'Info' : section.label;
               
               return (
                 <Tooltip key={section.id}>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => setActiveSection(section.id)}
+                      onClick={() => setActiveSection(section.id as any)}
                       className={cn(
                         "flex items-center justify-center transition-all duration-300 relative h-12 rounded-full active:scale-95 snap-center shrink-0",
                         isActive 
@@ -485,7 +498,7 @@ export function SettingsPage() {
       {/* Main Content Area */}
       <div className="flex-1 pb-32 sm:pb-0">
         <AnimatePresence mode="wait">
-          {activeSection === 'profile' && (
+          {activeSection === 'profile' && !isDoctor && (
             <motion.div
               key="profile"
               initial={{ opacity: 0, x: 20 }}
@@ -502,81 +515,20 @@ export function SettingsPage() {
                 <ArrowLeft className="text-[16px]" />
                 Volver al Panel Principal
               </button>
-            {/* Profile Header Card - Stitch Redesign */}
-            <div className="relative overflow-hidden bg-surface-low rounded-[3.5rem] shadow-sm p-10 sm:p-12">
-              <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12">
-                {/* Avatar Section */}
-                <div className="relative flex-shrink-0">
-                  {/* Outer Purple Glow Ring */}
-                  <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-[#9D8BFF] to-[#B39DFF] opacity-60 blur-[2px]" />
-                  
-                  <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-surface-low p-1.5 shadow-2xl">
-                    <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-[#2D2A32] relative">
-                      {user?.photoURL ? (
-                        <img 
-                          src={user.photoURL} 
-                          alt="Profile" 
-                          className="w-full h-full object-cover" 
-                          referrerPolicy="no-referrer" 
-                        />
-                      ) : (
-                        <span className="text-5xl font-display font-black text-white">
-                          {user?.displayName?.charAt(0).toUpperCase() || 'P'}
-                        </span>
-                      )}
-                      
-                      {isUploadingAvatar && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-                          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
-                  {/* Camera FAB (Image style) */}
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                    className="absolute bottom-1 right-1 w-12 h-12 bg-surface-lowest rounded-2xl shadow-xl flex items-center justify-center text-foreground transform transition-transform hover:scale-110 active:scale-95 z-20 border border-border/50"
-                    aria-label="Subir foto de perfil"
-                  >
-                    <Camera size={20} strokeWidth={2.5} />
-                  </button>
-                  
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleAvatarUpload} 
-                    className="hidden" 
-                    accept="image/*"
-                  />
-                </div>
+              <VinculoPage isStandalone={false} />
 
-                {/* Info Section */}
-                <div className="flex-1 text-center md:text-left space-y-6 min-w-0">
-                  <h2 className="text-display-md font-display font-black text-on-surface tracking-tighter leading-tight break-words">
-                    {user?.displayName || 'Paciente'}
-                  </h2>
-                  
-                  <div className="space-y-6">
-                    <p className="max-w-xl text-lg text-on-surface-variant font-medium leading-relaxed opacity-80 mx-auto md:mx-0">
-                      Personaliza y gestiona tus métricas biométricas esenciales para un seguimiento preciso y un bienestar optimizado.
-                    </p>
-                    
-                    <div className="flex justify-center md:justify-start pt-2">
-                      <div className="inline-flex px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-black uppercase tracking-[0.15em] text-primary ethereal-blur shadow-sm whitespace-nowrap">
-                        PACIENTE ACTIVO
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="hidden">
+                 <input 
+                   type="file" 
+                   ref={fileInputRef} 
+                   onChange={handleAvatarUpload} 
+                   className="hidden" 
+                   accept="image/*"
+                 />
               </div>
-            </div>
 
-            {/* Health Data Section Removed and Integrated */}
-
-
-            {/* Personal Information Section */}
+            {/* Rest of health data section for patients */}
             <section className="space-y-6">
               <header className="px-4 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -875,124 +827,128 @@ export function SettingsPage() {
               </div>
             </section>
 
-            {/* Ajustes Complementarios Section */}
-            <section className="space-y-6">
-              <div className="bg-surface-low rounded-[2.5rem] p-8 space-y-8">
-                <div className="flex items-center justify-between border-b border-surface-highest/10 pb-6">
-                  <div className="max-w-md">
-                    <h3 className="text-2xl font-display font-black text-foreground mb-1">Ajustes Complementarios</h3>
-                    <p className="text-sm text-on-surface-variant">Define la frecuencia de sincronización y las unidades de medida preferidas.</p>
+            {/* Ajustes Complementarios Section - Only for patients */}
+            {!isDoctor && (
+              <section className="space-y-6 mt-8">
+                <div className="bg-surface-low rounded-[2.5rem] p-8 space-y-8">
+                  <div className="flex items-center justify-between border-b border-surface-highest/10 pb-6">
+                    <div className="max-w-md">
+                      <h3 className="text-2xl font-display font-black text-foreground mb-1">Ajustes Complementarios</h3>
+                      <p className="text-sm text-on-surface-variant">Define la frecuencia de sincronización y las unidades de medida preferidas.</p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-12 gap-y-8">
-                  {/* Measurement System */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Sistema de Medida</label>
-                    <div className="flex bg-surface-high p-1 rounded-full">
-                      {['metric', 'imperial'].map((sys) => (
-                        <button
-                          key={sys}
-                          onClick={() => toggleUnitSystem(sys as 'metric' | 'imperial')}
-                          className={cn(
-                            "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                            unitSystem === sys 
-                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
-                              : "font-medium text-on-surface-variant"
-                          )}
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-12 gap-y-8">
+                    {/* Measurement System */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-on-surface-variant ml-1">Sistema de Medida</label>
+                      <div className="flex bg-surface-high p-1 rounded-full">
+                        {['metric', 'imperial'].map((sys) => (
+                          <button
+                            key={sys}
+                            onClick={() => toggleUnitSystem(sys as 'metric' | 'imperial')}
+                            className={cn(
+                              "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
+                              unitSystem === sys 
+                                ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                                : "font-medium text-on-surface-variant"
+                            )}
+                          >
+                            {sys === 'metric' ? 'Métrico' : 'Imperial'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Measurement Frequency */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-on-surface-variant ml-1">Frecuencia de Medición</label>
+                      <div className="relative group">
+                        <select 
+                          value={measurementFrequency}
+                          onChange={(e) => setMeasurementFrequency(e.target.value as any)}
+                          className="w-full bg-surface-high border-none rounded-xl py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 appearance-none transition-all outline-none"
                         >
-                          {sys === 'metric' ? 'Métrico' : 'Imperial'}
-                        </button>
-                      ))}
+                          <option value="daily">Diario</option>
+                          <option value="weekly">Semanal</option>
+                          <option value="monthly">Mensual</option>
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant" />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Measurement Frequency */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Frecuencia de Medición</label>
-                    <div className="relative group">
-                      <select 
-                        value={measurementFrequency}
-                        onChange={(e) => setMeasurementFrequency(e.target.value as any)}
-                        className="w-full bg-surface-high border-none rounded-xl py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 appearance-none transition-all outline-none"
-                      >
-                        <option value="daily">Diario</option>
-                        <option value="weekly">Semanal</option>
-                        <option value="monthly">Mensual</option>
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant" />
+                    {/* Auto BMI */}
+                    <div className="flex items-center justify-between p-4 bg-surface-highest/30 rounded-xl">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0">
+                          <Activity size={24} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-on-surface">Cálculo de IMC Automático</p>
+                          <p className="text-xs text-on-surface-variant">Calcular índice de masa corporal según peso/altura</p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={autoBmi}
+                          onChange={() => setAutoBmi(!autoBmi)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-surface-highest/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                      </label>
                     </div>
-                  </div>
 
-                  {/* Auto BMI */}
-                  <div className="flex items-center justify-between p-4 bg-surface-highest/30 rounded-xl">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0">
-                        <Activity size={24} strokeWidth={2.5} />
+                    {/* Trends History */}
+                    <div className="flex items-center justify-between p-4 bg-surface-highest/30 rounded-xl">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0">
+                          <History size={24} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-on-surface">Historial de Tendencias</p>
+                          <p className="text-xs text-on-surface-variant">Mostrar indicadores de progreso en tarjetas</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-on-surface">Cálculo de IMC Automático</p>
-                        <p className="text-xs text-on-surface-variant">Calcular índice de masa corporal según peso/altura</p>
-                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={showTrends}
+                          onChange={() => setShowTrends(!showTrends)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-surface-highest/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                      </label>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={autoBmi}
-                        onChange={() => setAutoBmi(!autoBmi)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-surface-highest/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                    </label>
-                  </div>
-
-                  {/* Trends History */}
-                  <div className="flex items-center justify-between p-4 bg-surface-highest/30 rounded-xl">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0">
-                        <History size={24} strokeWidth={2.5} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-on-surface">Historial de Tendencias</p>
-                        <p className="text-xs text-on-surface-variant">Mostrar indicadores de progreso en tarjetas</p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={showTrends}
-                        onChange={() => setShowTrends(!showTrends)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-surface-highest/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                    </label>
                   </div>
                 </div>
-              </div>
-            </section>
-
+              </section>
+            )}
 
             {/* Bottom Actions */}
             <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-8">
               <Button 
                 variant="outline"
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => isDoctor ? setActiveTab('patients') : setActiveTab('dashboard')}
                 className="w-full sm:w-auto flex items-center justify-center gap-2"
               >
                 <ArrowLeft size={18} />
-                Cancelar y Volver al Panel
+                <span>{isDoctor ? 'Volver a Pacientes' : 'Cancelar y Volver al Panel'}</span>
               </Button>
-              <Button 
-                onClick={handleSaveHealthData}
-                disabled={!isDirty || updateUserProfile.isPending}
-                isLoading={updateUserProfile.isPending}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 shadow-none hover:shadow-primary/20 hover:shadow-xl transition-all"
-              >
-                <Save size={18} />
-                <span>Actualizar Perfil</span>
-              </Button>
+              {!isDoctor && (
+                <Button 
+                  onClick={handleSaveHealthData}
+                  disabled={!isDirty || updateUserProfile.isPending}
+                  isLoading={updateUserProfile.isPending}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 shadow-none hover:shadow-primary/20 hover:shadow-xl transition-all"
+                >
+                  <Save size={18} />
+                  <span>Actualizar Perfil</span>
+                </Button>
+              )}
             </div>
-          </motion.div>)}
+          </motion.div>
+        )}
            {activeSection === 'data' && (
             <motion.div
               key="data"
@@ -1243,9 +1199,14 @@ export function SettingsPage() {
               className="space-y-8"
             >
               <div className="space-y-2">
-                <h3 className="text-3xl font-display font-black text-foreground">Energía IA</h3>
+                <h3 className="text-3xl font-display font-black text-foreground">
+                  {isDoctor ? 'Motor de Análisis Clínico' : 'Energía IA'}
+                </h3>
                 <p className="text-on-surface-variant">
-                  Consulta cuánta energía de Inteligencia Artificial tienes disponible este mes. Cada vez que generas un análisis o le hablas al asistente, se consume energía.
+                  {isDoctor 
+                    ? 'Gestiona la capacidad de procesamiento de nuestra arquitectura de Inteligencia Artificial para el análisis de expedientes y generación de reportes clínicos avanzados.'
+                    : 'Consulta cuánta energía de Inteligencia Artificial tienes disponible este mes. Cada vez que generas un análisis o le hablas al asistente, se consume energía.'
+                  }
                 </p>
               </div>
 
@@ -1255,7 +1216,8 @@ export function SettingsPage() {
                 </div>
                 
                 <h4 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
-                  <Activity size={20} className="text-primary-base" /> Consumo Mensual
+                  <Activity size={20} className="text-primary-base" /> 
+                  {isDoctor ? 'Estado del Servicio Analítico' : 'Consumo Mensual'}
                 </h4>
 
                 {(() => {
@@ -1267,7 +1229,6 @@ export function SettingsPage() {
                   if (percent > 75) barColor = 'bg-amber-500';
                   if (percent > 90) barColor = 'bg-red-500';
 
-                  // Using LocaleString for nicer big numbers
                   const fUsed = used.toLocaleString('es-ES');
                   const fLimit = limit.toLocaleString('es-ES');
                   const resetStr = user?.aiUsage?.resetDate 
@@ -1279,11 +1240,15 @@ export function SettingsPage() {
                       <div className="flex justify-between items-end">
                         <div className="space-y-1">
                           <span className="text-4xl font-black font-display text-foreground">{percent.toFixed(1)}%</span>
-                          <span className="text-sm font-medium text-on-surface-variant block">Energía utilizada</span>
+                          <span className="text-sm font-medium text-on-surface-variant block">
+                            {isDoctor ? 'Carga de análisis consumida' : 'Energía utilizada'}
+                          </span>
                         </div>
                         <div className="text-right">
                           <span className="text-lg font-bold text-foreground block">{fUsed} / {fLimit}</span>
-                          <span className="text-sm font-medium text-on-surface-variant">Unidades IA</span>
+                          <span className="text-sm font-medium text-on-surface-variant">
+                            {isDoctor ? 'Unidades de Cómputo' : 'Unidades IA'}
+                          </span>
                         </div>
                       </div>
 
@@ -1298,7 +1263,7 @@ export function SettingsPage() {
 
                       <div className="text-sm text-on-surface-variant flex items-center gap-2 bg-surface p-4 rounded-2xl">
                         <Clock size={16} className="text-primary-base shrink-0" />
-                        Tu límite se restablecerá automáticamente el <strong>{resetStr}</strong>.
+                        Su cuota de procesamiento se restablecerá el <strong>{resetStr}</strong>.
                       </div>
                     </div>
                   );
@@ -1316,9 +1281,14 @@ export function SettingsPage() {
               className="space-y-8"
             >
               <div className="space-y-2">
-                <h3 className="text-3xl font-display font-black text-foreground">Centro de Control de Privacidad</h3>
+                <h3 className="text-3xl font-display font-black text-foreground">
+                  {isDoctor ? 'Seguridad y Confidencialidad' : 'Centro de Control de Privacidad'}
+                </h3>
                 <p className="text-on-surface-variant">
-                  Gestione cómo se protegen sus datos y quién puede acceder a sus registros históricos. El cifrado de alta seguridad está activo por defecto.
+                  {isDoctor 
+                    ? 'Supervise los protocolos de cifrado que protegen su identidad profesional y la integridad de los reportes clínicos gestionados en la plataforma.'
+                    : 'Gestione cómo se protegen sus datos y quién puede acceder a sus registros históricos. El cifrado de alta seguridad está activo por defecto.'
+                  }
                 </p>
               </div>
 
@@ -1331,27 +1301,30 @@ export function SettingsPage() {
                         <Shield className="text-[28px]" />
                       </div>
                       <div>
-                        <h4 className="text-xl font-display font-black text-foreground">Estado de Cifrado de Datos</h4>
+                        <h4 className="text-xl font-display font-black text-foreground">Cifrado de Grado Médico</h4>
                         <div className="flex items-center gap-1.5 text-success font-black text-[10px] uppercase tracking-widest mt-1">
                           <Lock className="text-[12px]" />
-                          BÓVEDA ASEGURADA
+                          INFRAESTRUCTURA PROTEGIDA
                         </div>
                       </div>
                     </div>
                   </div>
                   <p className="text-on-surface-variant leading-relaxed font-medium">
-                    Sus registros están protegidos con tecnología de seguridad avanzada y cifrado automático. Esto garantiza que su información de salud sea privada y que nadie más que usted pueda verla.
+                    {isDoctor 
+                      ? 'TensioTrack implementa estándares internacionales de seguridad (cifrado AES-256) para asegurar que la interacción médico-paciente permanezca estrictamente confidencial e inalterable.'
+                      : 'Sus registros están protegidos con tecnología de seguridad avanzada y cifrado automático. Esto garantiza que su información de salud sea privada y que nadie más que usted pueda verla.'
+                    }
                   </p>
                   <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest pt-2">
                     <ShieldCheck className="text-[16px]" />
-                    Protección Activa 24/7
+                    Monitoreo de Integridad Activo
                   </div>
                 </div>
 
                 {/* Account Security Card (Firebase) */}
                 <div className="bg-surface-low rounded-[2.5rem] p-8 space-y-8 shadow-sm">
-                  <h4 className="text-xl font-display font-black text-foreground">Seguridad de la Cuenta</h4>
-                  <p className="text-xs text-on-surface-variant font-medium">Su cuenta está protegida por los sistemas de seguridad de Google.</p>
+                  <h4 className="text-xl font-display font-black text-foreground">Seguridad del Acceso</h4>
+                  <p className="text-xs text-on-surface-variant font-medium">Su identidad profesional está validada por los sistemas de Google Cloud.</p>
                   
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
@@ -1359,87 +1332,95 @@ export function SettingsPage() {
                         <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary shadow-sm">
                           <User className="text-[16px]" />
                         </div>
-                        <span className="text-sm font-bold text-foreground">Acceso con Google</span>
+                        <span className="text-sm font-bold text-foreground">Autenticación OAuth</span>
                       </div>
-                      <span className="text-[10px] font-black text-success uppercase tracking-widest bg-success/10 px-2 py-1 rounded-md">Conectado</span>
+                      <span className="text-[10px] font-black text-success uppercase tracking-widest bg-success/10 px-2 py-1 rounded-md">Válida</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary shadow-sm">
                           <Server className="text-[16px]" />
                         </div>
-                        <span className="text-sm font-bold text-foreground">Sincronización Cloud</span>
+                        <span className="text-sm font-bold text-foreground">Región de Datos</span>
                       </div>
-                      <span className="text-[10px] font-black text-success uppercase tracking-widest bg-success/10 px-2 py-1 rounded-md">Activa</span>
+                      <span className="text-[10px] font-black text-success uppercase tracking-widest bg-success/10 px-2 py-1 rounded-md">EU-West</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Medical Data Sharing Card */}
-              <div className="bg-surface-low rounded-[3rem] p-6 sm:p-12 space-y-8 sm:space-y-10 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <h4 className="text-2xl font-display font-black text-foreground">Compartir Datos Médicos</h4>
-                    <p className="text-on-surface-variant text-sm">Permisos granulares para sus datos biométricos sensibles.</p>
+              {!isDoctor && (
+                <div className="bg-surface-low rounded-[3rem] p-6 sm:p-12 space-y-8 sm:space-y-10 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <h4 className="text-2xl font-display font-black text-foreground">Compartir Datos Médicos</h4>
+                      <p className="text-on-surface-variant text-sm">Permisos granulares para sus datos biométricos sensibles.</p>
+                    </div>
+                    <div className="px-4 py-2 bg-primary/10 rounded-xl flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest self-start sm:self-center">
+                      <ShieldCheck className="text-[16px]" />
+                      Entorno de Cumplimiento Médico
+                    </div>
                   </div>
-                  <div className="px-4 py-2 bg-primary/10 rounded-xl flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest self-start sm:self-center">
-                    <ShieldCheck className="text-[16px]" />
-                    Entorno de Cumplimiento Médico
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                  {[
-                    { id: 'vitals', label: 'Tensión y Pulso', desc: 'Sus lecturas diarias y ritmo cardíaco', icon: Heart, state: shareVitals, setState: setShareVitals },
-                    { id: 'meds', label: 'Medicamentos', desc: 'Información sobre sus pastillas y recetas', icon: Pill, state: shareMedication, setState: setShareMedication },
-                    { id: 'emergency', label: 'Acceso de Emergencia', desc: 'Permitir a los médicos de urgencias ver sus datos', icon: Ambulance, state: shareEmergency, setState: setShareEmergency },
-                    { id: 'reports', label: 'Informes de Salud', desc: 'Resúmenes mensuales para su médico', icon: History, state: shareReports, setState: setShareReports },
-                  ].map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <div 
-                        key={item.id} 
-                        className="p-5 sm:p-8 rounded-[2.5rem] bg-surface flex items-center justify-between gap-4 sm:gap-6 hover:bg-surface-high/30 transition-all duration-300 group"
-                      >
-                        <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0 group-hover:scale-110 transition-transform">
-                            <IconComponent className="text-[22px] sm:text-[26px]" />
-                          </div>
-                          <div className="min-w-0">
-                            <h5 className="text-sm sm:text-base font-bold text-foreground leading-tight">{item.label}</h5>
-                            <p className="text-[10px] sm:text-xs text-on-surface-variant leading-tight sm:leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">{item.desc}</p>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => item.setState(!item.state)}
-                          className={cn(
-                            "w-10 h-5 sm:w-12 sm:h-6 rounded-full transition-all relative shrink-0 active:scale-90",
-                            item.state ? "bg-primary shadow-lg shadow-primary/20" : "bg-surface-low shadow-inner"
-                          )}
-                          aria-label={`Compartir ${item.label}`}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                    {[
+                      { id: 'vitals', label: 'Tensión y Pulso', desc: 'Sus lecturas diarias y ritmo cardíaco', icon: Heart, state: shareVitals, setState: setShareVitals },
+                      { id: 'meds', label: 'Medicamentos', desc: 'Información sobre sus pastillas y recetas', icon: Pill, state: shareMedication, setState: setShareMedication },
+                      { id: 'emergency', label: 'Acceso de Emergencia', desc: 'Permitir a los médicos de urgencias ver sus datos', icon: Ambulance, state: shareEmergency, setState: setShareEmergency },
+                      { id: 'reports', label: 'Informes de Salud', desc: 'Resúmenes mensuales para su médico', icon: History, state: shareReports, setState: setShareReports },
+                    ].map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <div 
+                          key={item.id} 
+                          className="p-5 sm:p-8 rounded-[2.5rem] bg-surface flex items-center justify-between gap-4 sm:gap-6 hover:bg-surface-high/30 transition-all duration-300 group"
                         >
-                          <div className={cn(
-                            "absolute top-0.5 sm:top-1 w-4 h-4 rounded-full transition-all shadow-md",
-                            item.state ? "left-5.5 sm:left-7 bg-white" : "left-0.5 sm:left-1 bg-white",
-                          )} />
-                        </button>
-                      </div>
-                    )
-                  })}
+                          <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm shrink-0 group-hover:scale-110 transition-transform">
+                              <IconComponent className="text-[22px] sm:text-[26px]" />
+                            </div>
+                            <div className="min-w-0">
+                              <h5 className="text-sm sm:text-base font-bold text-foreground leading-tight">{item.label}</h5>
+                              <p className="text-[10px] sm:text-xs text-on-surface-variant leading-tight sm:leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">{item.desc}</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => item.setState(!item.state)}
+                            className={cn(
+                              "w-10 h-5 sm:w-12 sm:h-6 rounded-full transition-all relative shrink-0 active:scale-90",
+                              item.state ? "bg-primary shadow-lg shadow-primary/20" : "bg-surface-low shadow-inner"
+                            )}
+                            aria-label={`Compartir ${item.label}`}
+                          >
+                            <div className={cn(
+                              "absolute top-0.5 sm:top-1 w-4 h-4 rounded-full transition-all shadow-md",
+                              item.state ? "left-5.5 sm:left-7 bg-white" : "left-0.5 sm:left-1 bg-white",
+                            )} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Data Ownership Statement */}
-              <div className="bg-primary/5 rounded-[2.5rem] p-8 flex flex-col sm:flex-row items-center gap-6">
-                <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm flex-shrink-0">
-                  <Fingerprint className="text-[28px]" strokeWidth={2.5} />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-xl font-display font-black text-foreground">Usted es el dueño de sus datos</h4>
-                  <p className="text-sm text-on-surface-variant">En TensioTrack, creemos que su información de salud le pertenece solo a usted. Puede descargar sus datos o eliminarlos permanentemente en cualquier momento desde la sección de Datos.</p>
-                </div>
-              </div>
+              {!isDoctor && (
+                <>
+                  <DoctorLinkManager />
+
+                  {/* Data Ownership Statement */}
+                  <div className="bg-primary/5 rounded-[2.5rem] p-8 flex flex-col sm:flex-row items-center gap-6">
+                    <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm flex-shrink-0">
+                      <Fingerprint className="text-[28px]" strokeWidth={2.5} />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-xl font-display font-black text-foreground">Usted es el dueño de sus datos</h4>
+                      <p className="text-sm text-on-surface-variant">En TensioTrack, creemos que su información de salud le pertenece solo a usted. Puede descargar sus datos o eliminarlos permanentemente en cualquier momento desde la sección de Datos.</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
 
@@ -1471,7 +1452,10 @@ export function SettingsPage() {
                   <h4 className="text-lg sm:text-2xl font-display font-black text-foreground leading-tight w-full text-center sm:text-left">Misión</h4>
                 </div>
                 <p className="text-on-surface-variant leading-relaxed font-medium text-sm sm:text-base w-full text-center sm:text-left">
-                  TensioTrack ha sido creado para ayudarle a cuidar de su salud de forma sencilla y segura. Nuestra misión es hacer que llevar el control de su tensión sea una tarea fácil, permitiéndole guardar sus registros a lo largo del tiempo para que usted y su médico tengan siempre una información clara y precisa sobre su bienestar.
+                  {isDoctor 
+                    ? 'Ofrecer a los profesionales de la salud una infraestructura robusta y analítica para el seguimiento remoto de pacientes mediante el protocolo AMPA, optimizando la precisión diagnóstica y la comunicación clínica.'
+                    : 'TensioTrack ha sido creado para ayudarle a cuidar de su salud de forma sencilla y segura. Nuestra misión es hacer que llevar el control de su tensión sea una tarea fácil, permitiéndole guardar sus registros a lo largo del tiempo para que usted y su médico tengan siempre una información clara y precisa sobre su bienestar.'
+                  }
                 </p>
               </div>
 
@@ -1484,7 +1468,10 @@ export function SettingsPage() {
                   <h4 className="text-[17px] sm:text-2xl font-display font-black text-foreground leading-tight w-full text-center sm:text-left tracking-tight">Descargo de Responsabilidad Clínica</h4>
                 </div>
                 <p className="text-on-surface-variant leading-relaxed italic font-medium text-sm sm:text-base w-full text-center sm:text-left">
-                  Esta aplicación es una herramienta de registro y no sustituye el diagnóstico médico profesional. Consulte siempre con su médico antes de realizar cambios en su tratamiento o si presenta síntomas inusuales. Los datos archivados son para propósitos informativos.
+                  {isDoctor 
+                    ? 'Esta plataforma es una herramienta de soporte analítico y gestión de datos. No sustituye el criterio clínico final del facultativo responsable. El procesamiento de IA debe ser validado por el profesional en base al historial completo del paciente.'
+                    : 'Esta aplicación es una herramienta de registro y no sustituye el diagnóstico médico profesional. Consulte siempre con su médico antes de realizar cambios en su tratamiento o si presenta síntomas inusuales. Los datos archivados son para propósitos informativos.'
+                  }
                 </p>
                 <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-primary font-black text-[9px] sm:text-[10px] uppercase tracking-widest pt-4 border-t border-surface-highest/10 w-full mt-auto">
                   <ShieldCheck className="text-[16px] sm:text-[18px]" />

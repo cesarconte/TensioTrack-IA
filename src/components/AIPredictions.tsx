@@ -1,5 +1,6 @@
 import * as React from "react";
-import { firebaseService } from "../lib/api";
+import { firebaseService, getTargetUserId } from "../lib/api";
+import { useAppStore } from "../store/useAppStore";
 import { GoogleGenAI } from "@google/genai";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
@@ -67,6 +68,11 @@ interface AIPredictionsProps {
 }
 
 export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredictionsProps) {
+  const { user: loggedInUser, activePatientId, activePatientName } = useAppStore();
+  const user = userProfile || loggedInUser;
+  const isDoctor = loggedInUser?.role === 'doctor';
+  const isViewingPatient = isDoctor && !!activePatientId;
+
   const [view, setView] = React.useState<'preparation' | 'results' | 'history'>('preparation');
   const [isLoading, setIsLoading] = React.useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
@@ -128,6 +134,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
   const isPhysicianValidated = completedSessions >= totalRequiredSessions;
   
   // Stricter analysis check: must have 5 unique days AND at least 10 sessions total
+  // Allow doctors to analyze if they are viewing a patient (the profile role will be 'patient' then)
   const canAnalyze = selectedData.isComplete && isPhysicianValidated && selectedData.daysCount >= 5;
 
   const analyzeTrends = async () => {
@@ -242,7 +249,11 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         if (!text) throw new Error("No response from AI engine");
         
         if (result.usageMetadata?.totalTokenCount) {
-          firebaseService.updateAITokenUsage(result.usageMetadata.totalTokenCount).catch(console.error);
+          try {
+            await firebaseService.updateAITokenUsage(result.usageMetadata.totalTokenCount);
+          } catch(e) {
+            console.error("Token update error:", e);
+          }
         }
 
         const jsonStr = text.replace(/```json|```/g, '').trim();
@@ -266,7 +277,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         // Enforcing 100% strict adherence to firestore.rules strings and limits defensively.
         // In case the AI omits a key, this prevents "Missing or insufficient permissions" from Firebase.
         const reportData = {
-          userUid: auth.currentUser.uid,
+          userUid: getTargetUserId(),
           createdAt: new Date().toISOString(),
           cycleId: String(activeFilters.cycleId || 'current'),
           title: String(generatedData.title || 'Análisis Clínico AMPA').substring(0, 199),
@@ -282,7 +293,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         };
         
         try {
-          await addDoc(collection(db, 'users', auth.currentUser.uid, 'ai_reports'), reportData);
+          await addDoc(collection(db, 'users', getTargetUserId(), 'ai_reports'), reportData);
         } catch (e: any) {
           console.error("AI Report Save Error Details:", e);
           if (e.message?.includes('permission')) {
@@ -316,7 +327,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
     setError(null);
     try {
       const q = query(
-        collection(db, 'users', auth.currentUser.uid, 'ai_reports'),
+        collection(db, 'users', getTargetUserId(), 'ai_reports'),
         orderBy('createdAt', 'desc')
       );
       const querySnapshot = await getDocs(q);
@@ -410,7 +421,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
       if (!auth.currentUser) return;
       try {
         const q = query(
-          collection(db, 'users', auth.currentUser.uid, 'ai_reports'),
+          collection(db, 'users', getTargetUserId(), 'ai_reports'),
           orderBy('createdAt', 'desc'),
           limit(1)
         );
@@ -433,7 +444,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
   // Force a professional clinical loading state
   if (isLoadingData || !dashboard || !dashboard.stats) {
     return (
-      <div className="flex-1 min-h-[70vh] flex flex-col items-center justify-center p-12 bg-surface-low rounded-[3rem] border border-border/40 relative">
+      <div className="flex-1 min-h-[70vh] flex flex-col items-center justify-center p-12 bg-surface-low rounded-[3rem] border-none relative">
         <Brain className="text-primary animate-pulse" size={48} />
         <h2 className="mt-8 text-2xl font-display font-black text-on-surface">Validando Muestra</h2>
         <p className="mt-2 text-on-surface-variant/60 text-sm font-medium">Procesando registros clínicos bajo estándares AMPA...</p>
@@ -591,10 +602,44 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
     );
   }
 
-  if (view === 'preparation') {
-    return (
-      <div className="space-y-8 pb-12">
-        {/* Selection Area / Advanced Filter Button */}
+  // RESULTS VIEW
+  return (
+    <div className="space-y-8 pb-20">
+      {/* Consultation Mode Banner (Doctor viewing Patient) - Persistent across views */}
+      <AnimatePresence mode="wait">
+        {isViewingPatient && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden px-4 sm:px-0"
+          >
+            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-6 mb-2 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                  <Activity className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-foreground tracking-tight">Análisis IA de Paciente</h4>
+                  <p className="text-sm font-medium text-on-surface-variant">Analizando datos para <span className="text-primary font-bold">{activePatientName}</span></p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5"
+                onClick={() => useAppStore.getState().setActivePatientId(null, null)}
+              >
+                Cerrar Sesión
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {(view === 'preparation') && (
+        <div className="space-y-8">
+          {/* Selection Area / Advanced Filter Button */}
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-2">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-full text-primary">
@@ -633,7 +678,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[2.5rem] bg-surface-low border border-border shadow-xl shadow-surface-highest/5 p-12 text-center"
+          className="relative overflow-hidden rounded-[3rem] bg-surface-low border-none p-12 text-center"
         >
           {/* Subtle Background Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
@@ -648,12 +693,12 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             </div>
             
             <h1 className="text-display-lg font-display font-black text-on-surface leading-[1.1] tracking-tight mb-6 max-w-xl">
-              {canAnalyze ? (activeFilters.cycleId === 'current' ? 'Periodo actual validado' : 'Ciclo clínico seleccionado') : 'Requisitos no alcanzados'}
+              {canAnalyze ? (activeFilters.cycleId === 'current' ? `Análisis para ${userProfile?.displayName?.split(' ')[0] || 'el paciente'}` : 'Ciclo clínico seleccionado') : 'Requisitos no alcanzados'}
             </h1>
             
             <p className="text-on-surface-variant/70 text-lg font-medium leading-relaxed max-w-2xl mx-auto mb-10">
               {canAnalyze 
-                ? `Los datos del ${selectedData.label} han sido validados según el protocolo AMPA y están listos para el procesamiento clínico.`
+                ? `Los datos de ${userProfile?.displayName || 'el paciente'} han sido validados según el protocolo AMPA y están listos para el procesamiento clínico.`
                 : `Para generar un informe profesional, el protocolo requiere una muestra de 5 días completos (10 sesiones). Actualmente dispone de ${completedSessions}/${totalRequiredSessions} sesiones registradas.`}
             </p>
             
@@ -696,7 +741,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="md:col-span-8 bg-surface-low rounded-[2.5rem] p-10 border border-border flex flex-col justify-between"
+            className="md:col-span-8 bg-surface-low rounded-[3rem] p-10 border-none flex flex-col justify-between"
           >
             <div>
               <p className="text-[10px] font-black tracking-[0.2em] text-on-surface-variant uppercase mb-3">Integridad de la Muestra</p>
@@ -750,7 +795,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="md:col-span-4 bg-surface-high rounded-[2.5rem] p-10 border border-border/50 flex flex-col justify-between"
+            className="md:col-span-4 bg-surface-high rounded-[3rem] p-10 border-none flex flex-col justify-between"
           >
             <div className="p-4 bg-primary/5 rounded-2xl w-fit mb-6">
               <FileText size={24} className="text-primary/60" />
@@ -798,7 +843,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="relative rounded-[2.5rem] bg-surface-low border border-primary/10 overflow-hidden min-h-[11rem] py-8 flex items-center justify-center bg-cover bg-center shadow-lg"
+            className="relative rounded-[3rem] bg-surface-low border-none overflow-hidden min-h-[11rem] py-8 flex items-center justify-center bg-cover bg-center"
             style={{ backgroundImage: 'url(/bg-health-network.png)' }}
           >
             <div className="absolute inset-0 bg-surface/70 backdrop-blur-[6px]"></div>
@@ -869,13 +914,11 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           </motion.div>
         </div>
       </div>
-    );
-  }
+    )}
 
-  if (view === 'history') {
-    return (
-      <div className="space-y-10 pb-20">
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      {(view === 'history') && (
+        <div className="space-y-10">
+          <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="space-y-2">
             <button 
               onClick={() => setView('preparation')}
@@ -895,7 +938,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         </header>
 
         {historicalReports.length === 0 ? (
-          <div className="bg-surface-low rounded-[2.5rem] border border-border p-20 flex flex-col items-center text-center space-y-6">
+          <div className="bg-surface-low rounded-[3rem] border-none p-20 flex flex-col items-center text-center space-y-6">
             <div className="w-20 h-20 bg-surface-low rounded-3xl flex items-center justify-center text-on-surface-variant/40">
               <Clock size={40} />
             </div>
@@ -913,7 +956,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               <motion.div 
                 key={report.id}
                 whileHover={{ y: -5 }}
-                className="bg-surface-low rounded-[2rem] border border-border p-8 flex flex-col justify-between space-y-8 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all cursor-pointer group"
+                className="bg-surface-low rounded-[3rem] border-none p-8 flex flex-col justify-between space-y-8 transition-all cursor-pointer group"
                 onClick={() => viewHistoricalReport(report)}
               >
                 <div className="space-y-4">
@@ -958,13 +1001,11 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           </div>
         )}
       </div>
-    );
-  }
+    )}
 
-  // RESULTS VIEW
-  return (
-    <div className="space-y-8 pb-20">
-      <header className="mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      {(view === 'results') && (
+        <>
+          <header className="mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-4 sm:px-0">
         <div className="space-y-2">
           <button 
             onClick={() => setView(historicalReports.length > 0 ? 'history' : 'preparation')}
@@ -987,7 +1028,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
       <motion.div 
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-primary rounded-[2.5rem] p-12 text-white overflow-hidden shadow-lg shadow-primary/10"
+        className="relative bg-primary rounded-[3rem] p-12 text-white overflow-hidden"
       >
         {/* Subtle radial highlights for depth */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-[120px] -mr-[300px] -mt-[300px]" />
@@ -1108,7 +1149,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * i }}
                   key={i} 
-                  className="flex gap-6 p-6 bg-surface-low rounded-[1.5rem] border border-border shadow-sm hover:shadow-md transition-shadow group cursor-default"
+                  className="flex gap-6 p-6 bg-surface-low rounded-[2.5rem] border-none transition-shadow group cursor-default"
                 >
                   <div className={cn(
                     "shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105",
@@ -1131,7 +1172,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="md:col-span-5 bg-surface-low rounded-[2.5rem] p-10 border border-border"
+          className="md:col-span-5 bg-surface-low rounded-[3rem] p-10 border-none"
         >
           <div className="flex items-center gap-3 mb-8">
             <Lightbulb className="text-primary" size={22} fill="currentColor" />
@@ -1184,19 +1225,25 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           Compartir con mi Doctor
         </Button>
       </div>
+    </>
+  )}
 
-      <ShareModal 
-        isOpen={isShareModalOpen} 
-        onClose={() => setIsShareModalOpen(false)} 
-        url={window.location.origin} 
-      />
+      <AnimatePresence>
+        {isShareModalOpen && (
+          <ShareModal 
+            isOpen={isShareModalOpen} 
+            onClose={() => setIsShareModalOpen(false)} 
+            url={window.location.origin} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 function CardDesign({ title, badge, children }: { title: string, badge?: string, children: React.ReactNode }) {
   return (
-    <div className="bg-surface-low rounded-[2.5rem] p-10 border border-border flex flex-col transition-all hover:shadow-sm">
+    <div className="bg-surface-low rounded-[3rem] p-10 border-none flex flex-col transition-all hover:shadow-sm">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-[1.2rem] font-display font-bold text-foreground">{title}</h3>
         {badge && (

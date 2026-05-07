@@ -4,6 +4,7 @@ import {
   auth, 
   collection, 
   doc, 
+  getDoc,
   setDoc, 
   getDocs, 
   query, 
@@ -32,10 +33,21 @@ import { toast } from 'sonner';
 
 // --- Services ---
 
+export const getTargetUserId = (): string => {
+  const { user, activePatientId } = useAppStore.getState();
+  if (!auth.currentUser) throw new Error('User not authenticated');
+  
+  if (user?.role === 'doctor' && activePatientId) {
+    return activePatientId;
+  }
+  return auth.currentUser.uid;
+};
+
 export const firebaseService = {
   async getReadings(filters?: { slot?: string; date?: string; limit?: number; periodId?: number; dateFrom?: string; dateTo?: string }): Promise<Reading[]> {
     if (!auth.currentUser) throw new Error('User not authenticated');
-    const readingsRef = collection(db, 'users', auth.currentUser.uid, 'readings');
+    const targetUid = getTargetUserId();
+    const readingsRef = collection(db, 'users', targetUid, 'readings');
     
     let q = query(readingsRef, orderBy('recordedAt', 'desc'));
     
@@ -319,8 +331,9 @@ export const firebaseService = {
 // --- Hooks ---
 
 export const useDashboard = () => {
+  const { activePatientId } = useAppStore();
   return useQuery<DashboardData>({
-    queryKey: ['dashboard', auth.currentUser?.uid],
+    queryKey: ['dashboard', auth.currentUser?.uid, activePatientId],
     enabled: !!auth.currentUser,
     queryFn: async () => {
       // 6-Month Temporal Boundary for Dashboard Performance
@@ -490,13 +503,15 @@ export const useDashboard = () => {
 };
 
 export const useAvailablePeriods = () => {
+  const { activePatientId } = useAppStore();
   return useQuery<{ id: number; label: string }[]>({
-    queryKey: ['availablePeriods', auth.currentUser?.uid],
-    enabled: !!auth.currentUser,
+    queryKey: ['availablePeriods', auth.currentUser?.uid, activePatientId],
+    enabled: !!auth.currentUser && (useAppStore.getState().user?.role !== 'doctor' || !!activePatientId),
     queryFn: async () => {
       if (!auth.currentUser) return [];
       try {
-        const readingsRef = collection(db, 'users', auth.currentUser.uid, 'readings');
+        const targetUid = getTargetUserId();
+        const readingsRef = collection(db, 'users', targetUid, 'readings');
         const snapshot = await getDocs(readingsRef);
         
         const periods = new Set<number>();
@@ -523,10 +538,26 @@ export const useAvailablePeriods = () => {
 };
 
 export const useReadings = (filters?: { slot?: string; date?: string; limit?: number; periodId?: number; dateFrom?: string; dateTo?: string }) => {
+  const { activePatientId } = useAppStore();
   return useQuery<Reading[]>({
-    queryKey: ['readings', auth.currentUser?.uid, filters?.slot, filters?.date, filters?.limit, filters?.periodId, filters?.dateFrom, filters?.dateTo],
+    queryKey: ['readings', auth.currentUser?.uid, activePatientId, filters?.slot, filters?.date, filters?.limit, filters?.periodId, filters?.dateFrom, filters?.dateTo],
     enabled: !!auth.currentUser,
     queryFn: () => firebaseService.getReadings(filters)
+  });
+};
+
+export const usePatientProfile = (patientId: string | null) => {
+  return useQuery({
+    queryKey: ['patient-profile', patientId],
+    enabled: !!patientId,
+    queryFn: async () => {
+      const docRef = doc(db, 'users', patientId!);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { uid: docSnap.id, ...docSnap.data() };
+      }
+      return null;
+    }
   });
 };
 

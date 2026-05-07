@@ -49,11 +49,11 @@ export function Login() {
           </div>
  
           <div className="space-y-6">
-            <h2 className="text-6xl font-display font-black leading-tight">
-              Cuidamos de su <br />
-              <span className="text-primary-container">corazón</span>, paso a paso.
+            <h2 className="text-4xl lg:text-5xl xl:text-6xl font-display font-black leading-[1.1]">
+              Cuidamos de su <br className="hidden sm:block" />
+              <span className="text-primary-container">corazón</span>,<br className="hidden xl:block" /> paso a paso.
             </h2>
-            <p className="text-xl text-primary-foreground/80 max-w-md font-medium leading-relaxed">
+            <p className="text-lg xl:text-xl text-primary-foreground/80 max-w-md font-medium leading-relaxed">
               La herramienta profesional para el seguimiento de su presión arterial, diseñada para ser sencilla, segura y precisa.
             </p>
             <div className="flex gap-4 pt-4">
@@ -105,7 +105,7 @@ export function Login() {
             ].map((item, i) => {
               const IconComp = item.icon;
               return (
-              <div key={i} className="bg-card p-5 rounded-[2.5rem] border border-border shadow-sm flex flex-col items-center lg:items-start gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <div key={i} className="bg-surface-high p-5 rounded-[3rem] border-none flex flex-col items-center lg:items-start gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]">
                 <div className={cn("w-10 h-10 rounded-full flex items-center justify-center bg-primary/10", item.color)}>
                   <IconComp className="text-[20px]" />
                 </div>

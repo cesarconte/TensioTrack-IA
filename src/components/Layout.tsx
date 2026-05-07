@@ -9,7 +9,7 @@ import { Footer } from "./Footer";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { Toaster } from "sonner";
 
-import { User, Moon, Sun, Settings, LogOut, LayoutDashboard, History, FileText, Sparkles, Plus } from "lucide-react";
+import { User, Moon, Sun, Settings, LogOut, LayoutDashboard, History, FileText, Sparkles, Plus, Users, Shield, Brain, Fingerprint } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,8 +23,14 @@ export function Layout({ children }: LayoutProps) {
     activeTab, 
     setActiveTab,
     setReadingFormOpen,
-    activeSettingsSection
+    activeSettingsSection,
+    activePatientId,
+    activePatientName,
+    setActivePatientId
   } = useAppStore();
+
+  const isDoctor = user?.role === 'doctor';
+  const isViewingPatient = isDoctor && !!activePatientId;
 
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
@@ -45,12 +51,34 @@ export function Layout({ children }: LayoutProps) {
 
   const handleLogout = () => signOut(auth);
 
-  const navItems = [
+  const navItems = user?.role === 'admin' ? [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'history', label: 'Historial', icon: History },
     { id: 'report', label: 'Informe', icon: FileText },
-    { id: 'ai', label: 'IA Análisis', icon: Sparkles }
+    { id: 'ai', label: 'IA Análisis', icon: Brain },
+    { id: 'admin', label: 'Panel Admin', icon: Shield },
+    { id: 'settings', label: 'Ajustes', icon: Settings }
+  ] as const : user?.role === 'doctor' ? [
+    { id: 'patients', label: 'Pacientes', icon: Users },
+    { id: 'vinculo', label: 'Vínculo', icon: Fingerprint },
+    ...(activePatientId ? [
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'history', label: 'Historial', icon: History },
+      { id: 'report', label: 'Informe', icon: FileText },
+      { id: 'ai', label: 'IA Análisis', icon: Brain }
+    ] : [])
+  ] as const : [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'history', label: 'Historial', icon: History },
+    { id: 'report', label: 'Informe', icon: FileText },
+    { id: 'ai', label: 'IA Análisis', icon: Brain },
+    { id: 'settings', label: 'Ajustes', icon: Settings }
   ] as const;
+
+  const handleBackToPatients = () => {
+    setActivePatientId(null);
+    setActiveTab('patients');
+  };
 
   const renderUserMenu = (containerRef: React.RefObject<HTMLDivElement>, isMobile: boolean) => (
     <div className="relative" ref={containerRef}>
@@ -156,9 +184,14 @@ export function Layout({ children }: LayoutProps) {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (item.id === 'patients' && user?.role === 'doctor') {
+                      useAppStore.getState().setActivePatientId(null);
+                    }
+                  }}
                   className={cn(
-                    "w-full flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-300 group relative",
+                    "w-full flex items-center gap-4 py-3 px-4 rounded-[1.2rem] transition-all duration-300 group relative",
                     isActive 
                       ? "bg-white/5 text-white" 
                       : "text-[#636C8B] hover:text-white"
@@ -173,15 +206,17 @@ export function Layout({ children }: LayoutProps) {
           </nav>
         </div>
 
+        {!isDoctor && (
         <div className="mt-auto p-10">
           <Button 
-            className="w-full bg-primary hover:bg-primary/90 text-white rounded-2xl h-14 font-black text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+            className="w-full bg-primary hover:bg-primary/90 text-white rounded-full h-14 font-black text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
             onClick={() => setReadingFormOpen(true)}
           >
             <Plus className="w-5 h-5" />
             Nueva Lectura
           </Button>
         </div>
+        )}
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -215,14 +250,34 @@ export function Layout({ children }: LayoutProps) {
             {/* Desktop Header */}
             <div className="hidden lg:flex items-center justify-between mb-12 relative z-30">
               <div className="flex items-center gap-4">
+                {isViewingPatient && (
+                  <button 
+                    onClick={handleBackToPatients}
+                    className="w-10 h-10 rounded-full bg-surface-low border-none flex items-center justify-center hover:bg-surface-high transition-colors mr-2 active:scale-90"
+                    title="Volver a pacientes"
+                  >
+                    <Users className="w-5 h-5 text-on-surface-variant" />
+                  </button>
+                )}
                 <h2 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-3">
                   {(() => {
                     const activeItem = navItems.find(item => item.id === activeTab);
+                    
+                    if (isViewingPatient && activeTab !== 'patients' && activeTab !== 'settings') {
+                      return (
+                        <>
+                          <span className="text-on-surface-variant/40">{activePatientName}</span>
+                          <span className="text-on-surface-variant/20 text-2xl font-light">/</span>
+                          <span>{activeItem?.label || 'Dashboard'}</span>
+                        </>
+                      );
+                    }
+
                     if (activeTab === 'settings') {
                       const sectionNames = {
                         profile: 'Salud',
                         data: 'Datos',
-                        ai: 'Energía IA',
+                        ai: isDoctor ? 'Capacidad IA' : 'Energía IA',
                         privacy: 'Privacidad',
                         about: 'Acerca de'
                       };
@@ -234,6 +289,7 @@ export function Layout({ children }: LayoutProps) {
                         </>
                       );
                     }
+                    if (activeTab === 'vinculo') return 'Validación Médica';
                     return activeItem?.label || 'Dashboard';
                   })()}
                 </h2>
@@ -266,7 +322,12 @@ export function Layout({ children }: LayoutProps) {
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                setActiveTab(item.id);
+                if (item.id === 'patients' && user?.role === 'doctor') {
+                  useAppStore.getState().setActivePatientId(null);
+                }
+              }}
               className={cn(
                 "flex flex-col items-center gap-1 transition-all",
                 isActive ? "text-primary scale-110" : "text-on-surface-variant opacity-60"

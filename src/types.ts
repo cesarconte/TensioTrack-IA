@@ -105,6 +105,17 @@ export interface UserProfile {
     limit: number;
     resetDate: string;
   };
+  
+  // Role
+  role?: 'admin' | 'doctor' | 'patient';
+}
+
+export interface Authorization {
+  id: string; // doctorId_patientId
+  patientId: string;
+  doctorId: string;
+  createdAt: string;
+  status?: string;
 }
 
 export interface AIReport {

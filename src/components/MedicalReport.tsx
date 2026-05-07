@@ -2,9 +2,10 @@ import * as React from "react";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
-import { Share2, FileText, RefreshCw, User, BarChart3, TrendingUp, TrendingDown, Sun, Moon, Activity, Calendar, ChevronLeft, ChevronRight, Info, StickyNote, MessageSquare } from "lucide-react";
+import { Share2, FileText, RefreshCw, User, BarChart3, TrendingUp, TrendingDown, Sun, Moon, Activity, Calendar, ChevronLeft, ChevronRight, Info, StickyNote, MessageSquare, Stethoscope } from "lucide-react";
 import { DashboardData, Reading, Cycle } from "../types";
 import { getBloodPressureStatus, getBloodPressureStyle } from "../domain/health";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/Button";
 import { Card } from "./ui/Card";
@@ -16,6 +17,7 @@ import { ShareModal } from "./ShareModal";
 interface MedicalReportProps {
   dashboard: DashboardData | null;
   allReadings: Reading[] | null;
+  userProfile?: any;
 }
 
 const CircularProgress = ({ status, className }: { status: ReturnType<typeof getBloodPressureStyle>, className?: string }) => {
@@ -96,8 +98,12 @@ const PDFIcon = ({ size = 18, className = "" }: { size?: number, className?: str
   </svg>
 );
 
-export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
-  const { user } = useAppStore();
+export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalReportProps) {
+  const { user: loggedInUser, activePatientId, activePatientName } = useAppStore();
+  const user = userProfile || loggedInUser;
+  const isDoctor = loggedInUser?.role === 'doctor';
+  const isViewingPatient = isDoctor && !!activePatientId;
+
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
   const [cycleIndex, setCycleIndex] = React.useState(0);
@@ -261,6 +267,38 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
   return (
     <div id="medical-report-content" className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       
+      {/* Consultation Mode Banner (Doctor viewing Patient) */}
+      <AnimatePresence>
+        {isViewingPatient && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden px-4 sm:px-0"
+          >
+            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-6 mb-2 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                  <Stethoscope className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-foreground tracking-tight">Modo Consulta Activo</h4>
+                  <p className="text-sm font-medium text-on-surface-variant">Generando informe para <span className="text-primary font-bold">{activePatientName}</span></p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5"
+                onClick={() => useAppStore.getState().setActivePatientId(null, null)}
+              >
+                Cerrar Sesión
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 1. HEADER (Title, Nav & Export) */}
       <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 px-4 sm:px-0">
         <div className="space-y-1 shrink-0 min-w-max">
@@ -326,7 +364,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
       </header>
 
       {/* 2. PATIENT PROFILE (Top Full Width) */}
-      <Card className="bg-surface shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-border/20 rounded-[2rem] p-6 lg:p-8">
+      <Card className="bg-surface-low border-none shadow-none rounded-[3rem] p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -372,7 +410,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
       <div className="grid grid-cols-1 gap-6 lg:gap-8 items-stretch">
         
         {/* Resumen Global (Full width) */}
-        <Card className="@container bg-surface shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border-border/10 rounded-[2rem] p-8 lg:p-10 flex flex-col justify-center overflow-hidden">
+        <Card className="@container bg-surface-low border-none shadow-none rounded-[3rem] p-8 lg:p-10 flex flex-col justify-center overflow-hidden">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <BarChart3 size={20} />
@@ -443,7 +481,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
         {/* 4. GRID: Promedios Mañana & Noche (Two Columns on Desktop) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
           {/* Promedio Mañana */}
-          <Card className="bg-surface shadow-[0_2px_12px_-6px_rgba(0,0,0,0.06)] border-border/20 rounded-[2rem] p-6 flex flex-col justify-between min-h-[160px]">
+          <Card className="bg-surface-low border-none shadow-none rounded-[3rem] p-6 flex flex-col justify-between min-h-[160px]">
              <div className="flex items-start justify-between mb-4">
                  <div className="flex items-center gap-2 shrink-0">
                   <Sun size={20} className="text-warning shrink-0" />
@@ -470,7 +508,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
           </Card>
 
            {/* Promedio Noche */}
-           <Card className="bg-surface shadow-[0_2px_12px_-6px_rgba(0,0,0,0.06)] border-border/20 rounded-[2rem] p-6 flex flex-col justify-between min-h-[160px]">
+           <Card className="bg-surface-low border-none shadow-none rounded-[3rem] p-6 flex flex-col justify-between min-h-[160px]">
              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-2 shrink-0">
                   <Moon size={20} className="text-primary shrink-0" />
@@ -501,7 +539,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
       {/* 5. HALLAZGOS CLÍNICOS (Información Médica de Valor) */}
       {insights && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-          <Card className="bg-surface border-border/20 rounded-[2rem] p-8 lg:p-10 flex flex-col space-y-6 shadow-sm">
+          <Card className="bg-surface-low border-none shadow-none rounded-[3rem] p-8 lg:p-10 flex flex-col space-y-6">
              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -540,7 +578,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
              </div>
           </Card>
 
-          <Card className="bg-surface border-border/20 rounded-[2rem] p-8 lg:p-10 flex flex-col space-y-6 shadow-sm">
+          <Card className="bg-surface-low border-none shadow-none rounded-[3rem] p-8 lg:p-10 flex flex-col space-y-6">
              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -587,7 +625,7 @@ export function MedicalReport({ dashboard, allReadings }: MedicalReportProps) {
       )}
 
       {/* 6. TABLE: Desglose Diario */}
-      <Card className="bg-surface shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border-border/20 rounded-[2rem] overflow-hidden">
+      <Card className="bg-surface-low border-none shadow-none rounded-[3rem] overflow-hidden p-2 sm:p-4">
         <div className="p-6 md:p-8 flex items-center justify-between">
           <h3 className="text-xl font-display font-black text-foreground">Desglose Diario</h3>
           <div className="flex items-center gap-2 text-on-surface-variant/60">

@@ -284,7 +284,7 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="w-full max-w-2xl bg-surface-low rounded-[2rem] p-6 sm:p-10 md:p-12 shadow-2xl relative overflow-hidden"
+          className="w-full max-w-2xl bg-surface-low rounded-[3rem] p-6 sm:p-10 md:p-12 shadow-2xl relative overflow-hidden"
         >
           {/* Close Button */}
           <button 
@@ -343,7 +343,7 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
           {/* Measurement Fields Grid */}
           <div className="space-y-4 sm:space-y-6">
             {/* Systolic (PAS) */}
-            <div className="bg-surface-lowest p-5 sm:p-6 rounded-[1.5rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+            <div className="bg-surface-high p-5 sm:p-6 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 transition-all">
               <div className="flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm sm:text-base font-bold text-on-surface-variant tracking-wider uppercase">SISTÓLICA (PAS)</span>
@@ -356,7 +356,7 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
                 <span className="text-xs sm:text-sm text-on-surface-variant/60 font-medium">Presión Alta (mmHg)</span>
               </div>
               <div className="flex items-center justify-between md:justify-end gap-2 sm:gap-4 px-2 sm:px-0">
-                <button type="button" onClick={() => adjustValue(setSystolic, systolic, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                <button type="button" onClick={() => adjustValue(setSystolic, systolic, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-surface-low flex items-center justify-center text-primary group-hover:bg-surface-lowest active:scale-90 transition-transform">
                   <Minus className="font-bold text-2xl sm:text-3xl" />
                 </button>
                 <input 
@@ -367,20 +367,20 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
                   placeholder="111"
                   required
                 />
-                <button type="button" onClick={() => adjustValue(setSystolic, systolic, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                <button type="button" onClick={() => adjustValue(setSystolic, systolic, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-surface-low flex items-center justify-center text-primary group-hover:bg-surface-lowest active:scale-90 transition-transform">
                   <Plus className="font-bold text-2xl sm:text-3xl" />
                 </button>
               </div>
             </div>
 
             {/* Diastolic (PAD) */}
-            <div className="bg-surface-lowest p-5 sm:p-6 rounded-[1.5rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+            <div className="bg-surface-high p-5 sm:p-6 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 transition-all">
               <div className="flex flex-col">
                 <span className="text-sm sm:text-base font-bold text-on-surface-variant tracking-wider uppercase">DIASTÓLICA (PAD)</span>
                 <span className="text-xs sm:text-sm text-on-surface-variant/60 font-medium">Presión Baja (mmHg)</span>
               </div>
               <div className="flex items-center justify-between md:justify-end gap-2 sm:gap-4 px-2 sm:px-0">
-                <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-surface-low flex items-center justify-center text-primary active:scale-90 transition-transform">
                   <Minus className="font-bold text-2xl sm:text-3xl" />
                 </button>
                 <input 
@@ -391,14 +391,14 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
                   placeholder="77"
                   required
                 />
-                <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                <button type="button" onClick={() => adjustValue(setDiastolic, diastolic, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-surface-low flex items-center justify-center text-primary active:scale-90 transition-transform">
                   <Plus className="font-bold text-2xl sm:text-3xl" />
                 </button>
               </div>
             </div>
 
             {/* Pulse (FC) */}
-            <div className="bg-surface-lowest p-5 sm:p-6 rounded-[1.5rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+            <div className="bg-surface-high p-5 sm:p-6 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 transition-all">
               <div className="flex flex-col">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm sm:text-base font-bold text-on-surface-variant tracking-wider uppercase">FRECUENCIA CARDÍACA (FC)</span>
@@ -412,7 +412,7 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
                 <span className="text-xs sm:text-sm text-on-surface-variant/60 font-medium">Latidos por minuto</span>
               </div>
               <div className="flex items-center justify-between md:justify-end gap-2 sm:gap-4 px-2 sm:px-0">
-                <button type="button" onClick={() => adjustValue(setPulse, pulse, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                <button type="button" onClick={() => adjustValue(setPulse, pulse, -1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-surface-low flex items-center justify-center text-primary active:scale-90 transition-transform">
                   <Minus className="font-bold text-2xl sm:text-3xl" />
                 </button>
                 <input 
@@ -422,7 +422,7 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
                   className="w-24 sm:w-32 text-6xl sm:text-7xl font-extrabold text-on-surface font-display text-center bg-transparent border-none focus:ring-0 p-0 placeholder:text-on-surface"
                   placeholder="68"
                 />
-                <button type="button" onClick={() => adjustValue(setPulse, pulse, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-surface-high flex items-center justify-center text-primary hover:bg-surface-highest active:scale-90 transition-transform">
+                <button type="button" onClick={() => adjustValue(setPulse, pulse, 1)} className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-surface-low flex items-center justify-center text-primary active:scale-90 transition-transform">
                   <Plus className="font-bold text-2xl sm:text-3xl" />
                 </button>
               </div>
@@ -434,7 +434,7 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
               <textarea 
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full bg-surface-lowest border-none rounded-[1.5rem] p-4 sm:p-6 text-sm sm:text-base text-on-surface font-medium focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/50" 
+                className="w-full bg-surface-high border-none rounded-[2rem] p-4 sm:p-6 text-sm sm:text-base text-on-surface font-medium focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/50" 
                 rows={2}
                 placeholder="Desayuno ligero"
               />

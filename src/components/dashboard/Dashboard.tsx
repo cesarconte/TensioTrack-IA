@@ -70,7 +70,7 @@ const AnalysisCard = ({
   periodLabel,
   icon
 }: AnalysisCardProps) => (
-  <Card className="bg-surface-low border-none shadow-none rounded-[2.5rem] overflow-hidden h-full">
+  <Card className="bg-surface-low border-none shadow-none rounded-[3rem] overflow-hidden h-full">
     <CardHeader className="pb-6">
       <div className="flex justify-between items-start">
         <div>
@@ -149,6 +149,12 @@ export function Dashboard() {
   
   // Atomic Selectors for Performance (O(1) renders)
   const user = useAppStore(s => s.user);
+  const activePatientId = useAppStore(s => s.activePatientId);
+  const activePatientName = useAppStore(s => s.activePatientName);
+  const isDoctor = user?.role === 'doctor';
+  const isViewingPatient = isDoctor && !!activePatientId;
+  const displayName = isViewingPatient ? activePatientName : user?.displayName;
+
   const setReadingFormOpen = useAppStore(s => s.setReadingFormOpen);
   const setInfoModalOpen = useAppStore(s => s.setInfoModalOpen);
   const unitSystem = useAppStore(s => s.unitSystem);
@@ -739,6 +745,24 @@ export function Dashboard() {
     return { currentSys, prevSys };
   }, [allReadings]);
 
+  // Memoized Diagnostic Status for Performance (Defined before isLoading to follow Rules of Hooks)
+  const getDiagnosticStatus = React.useCallback((sys?: number, dia?: number) => {
+    if (!sys || !dia) return { label: 'PENDIENTE', variant: 'outline' as const, color: 'text-on-surface-variant', bg: 'bg-surface-low', border: 'border-border' };
+    const status = getBloodPressureStatus(sys, dia);
+    const style = getBloodPressureStyle(status);
+    return { 
+      label: style.label, 
+      variant: (status === 'hypertension' ? 'danger' : status === 'normal-high' ? 'warning' : status === 'hypotension' ? 'info' : 'success') as any, 
+      color: style.color, 
+      bg: style.bg, 
+      border: style.bg.replace('-layer', '/20') 
+    };
+  }, []);
+
+  const finalStatus = React.useMemo(() => 
+    getDiagnosticStatus(finalResultData.avgSys, finalResultData.avgDia)
+  , [finalResultData.avgSys, finalResultData.avgDia, getDiagnosticStatus]);
+
   if (isLoading) {
     return (
       <div className="space-y-8 animate-pulse">
@@ -752,7 +776,7 @@ export function Dashboard() {
           <div className="absolute inset-0 bg-linear-to-r from-card/90 via-card/40 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-center px-8 sm:px-12">
             <h2 className="text-3xl sm:text-5xl font-display font-black tracking-tighter text-foreground mb-1">
-              {timeContext.greeting}, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'Paciente'}</span>
+              {timeContext.greeting}, <span className="text-primary">{displayName?.split(' ')[0] || 'Paciente'}</span>
             </h2>
             <p className="text-sm sm:text-lg font-bold text-on-surface-variant max-w-md hidden sm:block">
               {timeContext.message}
@@ -766,25 +790,11 @@ export function Dashboard() {
   const morningSession = dashboard?.today?.sessions.find(s => s.slot === 'morning');
   const eveningSession = dashboard?.today?.sessions.find(s => s.slot === 'evening');
   const latestSession = eveningSession?.avgSystolic ? eveningSession : morningSession;
-
+  
   const isControlled = dashboard?.stats.finalAverage 
     ? (dashboard.stats.finalAverage.systolic < 135 && dashboard.stats.finalAverage.diastolic < 85)
     : true;
 
-  const getDiagnosticStatus = (sys?: number, dia?: number) => {
-    if (!sys || !dia) return { label: 'PENDIENTE', variant: 'outline' as const, color: 'text-on-surface-variant', bg: 'bg-surface-low', border: 'border-border' };
-    const status = getBloodPressureStatus(sys, dia);
-    const style = getBloodPressureStyle(status);
-    return { 
-      label: style.label, 
-      variant: (status === 'hypertension' ? 'danger' : status === 'normal-high' ? 'warning' : status === 'hypotension' ? 'info' : 'success') as any, 
-      color: style.color, 
-      bg: style.bg, 
-      border: style.bg.replace('-layer', '/20') 
-    };
-  };
-
-  const finalStatus = getDiagnosticStatus(finalResultData.avgSys, finalResultData.avgDia);
   const completedSessions = dashboard?.stats.periodDays.reduce((acc, day) => acc + (day.morningAvg ? 1 : 0) + (day.eveningAvg ? 1 : 0), 0) || 0;
   const periodReadingsCount = completedSessions * 3;
 
@@ -1018,8 +1028,40 @@ export function Dashboard() {
 
   return (
     <div className="space-y-10 pb-20 sm:pb-0">
+      {/* Consultation Mode Banner (Doctor viewing Patient) */}
+      <AnimatePresence>
+        {isViewingPatient && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-6 mb-2 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                  <Stethoscope className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-foreground tracking-tight">Modo Consulta Activo</h4>
+                  <p className="text-sm font-medium text-on-surface-variant">Estás auditando el perfil clínico de <span className="text-primary font-bold">{activePatientName}</span></p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5"
+                onClick={() => useAppStore.getState().setActivePatientId(null, null)}
+              >
+                Cerrar Sesión
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Welcome Banner with Image */}
-      <section className="relative rounded-[2rem] overflow-hidden group shadow-2xl shadow-primary/10">
+      <section className="relative rounded-[2.8rem] overflow-hidden group shadow-2xl shadow-primary/5">
         <AnimatePresence mode="wait">
           <motion.img 
             key={timeContext.image}
@@ -1049,7 +1091,7 @@ export function Dashboard() {
                 <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Panel de Control</span>
               </div>
               <h2 className="text-4xl sm:text-5xl md:text-display-md font-display font-black text-foreground tracking-tighter leading-tight text-balance">
-                ¡{timeContext.greeting}, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'Paciente'}</span>!
+                ¡{timeContext.greeting}, <span className="text-primary">{displayName?.split(' ')[0] || 'Paciente'}</span>!
               </h2>
               <p className="text-on-surface-variant font-bold max-w-md text-sm sm:text-base leading-relaxed">
                 {dashboard?.stats.isComplete 
@@ -1064,6 +1106,7 @@ export function Dashboard() {
       </section>
 
       {/* Mobile & Tablet Floating Action Button (FAB) - MD3 Style */}
+      {!isDoctor && (
       <motion.div 
         initial={{ scale: 0, opacity: 0 }}
         animate={{ 
@@ -1084,6 +1127,7 @@ export function Dashboard() {
           <Plus className="w-8 h-8 shrink-0" />
         </Button>
       </motion.div>
+      )}
 
       {/* 4-Level Analysis Grid */}
       <section className="space-y-4">
@@ -1099,7 +1143,7 @@ export function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Level 1: Last Session */}
-          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
+          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[3rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px] border-none">
             <div className="flex items-start justify-between mb-6">
               <div className="flex flex-col gap-1">
                 <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">Última Lectura</h3>
@@ -1157,7 +1201,7 @@ export function Dashboard() {
           </Card>
 
           {/* Level 2: Daily */}
-          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
+          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[3rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px] border-none">
             <div className="flex items-start justify-between mb-6">
               <div className="flex flex-col gap-1">
                 <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">Media Hoy</h3>
@@ -1226,7 +1270,7 @@ export function Dashboard() {
           </Card>
 
           {/* Level 3: Period */}
-          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
+          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[3rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px] border-none">
             <div className="flex items-start justify-between mb-6">
               <div className="flex flex-col gap-1">
                 <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">Media Período</h3>
@@ -1295,7 +1339,7 @@ export function Dashboard() {
           </Card>
 
           {/* Level 4: Final */}
-          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[2.5rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px]">
+          <Card className="relative overflow-hidden bg-white dark:bg-card rounded-[3rem] p-6 sm:p-8 shadow-aura flex flex-col min-h-[380px] border-none">
             <div className="flex items-start justify-between mb-6">
               <div className="flex flex-col gap-1 flex-1 min-w-0 pr-4">
                 <h3 className="text-headline-sm font-black text-foreground tracking-tight">Evolución Clínica</h3>
@@ -1369,7 +1413,7 @@ export function Dashboard() {
       {/* Charts & Status Section - Refined for better proportions */}
       <section className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-3 gap-8 items-stretch">
         <div className="xl:col-span-2">
-          <Card className="h-full bg-card rounded-[2rem] border-border/50 shadow-aura-light dark:shadow-aura-dark">
+          <Card className="h-full bg-card rounded-[2.8rem] border-none shadow-aura-light dark:shadow-aura-dark">
             <CardHeader className="pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">

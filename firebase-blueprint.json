@@ -11,9 +11,23 @@
         "photoURL": { "type": "string" },
         "gender": { "type": "string", "enum": ["male", "female", "other", "prefer-not-to-say"] },
         "age": { "type": "number" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "role": { "type": "string", "enum": ["admin", "patient", "doctor"] }
       },
       "required": ["uid", "email"]
+    },
+    "Authorization": {
+      "title": "Doctor Authorization",
+      "description": "Patient authorization granting access to a doctor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "revoked"] }
+      },
+      "required": ["id", "patientId", "doctorId", "createdAt"]
     },
     "Reading": {
       "title": "Blood Pressure Reading",
@@ -52,6 +66,10 @@
       "schema": "User",
       "description": "User profiles"
     },
+    "/authorizations/{authId}": {
+      "schema": "Authorization",
+      "description": "Patient to doctor authorizations"
+    },
     "/users/{userId}/readings/{readingId}": {
       "schema": "Reading",
       "description": "User blood pressure readings"
@@ -59,6 +77,10 @@
     "/users/{userId}/ai_analysis/{analysisId}": {
       "schema": "AiAnalysis",
       "description": "User cached AI analysis"
+    },
+    "/users/{userId}/ai_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/AiReport" },
+      "description": "User generated AI reports"
     }
   }
 }

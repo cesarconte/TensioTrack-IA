@@ -12,8 +12,13 @@ interface AppState {
   // UI State
   isDarkMode: boolean;
   toggleDarkMode: () => void;
-  activeTab: 'dashboard' | 'history' | 'report' | 'ai' | 'settings';
-  setActiveTab: (tab: 'dashboard' | 'history' | 'report' | 'ai' | 'settings') => void;
+  activeTab: 'dashboard' | 'history' | 'report' | 'ai' | 'settings' | 'admin' | 'patients' | 'vinculo';
+  setActiveTab: (tab: 'dashboard' | 'history' | 'report' | 'ai' | 'settings' | 'admin' | 'patients' | 'vinculo') => void;
+  
+  // Doctor/Patient context
+  activePatientId: string | null;
+  activePatientName: string | null;
+  setActivePatientId: (id: string | null, name?: string | null) => void;
   
   // Settings sub-navigation
   activeSettingsSection: 'profile' | 'data' | 'privacy' | 'about' | 'ai';
@@ -56,6 +61,10 @@ export const useAppStore = create<AppState>()(
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
       activeTab: 'dashboard',
       setActiveTab: (activeTab) => set({ activeTab }),
+
+      activePatientId: null,
+      activePatientName: null,
+      setActivePatientId: (activePatientId, activePatientName = null) => set({ activePatientId, activePatientName }),
 
       activeSettingsSection: 'profile',
       setActiveSettingsSection: (activeSettingsSection) => set({ activeSettingsSection }),

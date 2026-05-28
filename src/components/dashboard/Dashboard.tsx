@@ -162,38 +162,6 @@ export function Dashboard() {
   const showTrends = useAppStore(s => s.showTrends);
   const measurementFrequency = useAppStore(s => s.measurementFrequency);
   const isDarkMode = useAppStore(s => s.isDarkMode);
-  
-  // Custom scroll tracking for floating items (MD3 autohide)
-  const [isFabHidden, setIsFabHidden] = React.useState(false);
-  
-  React.useEffect(() => {
-    const mainEl = document.getElementById('main-scroll-container');
-    if (!mainEl) return;
-    
-    let lastScroll = mainEl.scrollTop;
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScroll = mainEl.scrollTop;
-          
-          if (currentScroll > lastScroll && currentScroll > 100) {
-            setIsFabHidden(true);
-          } else if (currentScroll < lastScroll || currentScroll <= 50) {
-            setIsFabHidden(false);
-          }
-          
-          lastScroll = currentScroll;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    
-    mainEl.addEventListener('scroll', handleScroll, { passive: true });
-    return () => mainEl.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const [chartFilter, setChartFilter] = React.useState<'both' | 'pas' | 'pad'>('both');
   const [chartPeriod, setChartPeriod] = React.useState<'today' | 'period' | '15d' | 'month'>('month');
@@ -1027,7 +995,7 @@ export function Dashboard() {
   const currentStatusPeriod = getDiagnosticStatus(periodAvgSystolic, periodAvgDiastolic);
 
   return (
-    <div className="space-y-10 pb-20 sm:pb-0">
+    <div className="space-y-6 sm:space-y-10">
       {/* Consultation Mode Banner (Doctor viewing Patient) */}
       <AnimatePresence>
         {isViewingPatient && (
@@ -1104,30 +1072,6 @@ export function Dashboard() {
           </div>
         </div>
       </section>
-
-      {/* Mobile & Tablet Floating Action Button (FAB) - MD3 Style */}
-      {!isDoctor && (
-      <motion.div 
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ 
-          scale: isFabHidden ? 0 : 1, 
-          opacity: isFabHidden ? 0 : 1 
-        }}
-        className={cn(
-          "lg:hidden fixed bottom-[11rem] right-4 sm:right-6 z-50 transition-all duration-300",
-          !isFabHidden && "hover:scale-105",
-          isFabHidden && "pointer-events-none"
-        )}
-      >
-        <Button 
-          onClick={() => setReadingFormOpen(true)}
-          className="w-16 h-16 p-0 rounded-[2rem] shadow-2xl shadow-primary/40 dark:shadow-primary/20 flex items-center justify-center shrink-0 bg-primary text-white"
-          aria-label="Nueva Lectura"
-        >
-          <Plus className="w-8 h-8 shrink-0" />
-        </Button>
-      </motion.div>
-      )}
 
       {/* 4-Level Analysis Grid */}
       <section className="space-y-4">

@@ -26,7 +26,8 @@ export function Layout({ children }: LayoutProps) {
     activeSettingsSection,
     activePatientId,
     activePatientName,
-    setActivePatientId
+    setActivePatientId,
+    isScrollingDown
   } = useAppStore();
 
   const isDoctor = user?.role === 'doctor';
@@ -35,6 +36,7 @@ export function Layout({ children }: LayoutProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
   const mobileUserMenuRef = React.useRef<HTMLDivElement>(null);
+  const setScrollingDown = useAppStore(s => s.setScrollingDown);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -48,6 +50,35 @@ export function Layout({ children }: LayoutProps) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  React.useEffect(() => {
+    const mainEl = document.getElementById('main-scroll-container');
+    if (!mainEl) return;
+    
+    let lastScroll = mainEl.scrollTop;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScroll = mainEl.scrollTop;
+          
+          if (currentScroll > lastScroll && currentScroll > 100) {
+            setScrollingDown(true);
+          } else if (currentScroll < lastScroll || currentScroll <= 50) {
+            setScrollingDown(false);
+          }
+          
+          lastScroll = currentScroll;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainEl.removeEventListener('scroll', handleScroll);
+  }, [setScrollingDown]);
 
   const handleLogout = () => signOut(auth);
 
@@ -313,6 +344,32 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </main>
       </div>
+
+      {/* Mobile & Tablet Floating Action Button (FAB) - MD3 Style */}
+      {!isDoctor && (
+      <motion.div 
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ 
+          scale: isScrollingDown ? 0 : 1, 
+          opacity: isScrollingDown ? 0 : 1,
+          y: isScrollingDown ? 30 : 0
+        }}
+        transition={{ duration: 0.3 }}
+        className={cn(
+          "lg:hidden fixed bottom-24 right-4 sm:right-6 z-40 transition-all duration-300",
+          !isScrollingDown && "hover:scale-105",
+          isScrollingDown && "pointer-events-none"
+        )}
+      >
+        <Button 
+          onClick={() => setReadingFormOpen(true)}
+          className="w-14 h-14 sm:w-16 sm:h-16 p-0 rounded-[1.75rem] sm:rounded-[2rem] shadow-2xl shadow-primary/40 dark:shadow-primary/20 flex items-center justify-center shrink-0 bg-primary text-white"
+          aria-label="Nueva Lectura"
+        >
+          <Plus className="w-7 h-7 sm:w-8 sm:h-8 shrink-0" />
+        </Button>
+      </motion.div>
+      )}
 
       {/* Mobile Footer Nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/70 backdrop-blur-3xl lg:hidden border-t border-border/50 h-20 flex items-center justify-around px-4">

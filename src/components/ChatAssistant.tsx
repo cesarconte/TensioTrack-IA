@@ -21,41 +21,11 @@ interface ChatAssistantProps {
 }
 
 export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
-  const { activeTab } = useAppStore();
+  const { activeTab, isScrollingDown, user } = useAppStore();
   const [isOpen, setIsOpen] = React.useState(false);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const isDoctor = user?.role === 'doctor';
   
-  // Custom scroll tracking for floating items (MD3 autohide)
-  const [isFabHidden, setIsFabHidden] = React.useState(false);
-  
-  React.useEffect(() => {
-    const mainEl = document.getElementById('main-scroll-container');
-    if (!mainEl) return;
-    
-    let lastScroll = mainEl.scrollTop;
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScroll = mainEl.scrollTop;
-          
-          if (currentScroll > lastScroll && currentScroll > 100) {
-            setIsFabHidden(true);
-          } else if (currentScroll < lastScroll || currentScroll <= 50) {
-            setIsFabHidden(false);
-          }
-          
-          lastScroll = currentScroll;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    
-    mainEl.addEventListener('scroll', handleScroll, { passive: true });
-    return () => mainEl.removeEventListener('scroll', handleScroll);
-  }, []);
-
   const [messages, setMessages] = React.useState<Message[]>([
     { 
       role: 'assistant', 
@@ -64,7 +34,6 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
   ]);
   const [input, setInput] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -181,15 +150,17 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(true)}
             className={cn(
-              "fixed right-4 sm:right-6 w-16 h-16 rounded-full bg-primary text-white shadow-2xl shadow-primary/20 flex items-center justify-center z-40 transition-all duration-300",
+              "fixed right-4 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 rounded-[1.75rem] sm:rounded-[2rem] bg-primary text-white shadow-2xl shadow-primary/20 flex items-center justify-center z-40 transition-all duration-300",
               // Positioning logic:
-              // Mobile/Tablet: nav bar is visible up to lg (lg:hidden). So it should be bottom-24 up to lg, and bottom-6 from lg up.
-              "bottom-24 lg:bottom-6",
-              (isOpen || isFabHidden) && "scale-0 opacity-0 pointer-events-none"
+              // Mobile/Tablet: nav bar is visible up to lg (lg:hidden). 
+              // If Patient: sit ABOVE Nueva Lectura FAB (11.5rem). If Doctor: sit at normal FAB position (6rem/bottom-24).
+              // lg up: sit at bottom-6.
+              !isDoctor ? "bottom-[11.5rem] lg:bottom-6" : "bottom-24 lg:bottom-6",
+              (isOpen || isScrollingDown) && "scale-0 opacity-0 pointer-events-none translate-y-8"
             )}
             aria-label="Abrir asistente de IA"
           >
-            <MessageCircle className="text-[28px]" />
+            <MessageCircle className="text-[24px] sm:text-[28px]" />
             <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-[var(--destructive)] rounded-full border-2 border-white dark:border-[#121116] shadow-sm animate-pulse" />
           </motion.button>
         </TooltipTrigger>

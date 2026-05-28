@@ -604,7 +604,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
   // RESULTS VIEW
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-8">
       {/* Consultation Mode Banner (Doctor viewing Patient) - Persistent across views */}
       <AnimatePresence mode="wait">
         {isViewingPatient && (
@@ -1204,7 +1204,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
       </div>
 
       {/* Footer Actions - Matching Buttons in image */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 py-12 border-t border-border/50 mt-16 pb-24">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 py-12 border-t border-border/50 mt-16 mb-6">
         <Button 
           variant="primary"
           size="lg"

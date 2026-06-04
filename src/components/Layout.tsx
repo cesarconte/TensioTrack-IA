@@ -393,14 +393,14 @@ export function Layout({ children }: LayoutProps) {
       <AnimatePresence>
         {showScrollTop && (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0, y: 20 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 lg:bottom-10 z-40 transition-all duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-24 left-4 sm:left-6 lg:left-1/2 lg:-translate-x-1/2 lg:bottom-10 z-40 transition-all duration-300"
           >
             <button
               onClick={scrollToTop}
-              className="w-10 h-10 rounded-full shadow-lg bg-surface-highest/90 dark:bg-slate-800/90 backdrop-blur-md border border-primary/20 text-foreground flex items-center justify-center hover:bg-surface-highest dark:hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
+              className="w-[44px] h-[44px] rounded-full shadow-lg bg-surface-highest/90 dark:bg-slate-800/90 backdrop-blur-md border border-primary/20 text-foreground flex items-center justify-center hover:bg-surface-highest dark:hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
               aria-label="Volver arriba"
             >
               <ArrowUp className="w-4 h-4 shrink-0 text-primary" />

@@ -179,8 +179,62 @@ export function AdminPanel() {
       {/* User Management List */}
       <div className="bg-surface-low rounded-[3rem] p-6 sm:p-12 shadow-sm border border-surface-highest/10">
          <h4 className="text-2xl font-display font-black text-foreground mb-8">Gestión de Usuarios</h4>
-         
-         <div className="overflow-x-auto">
+
+         <div className="lg:hidden space-y-3">
+           {users && users.length > 0 ? users.map(u => (
+             <div key={u.id} className="rounded-[2rem] bg-surface/70 p-5 space-y-5">
+               <div className="flex items-start justify-between gap-4">
+                 <div className="min-w-0">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/45">Usuario</p>
+                   <p className="mt-1 text-lg font-display font-black text-foreground leading-tight break-words">{u.displayName || 'Sin nombre'}</p>
+                 </div>
+                 <div className={cn(
+                   "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest shrink-0",
+                   !u.role ? "bg-error/10 text-error" : "bg-primary/10 text-primary"
+                 )}>
+                   {u.role || 'Sin rol'}
+                 </div>
+               </div>
+
+               <dl className="space-y-3">
+                 <div>
+                   <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/45">Correo</dt>
+                   <dd className="mt-1 text-sm font-bold text-on-surface-variant break-all">{u.email}</dd>
+                 </div>
+                 <div>
+                   <dt className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/45">ID de Firebase</dt>
+                   <dd className="mt-1 font-mono text-[11px] leading-relaxed text-on-surface-variant/70 break-all">{u.id}</dd>
+                 </div>
+               </dl>
+
+               <label className="block">
+                 <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/45">Rol</span>
+                 <select
+                   value={u.role || ''}
+                   onChange={(e) => handleRoleChange(u.id, u.role || '', e.target.value)}
+                   aria-label={`Cambiar rol de ${u.displayName || 'usuario'}`}
+                   className={cn(
+                     "mt-2 w-full min-h-11 border text-base rounded-2xl px-4 py-3 outline-none shadow-sm transition-colors",
+                     !u.role
+                       ? "bg-error/10 border-error/30 text-error focus:border-error focus:ring-1 focus:ring-error"
+                       : "bg-surface border-surface-highest/20 focus:border-primary focus:ring-1 focus:ring-primary"
+                   )}
+                 >
+                   <option value="" disabled>Seleccionar rol...</option>
+                   <option value="patient">Paciente</option>
+                   <option value="doctor">Médico</option>
+                   <option value="admin">Admin</option>
+                 </select>
+               </label>
+             </div>
+           )) : (
+             <div className="rounded-[2rem] bg-surface/70 p-6 text-sm font-bold text-on-surface-variant">
+               No hay usuarios registrados.
+             </div>
+           )}
+         </div>
+
+         <div className="hidden lg:block overflow-x-auto">
            <table className="w-full text-left border-collapse">
              <thead>
                <tr className="border-b border-surface-highest/20">
@@ -191,7 +245,7 @@ export function AdminPanel() {
                </tr>
              </thead>
              <tbody>
-               {users?.map(u => (
+               {users && users.length > 0 ? users.map(u => (
                  <tr key={u.id} className="border-b border-surface-highest/10 hover:bg-surface-high/50 transition-colors">
                    <td className="py-4 px-4">
                      <div className="font-bold text-foreground text-sm">{u.displayName || 'Sin nombre'}</div>
@@ -217,7 +271,13 @@ export function AdminPanel() {
                      </select>
                    </td>
                  </tr>
-               ))}
+               )) : (
+                 <tr>
+                   <td colSpan={4} className="py-8 px-4 text-sm font-bold text-on-surface-variant">
+                     No hay usuarios registrados.
+                   </td>
+                 </tr>
+               )}
              </tbody>
            </table>
          </div>

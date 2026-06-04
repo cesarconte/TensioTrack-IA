@@ -264,6 +264,53 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
     : 'normal';
   const eveningStyle = getBloodPressureStyle(eveningStatus);
 
+  const dailyBreakdown = React.useMemo(() => {
+    return activeCycle?.days.map((day) => {
+      const date = new Date(day.date);
+      const formattedDate = date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      let totalSys = 0;
+      let totalDia = 0;
+      let count = 0;
+      let avgHr = 0;
+      let countHr = 0;
+
+      if (day.morningAvg) {
+        totalSys += day.morningAvg.systolic;
+        totalDia += day.morningAvg.diastolic;
+        count++;
+        if (day.morningAvg.heartRate) {
+          avgHr += day.morningAvg.heartRate;
+          countHr++;
+        }
+      }
+
+      if (day.eveningAvg) {
+        totalSys += day.eveningAvg.systolic;
+        totalDia += day.eveningAvg.diastolic;
+        count++;
+        if (day.eveningAvg.heartRate) {
+          avgHr += day.eveningAvg.heartRate;
+          countHr++;
+        }
+      }
+
+      let dayStatusLabel: ReturnType<typeof getBloodPressureStyle> | null = null;
+      if (count > 0) {
+        const avgDaySys = Math.round(totalSys / count);
+        const avgDayDia = Math.round(totalDia / count);
+        dayStatusLabel = getBloodPressureStyle(getBloodPressureStatus(avgDaySys, avgDayDia));
+      }
+
+      return {
+        day,
+        formattedDate,
+        finalHr: countHr > 0 ? Math.round(avgHr / countHr) : '--',
+        status: dayStatusLabel,
+      };
+    }) || [];
+  }, [activeCycle]);
+
   return (
     <div id="medical-report-content" className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
@@ -634,7 +681,64 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="sm:hidden px-4 pb-4 space-y-3">
+          {dailyBreakdown.map(({ day, formattedDate, finalHr, status }, idx) => (
+            <div key={idx} className="rounded-[2rem] bg-card/70 p-4 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/45">Fecha</p>
+                  <p className="font-display text-lg font-black text-foreground capitalize leading-tight">{formattedDate}</p>
+                </div>
+                {status ? (
+                  <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full shrink-0", status.bg, status.color)}>
+                    <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">{status.label}</span>
+                  </div>
+                ) : (
+                  <span className="text-xs font-bold text-on-surface-variant/35">Sin datos</span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-2xl bg-surface-lowest/70 p-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/45">Mañana</p>
+                  <dl className="mt-3 space-y-2">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/35">PAS</dt>
+                      <dd className="text-lg font-black text-foreground tabular-nums whitespace-nowrap">{day.morningAvg?.systolic ?? '--'}</dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/35">PAD</dt>
+                      <dd className="text-lg font-black text-foreground tabular-nums whitespace-nowrap">{day.morningAvg?.diastolic ?? '--'}</dd>
+                    </div>
+                  </dl>
+                  <p className="mt-3 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant/35">mmHg</p>
+                </div>
+                <div className="rounded-2xl bg-surface-lowest/70 p-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/45">Noche</p>
+                  <dl className="mt-3 space-y-2">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/35">PAS</dt>
+                      <dd className="text-lg font-black text-foreground tabular-nums whitespace-nowrap">{day.eveningAvg?.systolic ?? '--'}</dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/35">PAD</dt>
+                      <dd className="text-lg font-black text-foreground tabular-nums whitespace-nowrap">{day.eveningAvg?.diastolic ?? '--'}</dd>
+                    </div>
+                  </dl>
+                  <p className="mt-3 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant/35">mmHg</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between rounded-2xl bg-surface-lowest/50 px-4 py-3">
+                <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/45">Pulso medio</span>
+                <span className="text-base font-black text-foreground">{finalHr} <span className="text-[9px] uppercase tracking-widest text-on-surface-variant/40">PPM</span></span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse min-w-[700px]">
              <thead>
                <tr className="border-y border-border/40 bg-surface-low/30">
@@ -646,25 +750,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
                </tr>
              </thead>
              <tbody className="divide-y divide-border/20">
-               {activeCycle?.days.map((day, idx) => {
-                 // Format Date
-                 const d = new Date(day.date);
-                 const formattedDate = d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' });
-
-                 // Calc Daily Average to determine Status Badge
-                 let totalSys = 0, totalDia = 0, count = 0, avgHr = 0, countHr = 0;
-                 if (day.morningAvg) { totalSys += day.morningAvg.systolic; totalDia += day.morningAvg.diastolic; count++; if (day.morningAvg.heartRate) { avgHr += day.morningAvg.heartRate; countHr++; } }
-                 if (day.eveningAvg) { totalSys += day.eveningAvg.systolic; totalDia += day.eveningAvg.diastolic; count++; if (day.eveningAvg.heartRate) { avgHr += day.eveningAvg.heartRate; countHr++; } }
-
-                 let dayStatusLabel: ReturnType<typeof getBloodPressureStyle> | null = null;
-                 if (count > 0) {
-                   const avgDaySys = Math.round(totalSys / count);
-                   const avgDayDia = Math.round(totalDia / count);
-                   dayStatusLabel = getBloodPressureStyle(getBloodPressureStatus(avgDaySys, avgDayDia));
-                 }
-
-                 const finalHr = countHr > 0 ? Math.round(avgHr / countHr) : '--';
-
+               {dailyBreakdown.map(({ day, formattedDate, finalHr, status }, idx) => {
                  return (
                    <tr key={idx} className="hover:bg-primary/5 transition-colors">
                      <td className="px-8 py-5">
@@ -684,10 +770,10 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
                         {finalHr}
                      </td>
                      <td className="px-8 py-5 text-right">
-                       {dayStatusLabel ? (
-                         <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full", dayStatusLabel.bg, dayStatusLabel.color)}>
+                       {status ? (
+                         <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full", status.bg, status.color)}>
                             <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">{dayStatusLabel.label}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">{status.label}</span>
                          </div>
                        ) : (
                          <span className="text-on-surface-variant/30 text-xs">Sin datos</span>

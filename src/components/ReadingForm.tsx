@@ -4,7 +4,7 @@ import { useAddReading, useUpdateReading, useDeleteReading, useDashboard } from 
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "./ui/Button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
+import { CloseButton } from "./ui/CloseButton";
 import { Badge } from "./ui/Badge";
 import { toast } from "sonner";
 import { GoogleGenAI, Type } from "@google/genai";
@@ -432,14 +432,11 @@ export function ReadingForm({ onClose }: ReadingFormProps) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           className="w-full max-w-2xl bg-surface-low rounded-[3rem] p-6 sm:p-10 md:p-12 shadow-2xl relative overflow-hidden"
         >
-          {/* Close Button */}
-          <button
+          <CloseButton
             onClick={handleClose}
-            className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center text-on-surface-variant hover:bg-surface-high rounded-full transition-colors z-10 active:scale-90"
-            aria-label="Cerrar formulario"
-          >
-            <X className="w-6 h-6" />
-          </button>
+            label="Cerrar formulario"
+            className="absolute top-6 right-6 z-10"
+          />
 
           {/* Abstract background element */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary-container/10 rounded-full blur-3xl"></div>

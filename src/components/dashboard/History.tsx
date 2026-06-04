@@ -3,6 +3,7 @@ import { useReadings, useDeleteReading, useAvailablePeriods } from "../../lib/ap
 import { useAppStore } from "../../store/useAppStore";
 import { Card, CardContent } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { CloseButton } from "../ui/CloseButton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/Tooltip";
 import { Badge } from "../ui/Badge";
 import { cn } from "../../lib/utils";
@@ -311,24 +312,39 @@ export function History() {
           className="flex flex-col lg:flex-row bg-surface-low rounded-[3rem] shadow-none overflow-hidden relative border-none"
         >
           <div className="flex-1 p-6 lg:p-8">
-            <div className="flex justify-between items-start mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                  {isMorning ? <Sun className="w-[28px] h-[28px]" /> : <Moon className="w-[28px] h-[28px]" />}
-                </div>
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="text-2xl font-bold text-foreground">{timeString}</span>
-                    <Badge className="bg-surface-low text-on-surface-variant text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border-none">
-                      {isMorning ? 'MAÑANA' : 'NOCHE'}
-                    </Badge>
+            <div className="flex flex-col gap-5 mb-8">
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    {isMorning ? <Sun className="w-[28px] h-[28px]" /> : <Moon className="w-[28px] h-[28px]" />}
                   </div>
-                  <span className="text-sm font-medium text-on-surface-variant">
-                    Lectura {reading.order} • {dateStr}
-                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-2xl font-bold text-foreground">{timeString}</span>
+                      <Badge className="bg-surface-high text-on-surface-variant text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border-none shrink-0">
+                        {isMorning ? 'MAÑANA' : 'NOCHE'}
+                      </Badge>
+                    </div>
+                    <span className="text-sm font-medium text-on-surface-variant leading-relaxed">
+                      Lectura {reading.order} • {dateStr}
+                    </span>
+                  </div>
                 </div>
+
+                <div className="hidden lg:flex shrink-0">
+                  <Badge className={cn("px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border-none", status.bg, status.color)}>
+                    {status.label}
+                  </Badge>
+                </div>
+
+                <CloseButton
+                  onClick={() => setExpandedReadingId(null)}
+                  label="Cerrar detalle de lectura"
+                  className="lg:hidden"
+                />
               </div>
-              <Badge className={cn("px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border-none", status.bg, status.color)}>
+
+              <Badge className={cn("lg:hidden self-start max-w-full px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border-none", status.bg, status.color)}>
                 {status.label}
               </Badge>
             </div>
@@ -389,12 +405,6 @@ export function History() {
               </button>
             </div>
             )}
-            <button
-              onClick={() => setExpandedReadingId(null)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface-high text-on-surface-variant hover:bg-surface-highest lg:hidden"
-            >
-              <X className="text-[20px]" />
-            </button>
           </div>
         </motion.div>
       );
@@ -908,4 +918,3 @@ export function History() {
     </div>
   );
 }
-

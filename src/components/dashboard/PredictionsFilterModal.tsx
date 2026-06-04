@@ -1,6 +1,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "../ui/Button";
+import { CloseButton } from "../ui/CloseButton";
 import { cn } from "../../lib/utils";
 import { Filter, Calendar, ChevronRight, X, Search, Check } from "lucide-react";
 import { Cycle } from "../../types";
@@ -59,12 +60,11 @@ export function PredictionsFilterModal({
       >
         {/* Header */}
         <div className="p-8 border-b border-border bg-surface-low relative">
-          <button 
+          <CloseButton
             onClick={onClose}
-            className="absolute top-8 right-8 p-2 text-on-surface-variant hover:bg-surface-high rounded-full transition-colors"
-          >
-            <X size={20} />
-          </button>
+            label="Cerrar filtros"
+            className="absolute top-6 right-6 sm:top-8 sm:right-8"
+          />
           
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-primary/10 rounded-full text-primary">

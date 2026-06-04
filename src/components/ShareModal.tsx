@@ -1,10 +1,10 @@
 import * as React from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "motion/react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { Button } from "./ui/Button";
+import { CloseButton } from "./ui/CloseButton";
 import { toast } from "sonner";
-import { X, Share2, Check, Copy } from "lucide-react";
+import { Share2, Check, Copy } from "lucide-react";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -50,18 +50,7 @@ export function ShareModal({ isOpen, onClose, url }: ShareModalProps) {
           >
             <div className="p-6 border-b border-border flex items-center justify-between">
               <h3 className="font-display font-black text-lg text-foreground">Compartir Historial</h3>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button 
-                    onClick={onClose} 
-                    className="p-2 hover:bg-on-surface/5 rounded-full transition-all hover:scale-110 active:scale-90"
-                    aria-label="Cerrar modal de compartir"
-                  >
-                    <X className="text-[20px] text-on-surface-variant/60" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Cerrar modal de compartir</TooltipContent>
-              </Tooltip>
+              <CloseButton onClick={onClose} label="Cerrar modal de compartir" tooltip="Cerrar modal de compartir" />
             </div>
 
             <div className="p-8 flex flex-col items-center text-center space-y-8">

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "../ui/Button";
+import { CloseButton } from "../ui/CloseButton";
 import { cn } from "../../lib/utils";
 import { Cycle, DayStats } from "../../types";
 import { X, Check, BrainCircuit, ArrowLeftRight, ArrowRightLeft, Activity, TrendingUp, Utensils, Moon, Calendar, Clock } from "lucide-react";
@@ -123,14 +124,11 @@ export function AnalysisFilterModal({
         className="relative w-full max-w-2xl bg-surface-low rounded-[2.5rem] shadow-2xl border border-border flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
-        <button 
+        <CloseButton
           onClick={onClose}
-          className="absolute top-8 right-8 p-2 text-on-surface-variant hover:bg-surface-high rounded-full transition-colors z-50 shrink-0"
-          aria-label="Cerrar filtros"
-        >
-          <X className="" />
-        </button>
+          label="Cerrar filtros"
+          className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50"
+        />
 
         {/* Scrollable Content Area */}
         <div className="overflow-y-auto p-6 sm:p-10 md:p-12 pb-8 scrollbar-hide flex-1">

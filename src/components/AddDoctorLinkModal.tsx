@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { collection, query, where, getDocs, serverTimestamp, doc, getDoc, setDoc } from 'firebase/firestore';
-import { ShieldCheck, X } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { db, auth } from '../firebase';
 import { useAppStore } from '../store/useAppStore';
 import { toast } from 'sonner';
 import { Button } from './ui/Button';
+import { CloseButton } from './ui/CloseButton';
 
 export function AddDoctorLinkModal() {
   const [doctorId, setDoctorId] = useState<string | null>(null);
@@ -85,12 +86,11 @@ export function AddDoctorLinkModal() {
   return (
     <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm bg-surface rounded-[2rem] p-8 shadow-2xl relative border border-border/50">
-        <button 
+        <CloseButton
           onClick={() => setDoctorId(null)}
-          className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-surface-highest text-on-surface hover:scale-105 active:scale-95 transition-transform"
-        >
-          <X size={16} strokeWidth={3} />
-        </button>
+          label="Cerrar vinculación de médico"
+          className="absolute top-6 right-6"
+        />
 
         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mx-auto mb-6">
           <ShieldCheck size={32} />

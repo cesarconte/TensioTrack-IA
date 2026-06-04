@@ -2,8 +2,8 @@ import * as React from "react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/Button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
-import { Clock, Coffee, Heart, CheckCircle2, Book, X, AlertCircle } from "lucide-react";
+import { CloseButton } from "./ui/CloseButton";
+import { Clock, Coffee, Heart, CheckCircle2, Book, AlertCircle } from "lucide-react";
 
 interface InfoModalProps {
   onClose: () => void;
@@ -93,18 +93,7 @@ export function InfoModal({ onClose }: InfoModalProps) {
               <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest truncate">Protocolo Médico Oficial</p>
             </div>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button 
-                onClick={onClose} 
-                className="p-2 hover:bg-surface-high rounded-full transition-all shrink-0 hover:scale-110 active:scale-90"
-                aria-label="Cerrar guía"
-              >
-                <X className="text-[24px] text-on-surface-variant" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Cerrar guía</TooltipContent>
-          </Tooltip>
+          <CloseButton onClick={onClose} label="Cerrar guía" tooltip="Cerrar guía" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">

@@ -5,6 +5,7 @@ import { cn } from "../lib/utils";
 import { Reading } from "../types";
 import ReactMarkdown from "react-markdown";
 import { Button } from "./ui/Button";
+import { CloseButton } from "./ui/CloseButton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { useAppStore } from "../store/useAppStore";
 import { firebaseService } from "../lib/api";
@@ -203,18 +204,14 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
                   </div>
                 </div>
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="p-2 hover:bg-white/10 rounded-full transition-all hover:scale-110 active:scale-90"
-                    aria-label="Cerrar asistente"
-                  >
-                    <ChevronDown className="text-[24px]" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Cerrar asistente</TooltipContent>
-              </Tooltip>
+              <CloseButton
+                onClick={() => setIsOpen(false)}
+                label="Cerrar asistente"
+                tooltip="Cerrar asistente"
+                icon={ChevronDown}
+                className="bg-white/10 text-white hover:bg-white/20"
+                iconClassName="h-6 w-6"
+              />
             </div>
 
             <div

@@ -80,9 +80,10 @@ export function PredictionsFilterModal({
           {/* Month/Year Selectors */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest text-on-surface-variant uppercase ml-4">Año</label>
+              <label htmlFor="year-select" className="text-[10px] font-black tracking-widest text-on-surface-variant uppercase ml-4 cursor-pointer">Año</label>
               <div className="relative">
                 <select 
+                  id="year-select"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                   className="w-full appearance-none bg-surface-low text-on-surface font-bold rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer border-none"
@@ -93,9 +94,10 @@ export function PredictionsFilterModal({
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest text-on-surface-variant uppercase ml-4">Mes</label>
+              <label htmlFor="month-select" className="text-[10px] font-black tracking-widest text-on-surface-variant uppercase ml-4 cursor-pointer">Mes</label>
               <div className="relative">
                 <select 
+                  id="month-select"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                   className="w-full appearance-none bg-surface-low text-on-surface font-bold rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer border-none"

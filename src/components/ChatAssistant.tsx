@@ -25,11 +25,11 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const isDoctor = user?.role === 'doctor';
-  
+
   const [messages, setMessages] = React.useState<Message[]>([
-    { 
-      role: 'assistant', 
-      content: `¡Hola! Soy tu asistente de TensioTrack. Puedo analizar tu historial de presión arterial, explicarte tendencias o darte consejos de salud basados en tus datos. ¿En qué puedo ayudarte hoy?` 
+    {
+      role: 'assistant',
+      content: `¡Hola! Soy tu asistente de TensioTrack. Puedo analizar tu historial de presión arterial, explicarte tendencias o darte consejos de salud basados en tus datos. ¿En qué puedo ayudarte hoy?`
     }
   ]);
   const [input, setInput] = React.useState('');
@@ -57,32 +57,32 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
       // Safely access env vars
       const envProcess = typeof process !== 'undefined' ? process.env : undefined;
       const apiKey = envProcess?.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
-      
+
       if (!apiKey) {
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: "⚠️ No se detectó la clave de API de Gemini. Por favor, configúrala en el menú de Secrets." 
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: "⚠️ No se detectó la clave de API de Gemini. Por favor, configúrala en el menú de Secrets."
         }]);
         setIsLoading(false);
         return;
       }
 
       const ai = new GoogleGenAI({ apiKey });
-      
-      const recentReadings = readings.slice(0, 30).map(r => 
+
+      const recentReadings = readings.slice(0, 30).map(r =>
         `- ${new Date(r.recordedAt).toLocaleString()}: ${r.systolic}/${r.diastolic} mmHg, ${r.heartRate || '--'} ppm`
       ).join('\n');
 
-      const systemInstruction = `Eres un asistente de salud cardiovascular experto para TensioTrack. 
+      const systemInstruction = `Eres un asistente de salud cardiovascular experto para TensioTrack.
       Ayuda al usuario a entender sus mediciones siguiendo el Protocolo AMPA.
-      
+
       REGLAS:
       1. Usa los datos del usuario para respuestas personalizadas.
       2. Tono profesional y empático.
       3. ADVERTENCIA: No eres médico. Si hay dudas graves, deben consultar a un profesional.
       4. CRISIS: Si Sistólica > 180 o Diastólica > 120, insta a buscar atención médica inmediata.
       5. Responde en español usando Markdown.
-      
+
       PERFIL DEL USUARIO:
       - Edad: ${userProfile?.age || 'N/A'} años
       - Sexo: ${userProfile?.sex === 'male' ? 'Hombre' : userProfile?.sex === 'female' ? 'Mujer' : 'N/A'}
@@ -92,7 +92,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
       - Diabetes: ${userProfile?.hasDiabetes ? 'Sí' : 'No'}
       - Medicado para HTA: ${userProfile?.isHypertensiveMedicated ? 'Sí' : 'No'}
       - Nivel de actividad: ${userProfile?.activityLevel || 'N/A'}
-      
+
       Historial reciente:
       ${recentReadings}
       `;
@@ -102,7 +102,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }]
       }));
-      
+
       historyContents.push({ role: 'user', parts: [{ text: messageContent }] });
 
       const response = await ai.models.generateContent({
@@ -112,20 +112,20 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
           systemInstruction,
         }
       });
-      
+
       if (response.usageMetadata?.totalTokenCount) {
         firebaseService.updateAITokenUsage(response.usageMetadata.totalTokenCount).catch(console.error);
       }
-      
+
       const responseText = response.text;
-      
+
       setMessages(prev => [...prev, { role: 'assistant', content: responseText || "Mensaje vacío" }]);
 
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo." 
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo."
       }]);
     } finally {
       setIsLoading(false);
@@ -146,17 +146,24 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
       <Tooltip>
         <TooltipTrigger asChild>
             <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{
+              scale: (isOpen || isScrollingDown) ? 0 : 1,
+              opacity: (isOpen || isScrollingDown) ? 0 : 1,
+              y: (isOpen || isScrollingDown) ? 30 : 0
+            }}
+            transition={{ duration: 0.3 }}
+            whileHover={{ scale: (isOpen || isScrollingDown) ? 0 : 1.05 }}
+            whileTap={{ scale: (isOpen || isScrollingDown) ? 0 : 0.95 }}
             onClick={() => setIsOpen(true)}
             className={cn(
-              "fixed right-4 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 rounded-[1.75rem] sm:rounded-[2rem] bg-primary text-white shadow-2xl shadow-primary/20 flex items-center justify-center z-40 transition-all duration-300",
+              "fixed right-4 sm:right-6 lg:right-12 w-14 h-14 sm:w-16 sm:h-16 rounded-[1.75rem] sm:rounded-[2rem] bg-primary text-white shadow-2xl shadow-primary/20 flex items-center justify-center z-50",
               // Positioning logic:
-              // Mobile/Tablet: nav bar is visible up to lg (lg:hidden). 
+              // Mobile/Tablet: nav bar is visible up to lg (lg:hidden).
               // If Patient: sit ABOVE Nueva Lectura FAB (11.5rem). If Doctor: sit at normal FAB position (6rem/bottom-24).
-              // lg up: sit at bottom-6.
-              !isDoctor ? "bottom-[11.5rem] lg:bottom-6" : "bottom-24 lg:bottom-6",
-              (isOpen || isScrollingDown) && "scale-0 opacity-0 pointer-events-none translate-y-8"
+              // lg up: sit at bottom-12.
+              !isDoctor ? "bottom-48 lg:bottom-12" : "bottom-24 lg:bottom-12",
+              (isOpen || isScrollingDown) && "pointer-events-none"
             )}
             aria-label="Abrir asistente de IA"
           >
@@ -174,10 +181,12 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className={cn(
-              "fixed inset-0 sm:inset-auto sm:right-6 w-full sm:w-[420px] h-full sm:h-[650px] sm:max-h-[85vh] bg-card sm:rounded-[2.5rem] shadow-2xl flex flex-col z-40 overflow-hidden border-none sm:border border-border",
-              // Positioning logic:
-              // Chat window on Mobile is full screen. On tablet/desktop it's a popup.
-              // On tablet (sm to lg), nav bar is visible at bottom, so it needs bottom-24. On desktop (lg+), no nav bar, so bottom-6.
+              "fixed inset-0 sm:inset-auto sm:right-6 w-full sm:w-[420px] h-full sm:h-[650px] sm:max-h-[85vh] bg-card sm:rounded-[2.5rem] shadow-2xl flex flex-col z-50 overflow-hidden border-none sm:border border-border",
+              // Positioning logic (MD3 pattern):
+              // Mobile: Full-screen overlay sits ABOVE the nav bar (z-50 vs nav z-40).
+              // This follows Google's pattern in Chat/Messages where full-screen surfaces cover the nav.
+              // Tablet (sm to lg): popup format, needs bottom-24 clearance for nav bar.
+              // Desktop (lg+): no nav bar, so bottom-6.
               "sm:bottom-24 lg:bottom-6"
             )}
           >
@@ -196,7 +205,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button 
+                  <button
                     onClick={() => setIsOpen(false)}
                     className="p-2 hover:bg-white/10 rounded-full transition-all hover:scale-110 active:scale-90"
                     aria-label="Cerrar asistente"
@@ -208,7 +217,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
               </Tooltip>
             </div>
 
-            <div 
+            <div
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-surface-low"
             >
@@ -230,8 +239,8 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
                   </div>
                   <div className={cn(
                     "p-4 rounded-2xl text-sm shadow-sm",
-                    msg.role === 'user' 
-                      ? "bg-primary text-white rounded-tr-none" 
+                    msg.role === 'user'
+                      ? "bg-primary text-white rounded-tr-none"
                       : "bg-card text-foreground rounded-tl-none border border-border"
                   )}>
                     <div className="markdown-body prose prose-sm dark:prose-invert max-none">
@@ -253,7 +262,7 @@ export function ChatAssistant({ readings, userProfile }: ChatAssistantProps) {
               )}
             </div>
 
-            <div className="p-6 bg-card border-t border-border">
+            <div className="p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] bg-card border-t border-border">
               {messages.length === 1 && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {suggestedQuestions.map((q, i) => (

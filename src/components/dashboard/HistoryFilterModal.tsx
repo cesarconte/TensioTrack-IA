@@ -2,7 +2,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
-import { X, LayoutList, Circle, Activity, SlidersHorizontal, CheckCircle2, Calendar, Clock, RefreshCw, Check, Sun, Moon } from "lucide-react";
+import { X, LayoutList, ChevronDown, Activity, SlidersHorizontal, CheckCircle2, Calendar, Clock, RefreshCw, Check, Sun, Moon } from "lucide-react";
 
 export interface HistoryFilters {
   quickSelector: string;
@@ -115,14 +115,15 @@ export function HistoryFilterModal({ onClose, onApply, initialFilters, available
                     setPeriod(e.target.value);
                     if (e.target.value) setQuickSelector('Total');
                   }}
-                  className="w-full appearance-none bg-surface-high text-on-surface text-base font-bold rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer border-none"
+                  aria-label="Seleccionar período clínico"
+                  className="w-full appearance-none bg-surface-high text-on-surface text-base font-bold rounded-2xl pl-6 pr-12 py-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer border-none"
                 >
                   <option value="">Todos los períodos registrados</option>
                   {availablePeriods.map(p => (
                     <option key={p.id} value={p.id}>{p.label}</option>
                   ))}
                 </select>
-                <Circle className="absolute right-6 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
+                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-primary pointer-events-none" size={20} />
               </div>
             </div>
 
@@ -143,7 +144,7 @@ export function HistoryFilterModal({ onClose, onApply, initialFilters, available
                       setDateTo('');
                     }}
                     className={cn(
-                      "px-4 py-3 rounded-2xl text-sm font-bold transition-all border-none",
+                      "w-full px-4 py-3 rounded-xl text-sm font-bold transition-all border-none",
                       (quickSelector === selector || (quickSelector === '1 día' && selector === 'Hoy')) 
                         ? "bg-primary text-primary-foreground shadow-sm" 
                         : "bg-surface-high text-on-surface-variant hover:bg-surface-highest"
@@ -201,8 +202,9 @@ export function HistoryFilterModal({ onClose, onApply, initialFilters, available
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <span className="text-[10px] font-bold text-on-surface-variant/60 tracking-widest ml-4 uppercase">DESDE</span>
+                  <label htmlFor="date-from-input" className="text-[10px] font-bold text-on-surface-variant/60 tracking-widest ml-4 uppercase cursor-pointer">DESDE</label>
                   <input 
+                    id="date-from-input"
                     type="date" 
                     value={dateFrom}
                     onChange={(e) => {
@@ -214,8 +216,9 @@ export function HistoryFilterModal({ onClose, onApply, initialFilters, available
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className="text-[10px] font-bold text-on-surface-variant/60 tracking-widest ml-4 uppercase">HASTA</span>
+                  <label htmlFor="date-to-input" className="text-[10px] font-bold text-on-surface-variant/60 tracking-widest ml-4 uppercase cursor-pointer">HASTA</label>
                   <input 
+                    id="date-to-input"
                     type="date" 
                     value={dateTo}
                     onChange={(e) => {
@@ -235,7 +238,7 @@ export function HistoryFilterModal({ onClose, onApply, initialFilters, available
                 <Clock className="text-primary text-[20px]" />
                 <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Turno de captura</span>
               </div>
-              <div className="bg-surface-high p-2 rounded-[1.25rem] flex gap-2">
+              <div className="bg-surface-high p-2 rounded-[1.25rem] flex gap-1 sm:gap-2">
                 {[
                   { id: 'all', label: 'AMBAS', icon: Activity },
                   { id: 'morning', label: 'MAÑANA', icon: Sun },
@@ -247,7 +250,7 @@ export function HistoryFilterModal({ onClose, onApply, initialFilters, available
                       key={t.id}
                       onClick={() => setSlot(t.id as any)}
                       className={cn(
-                        "flex-1 py-4 text-xs font-black tracking-widest rounded-xl transition-all border-none flex items-center justify-center gap-2",
+                        "flex-1 py-3 sm:py-4 text-[10px] sm:text-xs font-black tracking-normal sm:tracking-widest rounded-xl transition-all border-none flex items-center justify-center gap-1 sm:gap-2",
                         slot === t.id 
                           ? "bg-surface-lowest text-primary shadow-sm" 
                           : "text-on-surface-variant hover:text-on-surface"

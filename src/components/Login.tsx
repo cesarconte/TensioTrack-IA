@@ -51,7 +51,7 @@ export function Login() {
           <div className="space-y-6">
             <h2 className="text-4xl lg:text-5xl xl:text-6xl font-display font-black leading-[1.1]">
               Cuidamos de su <br className="hidden sm:block" />
-              <span className="text-primary-container">corazón</span>,<br className="hidden xl:block" /> paso a paso.
+              <span className="text-secondary">corazón</span>,<br className="hidden xl:block" /> paso a paso.
             </h2>
             <p className="text-lg xl:text-xl text-primary-foreground/80 max-w-md font-medium leading-relaxed">
               La herramienta profesional para el seguimiento de su presión arterial, diseñada para ser sencilla, segura y precisa.

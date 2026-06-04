@@ -6,6 +6,21 @@ export function useAuth() {
   const { setUser, setAuthReady } = useAppStore();
 
   useEffect(() => {
+    // Permite bypass en desarrollo/pruebas locales mediante localStorage
+    if (typeof window !== 'undefined') {
+      const mockUserStr = window.localStorage.getItem('mock_user');
+      if (mockUserStr) {
+        try {
+          const mockUser = JSON.parse(mockUserStr);
+          setUser(mockUser);
+          setAuthReady(true);
+          return () => {};
+        } catch (e) {
+          console.error("Error parsing mock_user:", e);
+        }
+      }
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {

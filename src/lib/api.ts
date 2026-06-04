@@ -1,18 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  db, 
-  auth, 
-  collection, 
-  doc, 
+import {
+  db,
+  auth,
+  collection,
+  doc,
   getDoc,
-  setDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  Timestamp, 
-  addDoc, 
-  deleteDoc, 
+  setDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  addDoc,
+  deleteDoc,
   writeBatch,
   handleFirestoreError,
   OperationType,
@@ -20,11 +20,11 @@ import {
 } from '../firebase';
 import { Reading, DashboardData, UserProfile } from '../types';
 import { getISOWeek } from './utils';
-import { 
-  calculateSessionAverage, 
+import {
+  calculateSessionAverage,
   calculateDayAverage,
-  calculatePeriodAverages, 
-  calculateFinalPeriodAverage 
+  calculatePeriodAverages,
+  calculateFinalPeriodAverage
 } from '../domain/averaging';
 import { categorizeNote } from './categorization';
 import { ReadingInput } from './schemas';
@@ -35,8 +35,14 @@ import { toast } from 'sonner';
 
 export const getTargetUserId = (): string => {
   const { user, activePatientId } = useAppStore.getState();
+
+  if (typeof window !== 'undefined' && window.localStorage.getItem('mock_user')) {
+    const mockUser = JSON.parse(window.localStorage.getItem('mock_user')!);
+    return mockUser.uid;
+  }
+
   if (!auth.currentUser) throw new Error('User not authenticated');
-  
+
   if (user?.role === 'doctor' && activePatientId) {
     return activePatientId;
   }
@@ -45,16 +51,42 @@ export const getTargetUserId = (): string => {
 
 export const firebaseService = {
   async getReadings(filters?: { slot?: string; date?: string; limit?: number; periodId?: number; dateFrom?: string; dateTo?: string }): Promise<Reading[]> {
+    if (typeof window !== 'undefined' && window.localStorage.getItem('mock_user')) {
+      const mockReadingsStr = window.localStorage.getItem('mock_readings') || '[]';
+      let readings = JSON.parse(mockReadingsStr) as Reading[];
+
+      if (filters?.slot && filters.slot !== 'all') {
+        readings = readings.filter(r => r.slot === filters.slot);
+      }
+      if (filters?.date) {
+        readings = readings.filter(r => r.date === filters.date);
+      }
+      if (filters?.periodId) {
+        readings = readings.filter(r => Number(r.periodId) === Number(filters.periodId));
+      }
+      if (filters?.dateFrom) {
+        readings = readings.filter(r => r.date >= filters.dateFrom!);
+      }
+      if (filters?.dateTo) {
+        readings = readings.filter(r => r.date <= filters.dateTo!);
+      }
+      readings.sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
+      if (filters?.limit) {
+        readings = readings.slice(0, filters.limit);
+      }
+      return readings;
+    }
+
     if (!auth.currentUser) throw new Error('User not authenticated');
     const targetUid = getTargetUserId();
     const readingsRef = collection(db, 'users', targetUid, 'readings');
-    
+
     let q = query(readingsRef, orderBy('recordedAt', 'desc'));
-    
+
     if (filters?.slot && filters.slot !== 'all') {
       q = query(q, where('slot', '==', filters.slot));
     }
-    
+
     if (filters?.date) {
       q = query(q, where('date', '==', filters.date));
     }
@@ -70,7 +102,7 @@ export const firebaseService = {
     if (filters?.dateTo) {
       q = query(q, where('date', '<=', filters.dateTo));
     }
-    
+
     if (filters?.limit) {
       q = query(q, limit(filters.limit));
     }
@@ -131,10 +163,59 @@ export const firebaseService = {
   },
 
   async addReading(data: ReadingInput): Promise<Reading> {
+    if (typeof window !== 'undefined' && window.localStorage.getItem('mock_user')) {
+      const mockReadingsStr = window.localStorage.getItem('mock_readings') || '[]';
+      const readings = JSON.parse(mockReadingsStr) as Reading[];
+
+      const sessionCount = readings.filter(r => r.date === data.date && r.slot === data.slot).length;
+      if (sessionCount >= 3) {
+        throw new Error('La sesión ya tiene 3 lecturas (Protocolo AMPA)');
+      }
+
+      const weekId = getISOWeek(data.date);
+      let targetPeriodId = 1;
+      if (readings.length > 0) {
+        const lastReading = readings[0];
+        const currentPeriodId = lastReading.periodId || 1;
+        const periodReadings = readings.filter(r => r.periodId === currentPeriodId);
+        const uniqueDates = Array.from(new Set(periodReadings.map(r => r.date)));
+
+        const lastDateInPeriod = new Date(lastReading.date);
+        const newDate = new Date(data.date);
+        const diffDays = Math.ceil((newDate.getTime() - lastDateInPeriod.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 10 || (uniqueDates.length >= 5 && !uniqueDates.includes(data.date))) {
+          targetPeriodId = currentPeriodId + 1;
+        } else {
+          targetPeriodId = currentPeriodId;
+        }
+      }
+
+      const newReading: Reading = {
+        id: 'mock-reading-' + Math.random().toString(36).substr(2, 9),
+        systolic: data.systolic,
+        diastolic: data.diastolic,
+        heartRate: data.heartRate || null,
+        order: sessionCount + 1,
+        slot: data.slot,
+        date: data.date,
+        notes: data.notes || null,
+        category: 'reposo',
+        recordedAt: new Date().toISOString(),
+        userUid: 'mock-patient-123',
+        periodId: targetPeriodId,
+        weekId
+      };
+
+      readings.unshift(newReading);
+      window.localStorage.setItem('mock_readings', JSON.stringify(readings));
+      return newReading;
+    }
+
     if (!auth.currentUser) throw new Error('User not authenticated');
-    
+
     const readingsRef = collection(db, 'users', auth.currentUser.uid, 'readings');
-    
+
     // Check count for this session
     const q = query(readingsRef, where('date', '==', data.date), where('slot', '==', data.slot));
     const snapshot = await getDocs(q);
@@ -152,23 +233,23 @@ export const firebaseService = {
       // 1. Get the latest reading based purely on timestamp (already indexed natively)
       const latestQ = query(readingsRef, orderBy('recordedAt', 'desc'), limit(1));
       const latestSnap = await getDocs(latestQ);
-      
+
       if (!latestSnap.empty) {
         const lastReading = latestSnap.docs[0].data() as Reading;
         const currentPeriodId = lastReading.periodId || 1;
-        
+
         // 2. Fetch all readings for ONLY that latest period
         const periodQ = query(readingsRef, where('periodId', '==', currentPeriodId));
         const periodSnap = await getDocs(periodQ);
         const periodReadings = periodSnap.docs.map(d => d.data() as Reading);
-        
+
         const uniqueDates = Array.from(new Set(periodReadings.map(r => r.date)));
-        
+
         // Check temporal gap between the last date in this period and the new date
         const lastDateInPeriod = new Date(lastReading.date);
         const newDate = new Date(data.date);
         const diffDays = Math.ceil((newDate.getTime() - lastDateInPeriod.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays > 10) {
           // Time gap is large enough to logically break the cycle
           targetPeriodId = currentPeriodId + 1;
@@ -202,10 +283,10 @@ export const firebaseService = {
 
     try {
       const docRef = await addDoc(readingsRef, newReading);
-      return { 
-        id: docRef.id, 
-        ...newReading, 
-        recordedAt: new Date().toISOString() 
+      return {
+        id: docRef.id,
+        ...newReading,
+        recordedAt: new Date().toISOString()
       } as Reading;
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, `users/${auth.currentUser.uid}/readings`);
@@ -214,6 +295,14 @@ export const firebaseService = {
   },
 
   async deleteReading(id: string): Promise<string> {
+    if (typeof window !== 'undefined' && window.localStorage.getItem('mock_user')) {
+      const mockReadingsStr = window.localStorage.getItem('mock_readings') || '[]';
+      let readings = JSON.parse(mockReadingsStr) as Reading[];
+      readings = readings.filter(r => r.id !== id);
+      window.localStorage.setItem('mock_readings', JSON.stringify(readings));
+      return id;
+    }
+
     if (!auth.currentUser) throw new Error('User not authenticated');
     const readingRef = doc(db, 'users', auth.currentUser.uid, 'readings', id);
     try {
@@ -226,6 +315,11 @@ export const firebaseService = {
   },
 
   async clearAllData(): Promise<void> {
+    if (typeof window !== 'undefined' && window.localStorage.getItem('mock_user')) {
+      window.localStorage.removeItem('mock_readings');
+      return;
+    }
+
     if (!auth.currentUser) throw new Error('User not authenticated');
     const readingsRef = collection(db, 'users', auth.currentUser.uid, 'readings');
     const snapshot = await getDocs(readingsRef);
@@ -235,6 +329,13 @@ export const firebaseService = {
   },
 
   async updateUserProfile(data: Partial<UserProfile>): Promise<void> {
+    if (typeof window !== 'undefined' && window.localStorage.getItem('mock_user')) {
+      const mockUser = JSON.parse(window.localStorage.getItem('mock_user')!);
+      const updated = { ...mockUser, ...data };
+      window.localStorage.setItem('mock_user', JSON.stringify(updated));
+      return;
+    }
+
     if (!auth.currentUser) throw new Error('User not authenticated');
     const userRef = doc(db, 'users', auth.currentUser.uid);
     try {
@@ -267,9 +368,9 @@ export const firebaseService = {
           resetDate = user.aiUsage.resetDate;
         }
       }
-      
+
       const newTokens = currentTokens + tokensUsed;
-      
+
       try {
         await setDoc(userRef, {
           aiUsage: {
@@ -282,7 +383,7 @@ export const firebaseService = {
         handleFirestoreError(error, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
         throw error;
       }
-      
+
       // We also update local store gently via the app store
       if (store.user) {
         store.setUser({
@@ -334,7 +435,7 @@ export const useDashboard = () => {
   const { activePatientId } = useAppStore();
   return useQuery<DashboardData>({
     queryKey: ['dashboard', auth.currentUser?.uid, activePatientId],
-    enabled: !!auth.currentUser,
+    enabled: !!auth.currentUser || (typeof window !== 'undefined' && !!window.localStorage.getItem('mock_user')),
     queryFn: async () => {
       // 6-Month Temporal Boundary for Dashboard Performance
       const sixMonthsAgo = new Date();
@@ -375,11 +476,11 @@ export const useDashboard = () => {
       });
 
       const periods = Object.keys(readingsByPeriod).map(Number).sort((a, b) => b - a);
-      
+
       const cycles = periods.map(pId => {
         const pReadings = readingsByPeriod[pId];
         const pReadingsByDate: Record<string, Record<'morning' | 'evening', Reading[]>> = {};
-        
+
         pReadings.forEach(r => {
           if (!pReadingsByDate[r.date]) pReadingsByDate[r.date] = { morning: [], evening: [] };
           pReadingsByDate[r.date][r.slot].push(r);
@@ -408,7 +509,7 @@ export const useDashboard = () => {
         const completedSessionsCount = pDays.reduce((acc, d) => {
           return acc + (d.morningReadingsCount === 3 ? 1 : 0) + (d.eveningReadingsCount === 3 ? 1 : 0);
         }, 0);
-        
+
         // A period should be strictly contiguous (not spanning more than 10-12 total days)
         // to be clinically valid as a "block".
         let isTimeConsistent = false;
@@ -432,7 +533,7 @@ export const useDashboard = () => {
       const currentCycle = cycles[0] || null;
       const todayStr = new Date().toISOString().split('T')[0];
       const todaySlots = readingsByDate[todayStr] || { morning: [], evening: [] };
-      
+
       const todayMorningAvg = calculateSessionAverage(todaySlots.morning);
       const todayEveningAvg = calculateSessionAverage(todaySlots.evening);
       const todayAvg = calculateDayAverage(todayMorningAvg, todayEveningAvg);
@@ -444,12 +545,12 @@ export const useDashboard = () => {
         .map(([date, slots]) => {
           const allDayReadings = [...slots.morning, ...slots.evening];
           if (allDayReadings.length === 0) return null;
-          
+
           const sysSum = allDayReadings.reduce((sum, r) => sum + r.systolic, 0);
           const diaSum = allDayReadings.reduce((sum, r) => sum + r.diastolic, 0);
           const hrReadings = allDayReadings.filter(r => r.heartRate !== null);
           const hrSum = hrReadings.reduce((sum, r) => sum + (r.heartRate || 0), 0);
-          
+
           return {
             date,
             systolic: Math.round(sysSum / allDayReadings.length),
@@ -506,14 +607,26 @@ export const useAvailablePeriods = () => {
   const { activePatientId } = useAppStore();
   return useQuery<{ id: number; label: string }[]>({
     queryKey: ['availablePeriods', auth.currentUser?.uid, activePatientId],
-    enabled: !!auth.currentUser && (useAppStore.getState().user?.role !== 'doctor' || !!activePatientId),
+    enabled: (!!auth.currentUser || (typeof window !== 'undefined' && !!window.localStorage.getItem('mock_user'))) && (useAppStore.getState().user?.role !== 'doctor' || !!activePatientId),
     queryFn: async () => {
+      if (typeof window !== 'undefined' && window.localStorage.getItem('mock_user')) {
+        const mockReadingsStr = window.localStorage.getItem('mock_readings') || '[]';
+        const readings = JSON.parse(mockReadingsStr) as Reading[];
+        const periods = new Set<number>();
+        readings.forEach(r => {
+          if (r.periodId) periods.add(Number(r.periodId));
+        });
+        return Array.from(periods)
+          .sort((a, b) => b - a)
+          .map(id => ({ id, label: `Período ${id}` }));
+      }
+
       if (!auth.currentUser) return [];
       try {
         const targetUid = getTargetUserId();
         const readingsRef = collection(db, 'users', targetUid, 'readings');
         const snapshot = await getDocs(readingsRef);
-        
+
         const periods = new Set<number>();
         snapshot.docs.forEach(doc => {
           const data = doc.data();
@@ -522,11 +635,11 @@ export const useAvailablePeriods = () => {
             periods.add(Number(pid));
           }
         });
-        
+
         const result = Array.from(periods)
           .sort((a, b) => b - a)
           .map(id => ({ id, label: `Período ${id}` }));
-        
+
         console.log("Filtered available periods:", result);
         return result;
       } catch (error) {
@@ -541,20 +654,20 @@ export const useReadings = (filters?: { slot?: string; date?: string; limit?: nu
   const { activePatientId } = useAppStore();
   return useQuery<Reading[]>({
     queryKey: ['readings', auth.currentUser?.uid, activePatientId, filters?.slot, filters?.date, filters?.limit, filters?.periodId, filters?.dateFrom, filters?.dateTo],
-    enabled: !!auth.currentUser,
+    enabled: !!auth.currentUser || (typeof window !== 'undefined' && !!window.localStorage.getItem('mock_user')),
     queryFn: () => firebaseService.getReadings(filters)
   });
 };
 
 export const usePatientProfile = (patientId: string | null) => {
-  return useQuery({
+  return useQuery<UserProfile | null>({
     queryKey: ['patient-profile', patientId],
     enabled: !!patientId,
     queryFn: async () => {
       const docRef = doc(db, 'users', patientId!);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        return { uid: docSnap.id, ...docSnap.data() };
+        return { uid: docSnap.id, ...docSnap.data() } as UserProfile;
       }
       return null;
     }
@@ -620,15 +733,15 @@ export const useUpdateReading = () => {
 export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient();
   const { setUser, user } = useAppStore();
-  
+
   return useMutation({
     mutationFn: firebaseService.updateUserProfile,
     onSuccess: (_, variables) => {
       if (user) {
-        setUser({ 
-          ...user, 
-          ...variables, 
-          updatedAt: new Date().toISOString() 
+        setUser({
+          ...user,
+          ...variables,
+          updatedAt: new Date().toISOString()
         });
       }
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });

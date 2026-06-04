@@ -30,6 +30,7 @@
   
   --color-tertiary: #1E1B4B;
   --color-neutral-slate: #0F172A;
+  --color-dim: #0F172A;
   
   --color-surface: var(--background);
   --color-surface-low: var(--muted);
@@ -318,3 +319,19 @@ input[type="number"] {
 .bg-status-hypertension-layer { background-color: rgba(225, 29, 72, 0.1); }
 .bg-status-bradycardia-layer { background-color: rgba(6, 182, 212, 0.1); }
 .bg-status-tachycardia-layer { background-color: rgba(239, 68, 68, 0.1); }
+
+/* High Contrast Mode support */
+@media (prefers-contrast: more) {
+  :root {
+    --primary: #4F14C4;
+    --muted-foreground: #334155;
+    --border: rgba(15, 23, 42, 0.18);
+    --foreground: #000000;
+  }
+  .dark {
+    --primary: #AC85FF;
+    --muted-foreground: #F1F5F9;
+    --border: rgba(255, 255, 255, 0.25);
+    --foreground: #FFFFFF;
+  }
+}

@@ -15,7 +15,7 @@ describe('Averaging Logic (AMPA Protocol)', () => {
       { systolic: 118, diastolic: 78 }
     ];
     const result = calculateSessionAverage(readings);
-    expect(result).toEqual({ systolic: 120, diastolic: 80 });
+    expect(result).toEqual({ systolic: 120, diastolic: 80, heartRate: null });
   });
 
   it('should return null if session has less than 3 readings', () => {
@@ -31,7 +31,7 @@ describe('Averaging Logic (AMPA Protocol)', () => {
     const morning = { systolic: 120, diastolic: 80 };
     const evening = { systolic: 130, diastolic: 90 };
     const result = calculateDayAverage(morning, evening);
-    expect(result).toEqual({ systolic: 125, diastolic: 85 });
+    expect(result).toEqual({ systolic: 125, diastolic: 85, heartRate: null });
   });
 
   it('should calculate period averages correctly (Level 3)', () => {
@@ -40,15 +40,15 @@ describe('Averaging Logic (AMPA Protocol)', () => {
       eveningAvg: { systolic: 130, diastolic: 90 }
     });
     const result = calculatePeriodAverages(days);
-    expect(result.morning).toEqual({ systolic: 120, diastolic: 80 });
-    expect(result.evening).toEqual({ systolic: 130, diastolic: 90 });
+    expect(result.morning).toEqual({ systolic: 120, diastolic: 80, heartRate: null });
+    expect(result.evening).toEqual({ systolic: 130, diastolic: 90, heartRate: null });
   });
 
   it('should calculate final period average correctly (Level 4)', () => {
     const morningPeriod = { systolic: 120, diastolic: 80 };
     const eveningPeriod = { systolic: 130, diastolic: 90 };
     const result = calculateFinalPeriodAverage(morningPeriod, eveningPeriod);
-    expect(result).toEqual({ systolic: 125, diastolic: 85 });
+    expect(result).toEqual({ systolic: 125, diastolic: 85, heartRate: null });
   });
 
   it('should handle rounding to one decimal', () => {

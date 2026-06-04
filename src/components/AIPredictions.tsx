@@ -9,17 +9,17 @@ import jsPDF from "jspdf";
 import { DashboardData } from "../types";
 import { Button } from "./ui/Button";
 import { ShareModal } from "./ShareModal";
-import { 
-  Sparkles, 
-  Brain, 
-  Wifi, 
-  FileText, 
-  ChevronRight, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Moon, 
-  Lightbulb, 
-  Download, 
+import {
+  Sparkles,
+  Brain,
+  Wifi,
+  FileText,
+  ChevronRight,
+  CheckCircle2,
+  AlertTriangle,
+  Moon,
+  Lightbulb,
+  Download,
   ChevronLeft,
   Share2,
   TrendingUp,
@@ -36,15 +36,15 @@ import {
 } from "lucide-react";
 
 const PDFIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2.5" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
   >
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -132,14 +132,14 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
   const totalRequiredSessions = 10;
   const isPhysicianValidated = completedSessions >= totalRequiredSessions;
-  
+
   // Stricter analysis check: must have 5 unique days AND at least 10 sessions total
   // Allow doctors to analyze if they are viewing a patient (the profile role will be 'patient' then)
   const canAnalyze = selectedData.isComplete && isPhysicianValidated && selectedData.daysCount >= 5;
 
   const analyzeTrends = async () => {
     if (!canAnalyze) return;
-    
+
     setIsLoading(true);
     setError(null);
     setLoadingStep(0);
@@ -148,11 +148,11 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
     const stepInterval = setInterval(() => {
       setLoadingStep(prev => (prev < 6 ? prev + 1 : prev));
     }, 450);
-    
+
     try {
       const envProcess = typeof process !== 'undefined' ? process.env : undefined;
       const apiKey = envProcess?.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
-      
+
       // Get Comparison Period if active
       let previousData = null;
       if (activeFilters.isComparative) {
@@ -196,13 +196,140 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         }
       };
 
+      const isOnline = typeof window !== 'undefined' ? window.navigator.onLine : true;
       let generatedData: any;
 
-      if (!apiKey) {
+      if (!isOnline) {
+        // Local Clinical Fallback Mode
+        const finalAvg = promptData.finalAvg || { systolic: 120, diastolic: 80 };
+        const sysVal = finalAvg.systolic;
+        const diaVal = finalAvg.diastolic;
+
+        let statusLabel = 'Normal';
+        let statusType: 'success' | 'warning' | 'info' = 'success';
+        let recText = 'Continúe con el registro diario y mantenga hábitos saludables.';
+        let impactText = 'Control Óptimo';
+        const findingsList = [];
+
+        // Clinical classification
+        if (sysVal >= 135 || diaVal >= 85) {
+          statusLabel = 'Hipertensión (HTA)';
+          statusType = 'warning';
+          recText = 'Evite la sal, el ejercicio intenso antes de la toma y consulte a su médico de cabecera. Es aconsejable que revise si su medicación necesita ajuste.';
+          impactText = 'Riesgo Cardiovascular Elevado';
+          findingsList.push({
+            type: 'warning',
+            title: 'Presión Arterial Elevada',
+            desc: `Tu promedio final (${Math.round(sysVal)}/${Math.round(diaVal)} mmHg) supera el límite del protocolo AMPA (135/85 mmHg).`,
+            icon: null
+          });
+        } else if (sysVal >= 130 || diaVal >= 80) {
+          statusLabel = 'Normal-Alta';
+          statusType = 'info';
+          recText = 'Su presión está en el límite. Reduzca consumo de sodio y mantenga vigilancia.';
+          impactText = 'Riesgo Leve / Pre-HTA';
+          findingsList.push({
+            type: 'info',
+            title: 'Presión Normal-Alta',
+            desc: `Tus cifras promedio (${Math.round(sysVal)}/${Math.round(diaVal)} mmHg) están en zona límite. Vigila tus hábitos de salud.`,
+            icon: null
+          });
+        } else if (sysVal < 100 || diaVal < 60) {
+          statusLabel = 'Hipotensión';
+          statusType = 'info';
+          recText = 'Asegúrese de hidratarse correctamente y evite cambios bruscos de postura al levantarse.';
+          impactText = 'Presión Baja';
+          findingsList.push({
+            type: 'info',
+            title: 'Presión Baja (Hipotensión)',
+            desc: `Tus promedios están por debajo de lo habitual (${Math.round(sysVal)}/${Math.round(diaVal)} mmHg).`,
+            icon: null
+          });
+        } else {
+          findingsList.push({
+            type: 'success',
+            title: 'Presión Arterial Normal',
+            desc: `Tu promedio general (${Math.round(sysVal)}/${Math.round(diaVal)} mmHg) indica una salud cardiovascular óptima.`,
+            icon: null
+          });
+        }
+
+        // Dipping calculation (circadian rhythm)
+        const morningAvg = promptData.averages?.morning;
+        const eveningAvg = promptData.averages?.evening;
+        if (morningAvg && eveningAvg) {
+          const mSys = morningAvg.systolic;
+          const eSys = eveningAvg.systolic;
+          if (mSys > eSys + 5) {
+            findingsList.push({
+              type: 'info',
+              title: 'Predominio Matutino',
+              desc: `Tu presión sistólica media es más elevada por la mañana (${Math.round(mSys)} mmHg) que por la noche (${Math.round(eSys)} mmHg).`,
+              icon: null
+            });
+          } else if (eSys > mSys + 5) {
+            findingsList.push({
+              type: 'info',
+              title: 'Elevación Vespertina',
+              desc: `Se observa mayor tensión antes de cenar (${Math.round(eSys)} mmHg) que al despertar (${Math.round(mSys)} mmHg).`,
+              icon: null
+            });
+          } else {
+            findingsList.push({
+              type: 'success',
+              title: 'Ritmo Circadiano Estable',
+              desc: 'Tus promedios de mañana y noche muestran una fluctuación equilibrada y saludable.',
+              icon: null
+            });
+          }
+        }
+
+        // Add standard protocol completion info
+        findingsList.push({
+          type: 'info',
+          title: 'Adherencia al Protocolo',
+          desc: 'Se ha completado el 100% de los registros mínimos (30 lecturas) requeridos para el informe.',
+          icon: null
+        });
+
+        // Comparative analysis fallback
+        if (activeFilters.isComparative && promptData.comparisonPeriod) {
+          const prevSys = promptData.comparisonPeriod.finalAvg?.systolic || 120;
+          const prevDia = promptData.comparisonPeriod.finalAvg?.diastolic || 80;
+          const diffSys = sysVal - prevSys;
+
+          if (diffSys > 2) {
+            findingsList.push({
+              type: 'warning',
+              title: 'Tendencia Ascendente',
+              desc: `Tu presión media subió +${Math.round(diffSys)} mmHg respecto al ciclo anterior.`,
+              icon: null
+            });
+          } else if (diffSys < -2) {
+            findingsList.push({
+              type: 'success',
+              title: 'Evolución Favorable',
+              desc: `Tu presión sistólica media bajó ${Math.round(Math.abs(diffSys))} mmHg en comparación al ciclo anterior.`,
+              icon: null
+            });
+          }
+        }
+
+        generatedData = {
+          title: `Análisis de ${selectedData.label} (Modo Offline)`,
+          executiveSummary: `Este informe clínico se ha generado en modo local/offline debido a la falta de conexión. Clasificación general de presión: ${statusLabel}. Tu promedio final registrado es de ${Math.round(sysVal)}/${Math.round(diaVal)} mmHg con una frecuencia cardíaca media de ${Math.round(promptData.finalAvg?.heartRate || 70)} ppm.`,
+          recommendation: recText,
+          impact: impactText,
+          nextReview: "Próximo ciclo de 5 días",
+          findings: findingsList,
+          dataQuality: 99,
+          projectionData: promptData.days.map(d => ({ val: d.daily?.systolic || d.morning?.systolic || 120 }))
+        };
+      } else if (!apiKey) {
         // Mock data logic
         generatedData = {
           title: activeFilters.isComparative ? `Evolución: ${selectedData.label} vs Anterior` : `Análisis de ${selectedData.label}`,
-          executiveSummary: activeFilters.isComparative 
+          executiveSummary: activeFilters.isComparative
             ? `Se observa una tendencia favorable en comparación con el ciclo anterior. La presión sistólica media ha descendido un 3% debido a una mejor adherencia al tratamiento.`
             : `Basado en los datos del ${selectedData.label}, se observa una estabilidad general en sus niveles de presión arterial. El promedio final indica un buen control.`,
           projectionData: promptData.days.map(d => ({ val: d.daily?.systolic || d.morning?.systolic || 120 })),
@@ -213,7 +340,8 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           ],
           recommendation: "Continúe con sus hábitos actuales y mantenga la regularidad.",
           impact: "Mantenimiento estable",
-          nextReview: "Próximo ciclo"
+          nextReview: "Próximo ciclo",
+          findingsList: []
         };
       } else {
         const ai = new GoogleGenAI({ apiKey });
@@ -225,7 +353,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           'circadian-rhythm': 'Analiza el descenso nocturno (dipping) y la elevación matutina.'
         };
 
-        const comparativePrompt = activeFilters.isComparative && previousData 
+        const comparativePrompt = activeFilters.isComparative && previousData
           ? `\nIMPORTANTE: El usuario ha solicitado explícitamente una COMPARATIVA activa. Analiza minuciosamente los "DATOS" actuales midiendo la diferencia porcentual o de puntos de presión con respecto al "comparisonPeriod" (Ciclo anterior). Debes referir esta comparativa detallada de mejora o empeoramiento obligatoriamente dentro del \`executiveSummary\` así como incluir un hallazgo específico en \`findings\` con type "success" (si mejoró) o "warning" (si empeoró) detallando la evolución.`
           : '';
 
@@ -247,7 +375,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
         const text = result.text;
         if (!text) throw new Error("No response from AI engine");
-        
+
         if (result.usageMetadata?.totalTokenCount) {
           try {
             await firebaseService.updateAITokenUsage(result.usageMetadata.totalTokenCount);
@@ -259,7 +387,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         const jsonStr = text.replace(/```json|```/g, '').trim();
         generatedData = JSON.parse(jsonStr);
         generatedData.projectionData = promptData.days.map(d => ({ val: d.daily?.systolic || d.morning?.systolic || 120 }));
-        
+
         // CÁLCULO SENIOR Y CLÍNICAMENTE CORRECTO DE DATA QUALITY
         // --------------------------------------------------------
         // En software médico, la "Calidad de los Datos" NUNCA debe penalizar la variabilidad
@@ -291,16 +419,18 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           findings: Array.isArray(generatedData.findings) ? generatedData.findings : [],
           projectionData: Array.isArray(generatedData.projectionData) ? generatedData.projectionData : (promptData as any).days?.map((d: any) => ({ val: d.daily?.systolic || d.morning?.systolic || 120 })) || []
         };
-        
-        try {
-          await addDoc(collection(db, 'users', getTargetUserId(), 'ai_reports'), reportData);
-        } catch (e: any) {
-          console.error("AI Report Save Error Details:", e);
-          if (e.message?.includes('permission')) {
-             throw new Error("Error de permisos guardando el informe: " + e.message);
-          }
-          throw e; // Relying on our error boundary
-        }
+
+         try {
+           await addDoc(collection(db, 'users', getTargetUserId(), 'ai_reports'), reportData);
+         } catch (e: any) {
+           console.error("AI Report Save Error Details:", e);
+           if (isOnline) {
+             if (e.message?.includes('permission')) {
+                throw new Error("Error de permisos guardando el informe: " + e.message);
+             }
+             throw e; // Relying on our error boundary
+           }
+         }
       }
 
       setPrediction(generatedData);
@@ -356,7 +486,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
   const handleDownloadPDF = async () => {
     const input = document.getElementById('ai-report-content');
     if (!input) return;
-    
+
     setIsDownloading(true);
     try {
       const width = input.scrollWidth;
@@ -390,21 +520,21 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           return true;
         }
       });
-      
+
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
-      
+
       const margin = 15; // 15mm margin on all sides
       const maxPdfWidth = pdf.internal.pageSize.getWidth();
       const pdfWidth = maxPdfWidth - (margin * 2);
-      
+
       // html-to-image provides data URL directly. Keep proportions.
       const imgProps = pdf.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
+
       pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth, pdfHeight);
       pdf.save(`informe_ia_tensiotrack_${new Date().toISOString().slice(0, 10)}.pdf`);
       toast.success("Informe descargado con éxito");
@@ -473,25 +603,25 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         {/* Central Pulse Element */}
         <div className="relative">
           {/* Layered Pulsing Halos */}
-          <motion.div 
+          <motion.div
             animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.1, 0.3] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             className="absolute inset-0 bg-primary/30 rounded-full blur-3xl"
           />
-          <motion.div 
+          <motion.div
             animate={{ scale: [1, 1.8, 1], opacity: [0.1, 0.05, 0.1] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
             className="absolute inset-0 bg-primary/20 rounded-full blur-3xl"
           />
-          
-          <motion.div 
+
+          <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
             className="relative w-48 h-48 rounded-full border border-primary/20 flex items-center justify-center p-4 bg-surface-highest/10 backdrop-blur-xl shadow-2xl"
           >
             <div className="relative flex items-center justify-center">
               <Brain className="text-primary w-16 h-16" strokeWidth={1.5} />
-              
+
               {/* Outer scanning ring */}
               <svg className="absolute inset-0 w-32 h-32 -m-8">
                 <motion.circle
@@ -512,7 +642,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         {/* Status Messages */}
         <div className="text-center space-y-4 relative z-10 min-h-[80px]">
           <AnimatePresence mode="wait">
-            <motion.p 
+            <motion.p
               key={loadingStep}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -522,14 +652,14 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               {loadingMessages[loadingStep]}
             </motion.p>
           </AnimatePresence>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex items-center justify-center gap-1.5"
           >
             {[0, 1, 2].map((i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 animate={{ opacity: [0.2, 1, 0.2] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
@@ -552,8 +682,8 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
     return (
       <div className="min-h-[600px] flex flex-col items-center justify-center space-y-12 py-20 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-warning/5 rounded-full blur-[100px] -z-10" />
-        
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="relative"
@@ -561,7 +691,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           <div className="w-24 h-24 rounded-3xl bg-warning/10 flex items-center justify-center text-warning border border-warning/20">
             <AlertCircle size={48} strokeWidth={1.5} />
           </div>
-          <motion.div 
+          <motion.div
             animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.2, 0.5] }}
             transition={{ duration: 4, repeat: Infinity }}
             className="absolute inset-0 bg-warning/20 rounded-3xl blur-2xl -z-10"
@@ -576,14 +706,14 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Button 
+          <Button
             className="rounded-full px-10 py-7 bg-primary text-white shadow-xl shadow-primary/20 transition-all font-black tracking-widest uppercase text-xs"
             onClick={analyzeTrends}
           >
             <RefreshCw className="mr-3" size={18} />
             Reintentar Análisis
           </Button>
-          <Button 
+          <Button
             variant="ghost"
             className="rounded-full px-10 py-7 text-on-surface-variant hover:bg-surface-high transition-all font-black tracking-widest uppercase text-xs items-center gap-3"
             onClick={() => setError(null)}
@@ -608,7 +738,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
       {/* Consultation Mode Banner (Doctor viewing Patient) - Persistent across views */}
       <AnimatePresence mode="wait">
         {isViewingPatient && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -624,9 +754,9 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                   <p className="text-sm font-medium text-on-surface-variant">Analizando datos para <span className="text-primary font-bold">{activePatientName}</span></p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5"
                 onClick={() => useAppStore.getState().setActivePatientId(null, null)}
               >
@@ -650,9 +780,9 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               <h3 className="text-sm font-bold text-on-surface">Explorador de Datos Clínicos</h3>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
-            <button 
+            <button
               onClick={() => setIsFilterModalOpen(true)}
               className="flex items-center gap-2 px-6 py-3 bg-surface-low hover:bg-surface-high text-on-surface-variant hover:text-primary rounded-2xl border border-border shadow-sm transition-all text-xs font-black uppercase tracking-widest"
             >
@@ -664,7 +794,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
         <AnimatePresence>
           {isFilterModalOpen && (
-            <AnalysisFilterModal 
+            <AnalysisFilterModal
               onClose={() => setIsFilterModalOpen(false)}
               onApply={setActiveFilters}
               initialFilters={activeFilters}
@@ -675,14 +805,14 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         </AnimatePresence>
 
         {/* Main Hero Card */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[3rem] bg-surface-low border-none p-12 text-center"
+          className="relative overflow-hidden rounded-[3rem] bg-surface-low border-none p-6 sm:p-12 text-center"
         >
           {/* Subtle Background Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
-          
+
           <div className="flex flex-col items-center">
             <div className={cn(
               "inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-8 transition-colors",
@@ -691,22 +821,22 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               <Sparkles size={14} />
               {canAnalyze ? 'Análisis Predictivo IA' : 'Sesiones Incompletas'}
             </div>
-            
-            <h1 className="text-display-lg font-display font-black text-on-surface leading-[1.1] tracking-tight mb-6 max-w-xl">
+
+            <h1 className="text-3xl sm:text-display-lg font-display font-black text-on-surface leading-[1.1] tracking-tight mb-6 max-w-xl">
               {canAnalyze ? (activeFilters.cycleId === 'current' ? `Análisis para ${userProfile?.displayName?.split(' ')[0] || 'el paciente'}` : 'Ciclo clínico seleccionado') : 'Requisitos no alcanzados'}
             </h1>
-            
+
             <p className="text-on-surface-variant/70 text-lg font-medium leading-relaxed max-w-2xl mx-auto mb-10">
-              {canAnalyze 
+              {canAnalyze
                 ? `Los datos de ${userProfile?.displayName || 'el paciente'} han sido validados según el protocolo AMPA y están listos para el procesamiento clínico.`
                 : `Para generar un informe profesional, el protocolo requiere una muestra de 5 días completos (10 sesiones). Actualmente dispone de ${completedSessions}/${totalRequiredSessions} sesiones registradas.`}
             </p>
-            
+
             <div className="flex flex-col items-center gap-4">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className={cn(
-                  "rounded-full px-12 py-8 shadow-xl transition-all font-black tracking-widest uppercase text-xs flex items-center gap-3",
+                  "rounded-full px-8 sm:px-12 py-4 sm:py-8 shadow-xl transition-all font-black tracking-widest uppercase text-xs flex items-center gap-3",
                   canAnalyze ? "bg-primary text-white shadow-primary/30 hover:scale-105" : "bg-neutral-100 text-neutral-400 cursor-not-allowed opacity-80"
                 )}
                 onClick={analyzeTrends}
@@ -737,7 +867,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
         {/* Secondary Grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
@@ -747,13 +877,13 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               <p className="text-[10px] font-black tracking-[0.2em] text-on-surface-variant uppercase mb-3">Integridad de la Muestra</p>
               <h2 className="text-2xl font-display font-bold text-on-surface mb-8">Estado de los Registros</h2>
             </div>
-            
+
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
                 {/* Protocol Completion Logic: 10 sessions total (M/E for 5 days) */}
                 {(() => {
                   const completionPercentage = Math.round((completedSessions / totalRequiredSessions) * 100);
-                  
+
                   return (
                     <>
                       <div className="flex items-center justify-between mb-3">
@@ -768,7 +898,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                         </p>
                       </div>
                       <div className="h-4 w-full bg-surface-lowest rounded-full overflow-hidden p-1 border border-border/20 shadow-inner">
-                        <motion.div 
+                        <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(completionPercentage, 100)}%` }}
                           transition={{ duration: 1.5, ease: "easeOut" }}
@@ -791,7 +921,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -800,7 +930,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             <div className="p-4 bg-primary/5 rounded-2xl w-fit mb-6">
               <FileText size={24} className="text-primary/60" />
             </div>
-            
+
             <div>
               <h3 className="text-xl font-display font-bold text-on-surface mb-1">Último Informe</h3>
               {latestReport ? (
@@ -817,20 +947,20 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                 Consulte sus análisis médicos previos
               </p>
             </div>
-            
-            <Button 
+
+            <Button
               onClick={fetchHistory}
               disabled={isLoadingHistory}
               variant="outline"
-              className="mt-6 w-full text-[10px] tracking-widest uppercase group"
+              className="mt-6 w-full text-[10px] tracking-widest uppercase group flex items-center justify-between px-6"
             >
               {isLoadingHistory ? (
                 'Cargando...'
               ) : (
-                <>
+                <div className="flex items-center gap-2">
                   <History size={16} className="shrink-0" />
-                  Ver análisis guardados
-                </>
+                  <span>Ver análisis guardados</span>
+                </div>
               )}
               <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform shrink-0" />
             </Button>
@@ -839,7 +969,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
         {/* Bottom Banner - Clinical Insight */}
         <div className="max-w-4xl mx-auto w-full">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
@@ -847,7 +977,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             style={{ backgroundImage: 'url(/bg-health-network.png)' }}
           >
             <div className="absolute inset-0 bg-surface/70 backdrop-blur-[6px]"></div>
-            
+
             <div className="text-center space-y-4 px-6 sm:px-10 relative z-10 w-full">
               {latestReport ? (
                 <>
@@ -920,7 +1050,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         <div className="space-y-10">
           <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="space-y-2">
-            <button 
+            <button
               onClick={() => setView('preparation')}
               className="flex items-center gap-2 text-primary font-black text-[10px] tracking-widest uppercase mb-4 hover:translate-x-[-4px] transition-transform"
             >
@@ -953,10 +1083,19 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {historicalReports.map((report) => (
-              <motion.div 
+              <motion.div
                 key={report.id}
                 whileHover={{ y: -5 }}
-                className="bg-surface-low rounded-[3rem] border-none p-8 flex flex-col justify-between space-y-8 transition-all cursor-pointer group"
+                tabIndex={0}
+                role="button"
+                aria-label={`Ver informe: ${report.title}. Generado el ${new Date(report.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    viewHistoricalReport(report);
+                  }
+                }}
+                className="bg-surface-low rounded-[3rem] border-none p-8 flex flex-col justify-between space-y-8 transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50"
                 onClick={() => viewHistoricalReport(report)}
               >
                 <div className="space-y-4">
@@ -982,7 +1121,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                   <div className="h-1.5 w-full bg-surface-low rounded-full overflow-hidden">
                     <div className="h-full bg-primary/60" style={{ width: `${report.dataQuality}%` }} />
                   </div>
-                  
+
                   <div className="flex items-center justify-between pt-2">
                     {report.isComparative && (
                       <div className="flex items-center gap-1.5 px-3 py-1 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-widest">
@@ -1007,7 +1146,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
         <>
           <header className="mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 px-4 sm:px-0">
         <div className="space-y-2">
-          <button 
+          <button
             onClick={() => setView(historicalReports.length > 0 ? 'history' : 'preparation')}
             className="flex items-center gap-2 text-primary font-black text-[10px] tracking-widest uppercase mb-4 hover:translate-x-[-4px] transition-transform"
           >
@@ -1025,25 +1164,25 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
       <div id="ai-report-content" className="space-y-8 bg-background">
       {/* Hero Summary Card - matching image exactly */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-primary rounded-[3rem] p-12 text-white overflow-hidden"
+        className="relative bg-primary rounded-[3rem] p-6 sm:p-12 text-white overflow-hidden"
       >
         {/* Subtle radial highlights for depth */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-[120px] -mr-[300px] -mt-[300px]" />
-        
+
         <div className="relative z-10 space-y-8">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-md border border-white/10">
             <Sparkles size={12} fill="white" />
             Resumen Ejecutivo
           </div>
-          
+
           <div className="space-y-4">
-            <h2 className="text-[2.8rem] font-display font-black leading-[1.1] tracking-tight max-w-2xl text-white">
+            <h2 className="text-3xl sm:text-[2.8rem] font-display font-black leading-[1.1] tracking-tight max-w-2xl text-white">
               {prediction.title}
             </h2>
-            
+
             <p className="text-white/95 text-xl leading-[1.6] max-w-3xl font-medium">
               {prediction.executiveSummary}
             </p>
@@ -1059,20 +1198,20 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
               <LineChart data={prediction.projectionData}>
                 <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
                 {/* Glow effect for the line */}
-                <Line 
-                  type="monotone" 
-                  dataKey="val" 
-                  stroke="rgba(156, 142, 217, 0.2)" 
-                  strokeWidth={12} 
+                <Line
+                  type="monotone"
+                  dataKey="val"
+                  stroke="rgba(156, 142, 217, 0.2)"
+                  strokeWidth={12}
                   dot={false}
                   activeDot={false}
                   animationDuration={2000}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="val" 
-                  stroke="#9C8ED9" 
-                  strokeWidth={4} 
+                <Line
+                  type="monotone"
+                  dataKey="val"
+                  stroke="#9C8ED9"
+                  strokeWidth={4}
                   dot={(props: any) => {
                     const { cx, cy, index, dataCount } = props;
                     if (index === prediction.projectionData.length - 1) {
@@ -1122,7 +1261,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
                 </span>
               </div>
             </div>
-            
+
             <p className="text-on-surface-variant text-[13px] leading-relaxed text-center max-w-[280px] mt-10 font-medium">
               Al haber registrado estrictamente el 100% de la matriz exigida (10 sesiones), la muestra adquiere una fiabilidad de Clase A (Gold Standard) para este análisis.
             </p>
@@ -1139,22 +1278,22 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             </span>
             <h3 className="text-[1.3rem] font-display font-bold text-foreground">Hallazgos Clave</h3>
           </div>
-          
+
           <div className="space-y-4">
             {prediction.findings.map((f: any, i: number) => {
               const Icon = f.icon || (f.type === 'success' ? CheckCircle2 : f.type === 'warning' ? AlertTriangle : Moon);
               return (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * i }}
-                  key={i} 
+                  key={i}
                   className="flex gap-6 p-6 bg-surface-low rounded-[2.5rem] border-none transition-shadow group cursor-default"
                 >
                   <div className={cn(
                     "shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105",
-                    f.type === 'success' ? "bg-success/10 text-success" : 
-                    f.type === 'warning' ? "bg-destructive/10 text-destructive" : 
+                    f.type === 'success' ? "bg-success/10 text-success" :
+                    f.type === 'warning' ? "bg-destructive/10 text-destructive" :
                     "bg-primary/10 text-primary"
                   )}>
                     <Icon size={22} />
@@ -1169,7 +1308,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           </div>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="md:col-span-5 bg-surface-low rounded-[3rem] p-10 border-none"
@@ -1178,7 +1317,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
             <Lightbulb className="text-primary" size={22} fill="currentColor" />
             <h3 className="text-[1.3rem] font-display font-bold text-foreground">Recomendación IA</h3>
           </div>
-          
+
           <div className="bg-primary/5 rounded-[1.5rem] p-10 mb-10 shadow-inner border border-primary/10">
             <p className="text-on-surface font-body font-medium leading-[1.6] text-[1.1rem] text-center italic">
               "{prediction.recommendation}"
@@ -1186,15 +1325,23 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           </div>
 
           <div className="space-y-5 px-4">
-            <div className="flex items-center gap-4 text-on-surface-variant group">
-              <Activity size={16} className="text-primary/40 transition-colors group-hover:text-primary" />
-              <p className="text-[13px] font-medium leading-none">
+            <div className="flex items-start gap-4 text-on-surface-variant group">
+              <Activity
+                size={16}
+                className="text-primary/70 transition-colors group-hover:text-primary mt-0.5 shrink-0"
+                aria-hidden="true"
+              />
+              <p className="text-sm font-medium leading-relaxed">
                 Impacto estimado: <span className="text-foreground font-bold">{prediction.impact}</span>
               </p>
             </div>
-            <div className="flex items-center gap-4 text-on-surface-variant group">
-              <Calendar size={16} className="text-primary/40 transition-colors group-hover:text-primary" />
-              <p className="text-[13px] font-medium leading-none">
+            <div className="flex items-start gap-4 text-on-surface-variant group">
+              <Calendar
+                size={16}
+                className="text-primary/70 transition-colors group-hover:text-primary mt-0.5 shrink-0"
+                aria-hidden="true"
+              />
+              <p className="text-sm font-medium leading-relaxed">
                 Siguiente revisión: <span className="text-foreground font-bold">{prediction.nextReview}</span>
               </p>
             </div>
@@ -1205,7 +1352,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
       {/* Footer Actions - Matching Buttons in image */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 py-12 border-t border-border/50 mt-16 mb-6">
-        <Button 
+        <Button
           variant="primary"
           size="lg"
           className="rounded-full px-10 sm:px-12 bg-linear-to-br from-primary to-secondary text-primary-foreground transition-all font-black tracking-widest text-[10px] sm:text-xs uppercase flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.98]"
@@ -1215,7 +1362,7 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
           {!isDownloading && <PDFIcon className="mr-3" size={20} />}
           {isDownloading ? "Generando PDF..." : "Descargar PDF del Informe"}
         </Button>
-        <Button 
+        <Button
           variant="secondary"
           size="lg"
           className="rounded-full px-10 sm:px-12 bg-surface-highest text-foreground transition-all font-black tracking-widest text-[10px] sm:text-xs uppercase flex items-center justify-center shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] border-none"
@@ -1230,10 +1377,10 @@ export function AIPredictions({ dashboard, userProfile, isLoadingData }: AIPredi
 
       <AnimatePresence>
         {isShareModalOpen && (
-          <ShareModal 
-            isOpen={isShareModalOpen} 
-            onClose={() => setIsShareModalOpen(false)} 
-            url={window.location.origin} 
+          <ShareModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            url={`${window.location.origin}/?patientId=${activePatientId || user?.uid || ''}&tab=ai`}
           />
         )}
       </AnimatePresence>

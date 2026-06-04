@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/Card";
 import { Badge } from "./ui/Badge";
 import { cn } from "../lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 
 interface PatientCard {
   id: string; // Patient UID
@@ -29,19 +30,19 @@ export function PatientsList() {
       // 1. Get authorizations where doctorId == auth.currentUser.uid
       const authRef = collection(db, 'authorizations');
       const q = query(
-        authRef, 
+        authRef,
         where('doctorId', '==', auth.currentUser?.uid)
       );
       const snap = await getDocs(q);
-      
+
       const authDocs = snap.docs
         .map(d => d.data())
         .filter(d => d.status !== 'revoked');
 
       if (authDocs.length === 0) return [];
-      
+
       const patientIds = authDocs.map(d => d.patientId);
-      
+
       // Batch fetch profiles (avoiding N+1)
       const results: PatientCard[] = [];
       const chunks = [];
@@ -50,7 +51,7 @@ export function PatientsList() {
       }
 
       const userProfiles: Record<string, any> = {};
-      
+
       for (const chunk of chunks) {
         const usersRef = collection(db, 'users');
         const userQuery = query(usersRef, where('__name__', 'in', chunk));
@@ -110,11 +111,12 @@ export function PatientsList() {
           <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
             <Search className="w-5 h-5 text-on-surface-variant group-focus-within:text-primary transition-all duration-300" />
           </div>
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre o email..." 
+          <input
+            type="text"
+            placeholder="Buscar por nombre o email..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
+            aria-label="Buscar pacientes por nombre o correo electrónico"
             className="w-full h-14 pl-14 pr-6 bg-surface-low rounded-full border-none outline-none focus:ring-4 focus:ring-primary/10 text-base font-medium transition-all placeholder:text-on-surface-variant/40"
           />
         </div>
@@ -127,7 +129,7 @@ export function PatientsList() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center justify-center py-24 text-center bg-surface-low rounded-[3.5rem] border-none"
@@ -137,8 +139,8 @@ export function PatientsList() {
           </div>
           <h3 className="text-2xl font-display font-black text-foreground mb-3">No hay resultados</h3>
           <p className="text-on-surface-variant max-w-sm mx-auto leading-relaxed">
-            {searchTerm 
-              ? "No hemos encontrado pacientes que coincidan con tu búsqueda." 
+            {searchTerm
+              ? "No hemos encontrado pacientes que coincidan con tu búsqueda."
               : "Tus pacientes aún no te han vinculado. Comparte tu código profesional para empezar."}
           </p>
         </motion.div>
@@ -157,7 +159,7 @@ export function PatientsList() {
                   transition={{ delay: index * 0.04, type: "spring", stiffness: 100 }}
                   className="h-full"
                 >
-                  <Card 
+                  <Card
                     interactive
                     onClick={() => handleSelectPatient(patient)}
                     className="h-full flex flex-col p-0 overflow-hidden"
@@ -166,10 +168,10 @@ export function PatientsList() {
                       <div className="flex items-center gap-5">
                         <div className="relative shrink-0">
                           {patient.photoURL ? (
-                            <img 
-                              src={patient.photoURL} 
-                              alt={patient.displayName} 
-                              className="w-16 h-16 rounded-3xl object-cover ring-2 ring-background shadow-lg" 
+                            <img
+                              src={patient.photoURL}
+                              alt={patient.displayName}
+                              className="w-16 h-16 rounded-3xl object-cover ring-2 ring-background shadow-lg"
                             />
                           ) : (
                             <div className={`w-16 h-16 rounded-3xl ${avatar.colorClass} flex items-center justify-center font-black text-xl shadow-md border-2 border-background`}>
@@ -178,7 +180,7 @@ export function PatientsList() {
                           )}
                           <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-background rounded-full shadow-sm" title="Activo" />
                         </div>
-                        
+
                         <div className="min-w-0 flex-1">
                           <CardDescription className="mb-1 text-primary/60 font-black">PACIENTE</CardDescription>
                           <CardTitle className="text-xl sm:text-2xl font-black text-foreground truncate group-hover:text-primary transition-colors tracking-tight leading-none h-8">
@@ -199,28 +201,45 @@ export function PatientsList() {
 
                       {/* Integrated Actions */}
                       <div className="flex items-center gap-2 pt-2">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleSelectPatient(patient, 'dashboard'); }}
-                          className="flex-1 h-12 rounded-2xl bg-surface-high/50 flex items-center justify-center text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-all duration-300 group/btn"
-                          title="Ver Dashboard"
-                        >
-                          <LayoutDashboard size={20} className="transition-transform group-hover/btn:scale-110" />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleSelectPatient(patient, 'history'); }}
-                          className="flex-1 h-12 rounded-2xl bg-surface-high/50 flex items-center justify-center text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-all duration-300 group/btn"
-                          title="Ver Historial"
-                        >
-                          <History size={20} className="transition-transform group-hover/btn:scale-110" />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleSelectPatient(patient, 'report'); }}
-                          className="flex-1 h-12 rounded-2xl bg-surface-high/50 flex items-center justify-center text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-all duration-300 group/btn"
-                          title="Generar Informe"
-                        >
-                          <FileText size={20} className="transition-transform group-hover/btn:scale-110" />
-                        </button>
-                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleSelectPatient(patient, 'dashboard'); }}
+                              className="flex-1 h-12 rounded-2xl bg-surface-high/50 flex items-center justify-center text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-all duration-300 group/btn cursor-pointer"
+                              aria-label="Ver Dashboard"
+                            >
+                              <LayoutDashboard size={20} className="transition-transform group-hover/btn:scale-110" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Ver Dashboard</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleSelectPatient(patient, 'history'); }}
+                              className="flex-1 h-12 rounded-2xl bg-surface-high/50 flex items-center justify-center text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-all duration-300 group/btn cursor-pointer"
+                              aria-label="Ver Historial"
+                            >
+                              <History size={20} className="transition-transform group-hover/btn:scale-110" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Ver Historial</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleSelectPatient(patient, 'report'); }}
+                              className="flex-1 h-12 rounded-2xl bg-surface-high/50 flex items-center justify-center text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-all duration-300 group/btn cursor-pointer"
+                              aria-label="Generar Informe"
+                            >
+                              <FileText size={20} className="transition-transform group-hover/btn:scale-110" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Generar Informe</TooltipContent>
+                        </Tooltip>
+
                         <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20 group-hover:scale-105 transition-all ml-1 shrink-0">
                           <ChevronRight size={22} strokeWidth={3} />
                         </div>

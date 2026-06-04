@@ -8,15 +8,15 @@ import { Badge } from "../ui/Badge";
 import { cn } from "../../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { AIPredictions } from "../AIPredictions";
-import { 
-  BarChart, 
-  Bar, 
+import {
+  BarChart,
+  Bar,
   LineChart,
   Line,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Legend,
   ReferenceLine,
@@ -29,6 +29,7 @@ import { getCachedAnalysis, generateAndCacheAnalysis } from '../../services/aiSe
 import { toast } from 'sonner';
 import { getBloodPressureStatus, getBloodPressureStyle, getPulseStatus, getPulseStyle } from "../../domain/health";
 import { Sparkles, Loader2, LayoutDashboard, Target, HeartPulse, AlertCircle, Plus, Info, Clock, CalendarCheck, Calendar, ChevronDown, UserCheck, BarChart3, ShieldCheck, Check, ArrowRight, BrainCircuit, Activity, Heart, TrendingUp, TrendingDown, Minus, Sun, Moon, Stethoscope, FileText } from "lucide-react";
+import { Tooltip as RadixTooltip, TooltipContent, TooltipTrigger } from "../ui/Tooltip";
 
 const LocalPulseStatusDisplay = ({ hr }: { hr: number | null | undefined }) => {
   if (!hr) return <Badge variant="secondary" className="bg-surface-low text-on-surface-variant/40 px-2 py-0.5 border-none text-[10px] uppercase font-bold tracking-widest leading-none">--</Badge>;
@@ -56,14 +57,14 @@ interface AnalysisCardProps {
   icon: React.ReactNode;
 }
 
-const AnalysisCard = ({ 
-  title, 
-  subtitle, 
-  imageSeed, 
+const AnalysisCard = ({
+  title,
+  subtitle,
+  imageSeed,
   customImageUrl,
-  statisticalAnalysis, 
-  aiAnalysis, 
-  isGenerating, 
+  statisticalAnalysis,
+  aiAnalysis,
+  isGenerating,
   onGenerate,
   comparisonText,
   comparisonTrend,
@@ -85,9 +86,9 @@ const AnalysisCard = ({
     <CardContent className="space-y-8">
       <div className="flex flex-col gap-6">
         <div className="w-full aspect-video rounded-3xl overflow-hidden bg-surface-high relative shadow-inner">
-          <img 
-            src={customImageUrl || `https://picsum.photos/seed/${imageSeed}/800/450`} 
-            alt="Analysis Visualization" 
+          <img
+            src={customImageUrl || `https://picsum.photos/seed/${imageSeed}/800/450`}
+            alt="Analysis Visualization"
             className="w-full h-full object-cover opacity-90"
             referrerPolicy="no-referrer"
           />
@@ -100,7 +101,7 @@ const AnalysisCard = ({
           <div className="flex flex-wrap gap-2 pt-2">
             <div className={cn(
               "px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm",
-              comparisonTrend === 'up' ? "bg-destructive/10 text-destructive" : 
+              comparisonTrend === 'up' ? "bg-destructive/10 text-destructive" :
               comparisonTrend === 'down' ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
             )}>
               <div className="flex items-center">
@@ -125,7 +126,7 @@ const AnalysisCard = ({
             <p className="text-[10px] text-on-surface-variant font-medium">{subtitle}</p>
           </div>
         </div>
-        <Button 
+        <Button
           onClick={onGenerate}
           disabled={isGenerating}
           className="w-full rounded-full py-6 bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -146,7 +147,7 @@ const AnalysisCard = ({
 
 export function Dashboard() {
   const { data: dashboard, isLoading } = useDashboard();
-  
+
   // Atomic Selectors for Performance (O(1) renders)
   const user = useAppStore(s => s.user);
   const activePatientId = useAppStore(s => s.activePatientId);
@@ -166,7 +167,7 @@ export function Dashboard() {
   const [chartFilter, setChartFilter] = React.useState<'both' | 'pas' | 'pad'>('both');
   const [chartPeriod, setChartPeriod] = React.useState<'today' | 'period' | '15d' | 'month'>('month');
   const [finalPeriod, setFinalPeriod] = React.useState<'period' | 'fortnight' | 'month' | 'quarter' | 'semester' | 'year' | 'total'>('month');
-  
+
   const [aiAnalysisBp, setAiAnalysisBp] = React.useState<string | null>(null);
   const [isGeneratingBp, setIsGeneratingBp] = React.useState(false);
   const [aiAnalysisPulse, setAiAnalysisPulse] = React.useState<string | null>(null);
@@ -176,13 +177,13 @@ export function Dashboard() {
 
   const timeContext = React.useMemo(() => {
     const hour = new Date().getHours();
-    
+
     // Time slots definition:
     // Morning: 06:00 - 12:00
     // Afternoon: 12:00 - 18:00
     // Evening: 18:00 - 21:00
     // Night: 21:00 - 06:00
-    
+
     if (hour >= 6 && hour < 12) {
       return {
         greeting: "Buenos días",
@@ -394,7 +395,7 @@ export function Dashboard() {
     const sysMin = data.length > 0 ? Math.min(...data.map(d => d.pas)) : 0;
     const diaMax = data.length > 0 ? Math.max(...data.map(d => d.pad)) : 0;
     const diaMin = data.length > 0 ? Math.min(...data.map(d => d.pad)) : 0;
-    
+
     let targetCount = 0;
     filteredReadings.forEach(r => {
        const status = getBloodPressureStatus(r.systolic, r.diastolic);
@@ -407,11 +408,11 @@ export function Dashboard() {
     // Calculate comparison for badges
     let comparisonText = '--';
     let comparisonTrend: 'up' | 'down' | 'stable' = 'stable';
-    
+
     const getPrevPeriodData = () => {
       const prevStart = new Date(now);
       const prevEnd = new Date(now);
-      
+
       if (finalPeriod === 'period') {
         prevStart.setDate(now.getDate() - 10);
         prevEnd.setDate(now.getDate() - 6);
@@ -431,13 +432,13 @@ export function Dashboard() {
         prevStart.setDate(now.getDate() - 730);
         prevEnd.setDate(now.getDate() - 366);
       }
-      
+
       const startStr = prevStart.toISOString().split('T')[0];
       const endStr = prevEnd.toISOString().split('T')[0];
-      
+
       const prevReadings = allReadings.filter(r => r.date >= startStr && r.date <= endStr);
       if (prevReadings.length === 0) return null;
-      
+
       const avgSys = Math.round(prevReadings.reduce((sum, r) => sum + r.systolic, 0) / prevReadings.length);
       return avgSys;
     };
@@ -451,7 +452,7 @@ export function Dashboard() {
       comparisonText = `${trendIcon} ${percent}% vs período anterior`;
     }
 
-    const periodDaysLabel = data.length > 0 
+    const periodDaysLabel = data.length > 0
       ? `${data.length} ${data.length === 1 ? 'día analizado' : 'días analizados'}`
       : 'Sin datos registrados';
 
@@ -459,24 +460,24 @@ export function Dashboard() {
     if (data.length >= 2) {
       const firstHalf = data.slice(0, Math.ceil(data.length / 2));
       const secondHalf = data.slice(Math.floor(data.length / 2));
-      
+
       const firstSysAvg = Math.round(firstHalf.reduce((sum, d) => sum + d.pas, 0) / firstHalf.length);
       const secondSysAvg = Math.round(secondHalf.reduce((sum, d) => sum + d.pas, 0) / secondHalf.length);
       const firstDiaAvg = Math.round(firstHalf.reduce((sum, d) => sum + d.pad, 0) / firstHalf.length);
       const secondDiaAvg = Math.round(secondHalf.reduce((sum, d) => sum + d.pad, 0) / secondHalf.length);
-      
+
       const sysDiff = secondSysAvg - firstSysAvg;
       const diaDiff = secondDiaAvg - firstDiaAvg;
-      
+
       const sysText = sysDiff > 0 ? `aumentado ${sysDiff} mmHg` : sysDiff < 0 ? `disminuido ${Math.abs(sysDiff)} mmHg` : `mantenido constante`;
       const diaText = diaDiff > 0 ? `aumentado ${diaDiff} mmHg` : diaDiff < 0 ? `disminuido ${Math.abs(diaDiff)} mmHg` : `mantenido constante`;
-      
+
       const bpStatus = getBloodPressureStatus(secondSysAvg, secondDiaAvg);
       const bpStyle = getBloodPressureStyle(bpStatus);
-      const statusText = bpStatus === 'normal' 
-        ? "Tus valores recientes están dentro del rango Normal." 
+      const statusText = bpStatus === 'normal'
+        ? "Tus valores recientes están dentro del rango Normal."
         : `Tus valores recientes indican un estado de ${bpStyle.label}.`;
-      
+
       trendAnalysis = `En este período, tu presión sistólica ha ${sysText} y la diastólica se ha ${diaText}. ${statusText} Promedio reciente: ${secondSysAvg}/${secondDiaAvg} mmHg.`;
     }
 
@@ -560,11 +561,11 @@ export function Dashboard() {
     // Calculate comparison for badges
     let comparisonText = '--';
     let comparisonTrend: 'up' | 'down' | 'stable' = 'stable';
-    
+
     const getPrevPeriodData = () => {
       const prevStart = new Date(now);
       const prevEnd = new Date(now);
-      
+
       if (finalPeriod === 'period') {
         prevStart.setDate(now.getDate() - 10);
         prevEnd.setDate(now.getDate() - 6);
@@ -584,13 +585,13 @@ export function Dashboard() {
         prevStart.setDate(now.getDate() - 730);
         prevEnd.setDate(now.getDate() - 366);
       }
-      
+
       const startStr = prevStart.toISOString().split('T')[0];
       const endStr = prevEnd.toISOString().split('T')[0];
-      
+
       const prevReadings = allReadings.filter(r => r.heartRate && r.date >= startStr && r.date <= endStr);
       if (prevReadings.length === 0) return null;
-      
+
       const avgHr = Math.round(prevReadings.reduce((sum, r) => sum + r.heartRate!, 0) / prevReadings.length);
       return avgHr;
     };
@@ -604,7 +605,7 @@ export function Dashboard() {
       comparisonText = `${trendIcon} ${percent}% vs período anterior`;
     }
 
-    const periodDaysLabel = data.length > 0 
+    const periodDaysLabel = data.length > 0
       ? `${data.length} ${data.length === 1 ? 'día analizado' : 'días analizados'}`
       : 'Sin datos registrados';
 
@@ -612,12 +613,12 @@ export function Dashboard() {
     if (data.length >= 2) {
       const firstHalf = data.slice(0, Math.ceil(data.length / 2));
       const secondHalf = data.slice(Math.floor(data.length / 2));
-      
+
       const firstAvg = Math.round(firstHalf.reduce((sum, d) => sum + d.fc, 0) / firstHalf.length);
       const secondAvg = Math.round(secondHalf.reduce((sum, d) => sum + d.fc, 0) / secondHalf.length);
-      
+
       const diff = secondAvg - firstAvg;
-      
+
       if (diff > 3) {
         analysis = `Tu frecuencia cardíaca promedio ha aumentado en ${diff} ppm recientemente.`;
       } else if (diff < -3) {
@@ -644,7 +645,7 @@ export function Dashboard() {
     let label = '';
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
-    
+
     // Helper to get dates
     const getDaysAgoStr = (days: number) => {
       const d = new Date(now);
@@ -698,7 +699,7 @@ export function Dashboard() {
     if (!allReadings) return { currentSys: null, prevSys: null };
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
-    
+
     const getDaysAgoStr = (days: number) => {
       const d = new Date(now);
       d.setDate(now.getDate() - days);
@@ -707,7 +708,7 @@ export function Dashboard() {
 
     const currentReadings = allReadings.filter(r => r.date >= getDaysAgoStr(5) && r.date <= todayStr);
     const prevReadings = allReadings.filter(r => r.date >= getDaysAgoStr(10) && r.date < getDaysAgoStr(5));
-    
+
     const currentSys = currentReadings.length > 0 ? Math.round(currentReadings.reduce((s, r) => s + r.systolic, 0) / currentReadings.length) : null;
     const prevSys = prevReadings.length > 0 ? Math.round(prevReadings.reduce((s, r) => s + r.systolic, 0) / prevReadings.length) : null;
     return { currentSys, prevSys };
@@ -718,16 +719,16 @@ export function Dashboard() {
     if (!sys || !dia) return { label: 'PENDIENTE', variant: 'outline' as const, color: 'text-on-surface-variant', bg: 'bg-surface-low', border: 'border-border' };
     const status = getBloodPressureStatus(sys, dia);
     const style = getBloodPressureStyle(status);
-    return { 
-      label: style.label, 
-      variant: (status === 'hypertension' ? 'danger' : status === 'normal-high' ? 'warning' : status === 'hypotension' ? 'info' : 'success') as any, 
-      color: style.color, 
-      bg: style.bg, 
-      border: style.bg.replace('-layer', '/20') 
+    return {
+      label: style.label,
+      variant: (status === 'hypertension' ? 'danger' : status === 'normal-high' ? 'warning' : status === 'hypotension' ? 'info' : 'success') as any,
+      color: style.color,
+      bg: style.bg,
+      border: style.bg.replace('-layer', '/20')
     };
   }, []);
 
-  const finalStatus = React.useMemo(() => 
+  const finalStatus = React.useMemo(() =>
     getDiagnosticStatus(finalResultData.avgSys, finalResultData.avgDia)
   , [finalResultData.avgSys, finalResultData.avgDia, getDiagnosticStatus]);
 
@@ -735,9 +736,9 @@ export function Dashboard() {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="h-40 sm:h-56 relative rounded-[2rem] overflow-hidden group shadow-2xl shadow-primary/10">
-          <img 
-            src={timeContext.image} 
-            alt="Time of Day" 
+          <img
+            src={timeContext.image}
+            alt="Time of Day"
             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
             referrerPolicy="no-referrer"
           />
@@ -758,8 +759,8 @@ export function Dashboard() {
   const morningSession = dashboard?.today?.sessions.find(s => s.slot === 'morning');
   const eveningSession = dashboard?.today?.sessions.find(s => s.slot === 'evening');
   const latestSession = eveningSession?.avgSystolic ? eveningSession : morningSession;
-  
-  const isControlled = dashboard?.stats.finalAverage 
+
+  const isControlled = dashboard?.stats.finalAverage
     ? (dashboard.stats.finalAverage.systolic < 135 && dashboard.stats.finalAverage.diastolic < 85)
     : true;
 
@@ -830,10 +831,10 @@ export function Dashboard() {
   const renderCustomDot = (props: any, type: 'pas' | 'pad' | 'hr') => {
     const { cx, cy, value, payload } = props;
     if (cx == null || cy == null) return null;
-    
+
     let stroke = type === 'pas' ? "var(--primary)" : type === 'pad' ? "var(--primary-container)" : "var(--warning)";
     let fill = "var(--card)";
-    
+
     if (type === 'pas') {
       if (value >= 180) { stroke = "var(--destructive)"; fill = "var(--destructive-container)"; }
       else if (value >= 135) { stroke = "var(--warning)"; fill = "var(--warning-container)"; }
@@ -846,14 +847,14 @@ export function Dashboard() {
     }
 
     return (
-      <circle 
-        key={`dot-${type}-${payload.name}`} 
-        cx={cx} 
-        cy={cy} 
-        r={5} 
-        stroke={stroke} 
-        strokeWidth={2} 
-        fill={fill} 
+      <circle
+        key={`dot-${type}-${payload.name}`}
+        cx={cx}
+        cy={cy}
+        r={5}
+        stroke={stroke}
+        strokeWidth={2}
+        fill={fill}
       />
     );
   };
@@ -870,7 +871,7 @@ export function Dashboard() {
             const value = entry.value;
             let colorClass = type === 'pas' ? "text-primary" : type === 'pad' ? "" : "text-warning";
             let customStyle = type === 'pad' && !colorClass ? { color: '#BBA2FD' } : {};
-            
+
             if (type === 'pas') {
               if (value >= 180) colorClass = "text-destructive";
               else if (value >= 135) colorClass = "text-warning";
@@ -999,15 +1000,15 @@ export function Dashboard() {
       {/* Consultation Mode Banner (Doctor viewing Patient) */}
       <AnimatePresence>
         {isViewingPatient && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-6 mb-2 flex items-center justify-between gap-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-5 sm:p-6 mb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
                   <Stethoscope className="w-6 h-6" />
                 </div>
                 <div>
@@ -1015,10 +1016,10 @@ export function Dashboard() {
                   <p className="text-sm font-medium text-on-surface-variant">Estás auditando el perfil clínico de <span className="text-primary font-bold">{activePatientName}</span></p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5"
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5 w-full sm:w-auto shrink-0"
                 onClick={() => useAppStore.getState().setActivePatientId(null, null)}
               >
                 Cerrar Sesión
@@ -1031,10 +1032,10 @@ export function Dashboard() {
       {/* Welcome Banner with Image */}
       <section className="relative rounded-[2.8rem] overflow-hidden group shadow-2xl shadow-primary/5">
         <AnimatePresence mode="wait">
-          <motion.img 
+          <motion.img
             key={timeContext.image}
-            src={timeContext.image} 
-            alt={timeContext.greeting} 
+            src={timeContext.image}
+            alt={timeContext.greeting}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1044,10 +1045,10 @@ export function Dashboard() {
           />
         </AnimatePresence>
         <div className="absolute inset-0 bg-linear-to-r from-card/90 via-card/40 to-transparent" />
-        
+
         <div className="relative p-7 sm:p-10 md:p-12 flex flex-col justify-center min-h-[14rem] sm:min-h-[16rem]">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 relative z-10 w-full">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="max-w-xl space-y-4"
@@ -1062,9 +1063,9 @@ export function Dashboard() {
                 ¡{timeContext.greeting}, <span className="text-primary">{displayName?.split(' ')[0] || 'Paciente'}</span>!
               </h2>
               <p className="text-on-surface-variant font-bold max-w-md text-sm sm:text-base leading-relaxed">
-                {dashboard?.stats.isComplete 
+                {dashboard?.stats.isComplete
                   ? "Protocolo completado. Su informe médico está listo para ser revisado."
-                  : (dashboard?.stats.daysCount && dashboard.stats.daysCount > 0 
+                  : (dashboard?.stats.daysCount && dashboard.stats.daysCount > 0
                       ? `Día ${dashboard.stats.daysCount} de 5 del protocolo AMPA. ${timeContext.message}`
                       : `Bienvenido. ${timeContext.message}`)}
               </p>
@@ -1076,13 +1077,18 @@ export function Dashboard() {
       {/* 4-Level Analysis Grid */}
       <section className="space-y-4">
         <div className="flex justify-end px-2">
-          <button 
-            onClick={() => setInfoModalOpen(true)}
-            className="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-variant/20"
-            aria-label="Más información sobre el análisis"
-          >
-            <Info className="text-[20px]" />
-          </button>
+          <RadixTooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setInfoModalOpen(true)}
+                className="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-variant/20 cursor-pointer"
+                aria-label="Más información sobre el análisis"
+              >
+                <Info className="text-[20px]" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Guía del Protocolo AMPA</TooltipContent>
+          </RadixTooltip>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1124,9 +1130,9 @@ export function Dashboard() {
                   <span className={cn("text-[10px] font-black uppercase tracking-widest", currentStatusLatest.color)}>{currentStatusLatest.label}</span>
                 </div>
                 <div className="h-1.5 w-full bg-surface-high rounded-full overflow-hidden">
-                  <div 
-                    className={cn("h-full transition-all duration-1000", currentStatusLatest.bg)} 
-                    style={{ width: latestSession?.avgSystolic ? `${Math.min(100, Math.max(5, ((latestSession.avgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }} 
+                  <div
+                    className={cn("h-full transition-all duration-1000", currentStatusLatest.bg)}
+                    style={{ width: latestSession?.avgSystolic ? `${Math.min(100, Math.max(5, ((latestSession.avgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }}
                   />
                 </div>
               </div>
@@ -1200,9 +1206,9 @@ export function Dashboard() {
                   <span className={cn("text-[10px] font-black uppercase tracking-widest", currentStatusToday.color)}>{currentStatusToday.label}</span>
                 </div>
                 <div className="h-1.5 w-full bg-surface-high rounded-full overflow-hidden">
-                  <div 
-                    className={cn("h-full transition-all duration-1000", currentStatusToday.bg)} 
-                    style={{ width: dashboard?.today?.avgSystolic ? `${Math.min(100, Math.max(5, ((dashboard.today.avgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }} 
+                  <div
+                    className={cn("h-full transition-all duration-1000", currentStatusToday.bg)}
+                    style={{ width: dashboard?.today?.avgSystolic ? `${Math.min(100, Math.max(5, ((dashboard.today.avgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }}
                   />
                 </div>
               </div>
@@ -1269,9 +1275,9 @@ export function Dashboard() {
                   <span className={cn("text-[10px] font-black uppercase tracking-widest", currentStatusPeriod.color)}>{currentStatusPeriod.label}</span>
                 </div>
                 <div className="h-1.5 w-full bg-surface-high rounded-full overflow-hidden">
-                  <div 
-                    className={cn("h-full transition-all duration-1000", currentStatusPeriod.bg)} 
-                    style={{ width: periodAvgSystolic ? `${Math.min(100, Math.max(5, ((periodAvgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }} 
+                  <div
+                    className={cn("h-full transition-all duration-1000", currentStatusPeriod.bg)}
+                    style={{ width: periodAvgSystolic ? `${Math.min(100, Math.max(5, ((periodAvgSystolic) - 90) / (160 - 90) * 100))}%` : '0%' }}
                   />
                 </div>
               </div>
@@ -1288,9 +1294,10 @@ export function Dashboard() {
               <div className="flex flex-col gap-1 flex-1 min-w-0 pr-4">
                 <h3 className="text-headline-sm font-black text-foreground tracking-tight">Evolución Clínica</h3>
                 <div className="relative flex items-center group mt-1 w-full max-w-[180px]">
-                  <select 
+                  <select
                     value={finalPeriod}
                     onChange={(e) => setFinalPeriod(e.target.value as any)}
+                    aria-label="Seleccionar período de evolución clínica"
                     className="bg-transparent w-full border-none text-[10px] font-black text-primary uppercase tracking-[0.1em] focus:ring-0 outline-none cursor-pointer appearance-none z-10 pr-8 pl-0 py-2"
                   >
                     <option value="period">ÚLTIMOS 5 DÍAS</option>
@@ -1339,9 +1346,9 @@ export function Dashboard() {
                   <span className={cn("text-[10px] font-black uppercase tracking-widest", finalStatus.color)}>{finalResultData.avgSys ? finalStatus.label : 'SIN DATOS'}</span>
                 </div>
                 <div className="h-1.5 w-full bg-surface-high rounded-full overflow-hidden">
-                  <div 
-                    className={cn("h-full transition-all duration-1000", finalStatus.bg)} 
-                    style={{ width: finalResultData.avgSys ? `${Math.min(100, Math.max(5, ((finalResultData.avgSys) - 90) / (160 - 90) * 100))}%` : '0%' }} 
+                  <div
+                    className={cn("h-full transition-all duration-1000", finalStatus.bg)}
+                    style={{ width: finalResultData.avgSys ? `${Math.min(100, Math.max(5, ((finalResultData.avgSys) - 90) / (160 - 90) * 100))}%` : '0%' }}
                   />
                 </div>
               </div>
@@ -1365,25 +1372,25 @@ export function Dashboard() {
                   <CardTitle className="text-2xl font-black text-foreground">Mañana vs Noche</CardTitle>
                 </div>
                 <div className="flex bg-surface p-1 rounded-full border border-border">
-                  <button 
+                  <button
                     onClick={() => setChartPeriod('today')}
                     className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", chartPeriod === 'today' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
                   >
                     1D
                   </button>
-                  <button 
+                  <button
                     onClick={() => setChartPeriod('period')}
                     className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", chartPeriod === 'period' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
                   >
                     5D
                   </button>
-                  <button 
+                  <button
                     onClick={() => setChartPeriod('15d')}
                     className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", chartPeriod === '15d' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
                   >
                     15D
                   </button>
-                  <button 
+                  <button
                     onClick={() => setChartPeriod('month')}
                     className={cn("px-4 py-1.5 text-xs font-bold rounded-full transition-colors", chartPeriod === 'month' ? "bg-primary text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-high")}
                   >
@@ -1397,27 +1404,27 @@ export function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={[
-                      { 
-                        name: 'Mañana', 
+                      {
+                        name: 'Mañana',
                         time: '08:00 AM',
-                        pas: chartData.morning.systolic, 
-                        pad: chartData.morning.diastolic 
+                        pas: chartData.morning.systolic,
+                        pad: chartData.morning.diastolic
                       },
-                      { 
-                        name: 'Noche', 
+                      {
+                        name: 'Noche',
                         time: '10:30 PM',
-                        pas: chartData.evening.systolic, 
-                        pad: chartData.evening.diastolic 
+                        pas: chartData.evening.systolic,
+                        pad: chartData.evening.diastolic
                       }
                     ]}
                     margin={{ top: 20, right: 10, left: -20, bottom: 20 }}
                     barGap={4}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(15,23,42,0.05)"} />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
                       tick={(props) => {
                         const { x, y, payload } = props;
                         const item = payload.value === 'Mañana' ? { name: 'Mañana', time: '08:00 AM' } : { name: 'Noche', time: '10:30 PM' };
@@ -1430,15 +1437,15 @@ export function Dashboard() {
                       }}
                     />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: isDarkMode ? '#94A3B8' : '#64748B', fontSize: 12, fontWeight: 600 }} />
-                    <Tooltip 
+                    <Tooltip
                       cursor={{ fill: 'var(--primary)', opacity: 0.05 }}
                       content={<CustomTooltip />}
                     />
-                    <Legend 
-                      verticalAlign="top" 
+                    <Legend
+                      verticalAlign="top"
                       align="right"
-                      iconType="circle" 
-                      wrapperStyle={{ paddingBottom: '30px', fontSize: '10px', fontWeight: 800, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.1em' }} 
+                      iconType="circle"
+                      wrapperStyle={{ paddingBottom: '30px', fontSize: '10px', fontWeight: 800, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.1em' }}
                     />
                     <Bar dataKey="pas" name="Sistólica" fill="#6322E0" radius={[10, 10, 0, 0]} barSize={56} />
                     <Bar dataKey="pad" name="Diastólica" fill="#BBA2FD" radius={[10, 10, 0, 0]} barSize={56} />
@@ -1489,7 +1496,7 @@ export function Dashboard() {
                   </div>
                 </div>
 
-                <Badge 
+                <Badge
                   className="font-black px-4 py-1.5 tracking-widest"
                   variant={isControlled ? "success" : "danger"}
                 >
@@ -1509,7 +1516,7 @@ export function Dashboard() {
 
                 <div className="bg-surface-low rounded-[2rem] p-6 border border-border/10 relative shadow-sm">
                   <p className="text-base text-on-surface-variant font-black leading-relaxed">
-                    {dashboard?.stats.finalAverage 
+                    {dashboard?.stats.finalAverage
                       ? (isControlled
                           ? <>Tus promedios están dentro de los objetivos médicos recomendados (<span className="text-success font-black">135/85</span>).</>
                           : "Tus promedios superan los límites recomendados. Consulta con tu médico.")
@@ -1520,9 +1527,9 @@ export function Dashboard() {
                 <div className="flex justify-center items-center py-2">
                   <div className="relative">
                     <div className="absolute inset-0 bg-primary/10 blur-[60px] rounded-full scale-125" />
-                    <img 
-                      src="/healthcare-status.png" 
-                      alt="Icono médico" 
+                    <img
+                      src="/healthcare-status.png"
+                      alt="Icono médico"
                       className="w-[160px] h-[160px] object-contain relative drop-shadow-3xl"
                       referrerPolicy="no-referrer"
                     />
@@ -1531,7 +1538,7 @@ export function Dashboard() {
               </div>
 
               <div className="mt-auto pt-2">
-                <Button 
+                <Button
                   onClick={() => useAppStore.getState().setActiveTab('report')}
                   className="w-full h-14 sm:h-16 text-sm sm:text-base font-black tracking-tight shadow-xl shadow-primary/20"
                 >
@@ -1549,23 +1556,23 @@ export function Dashboard() {
         {/* Decorative Light Blobs */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-primary-container/20 blur-[60px] rounded-full pointer-events-none" />
-        
+
         <div className="flex-1 space-y-6 z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 ethereal-blur">
             <Sparkles className="text-white text-sm fill-current" />
             <span className="text-[10px] font-black text-white tracking-[0.2em] font-display">AURA INTELLIGENCE</span>
           </div>
-          
+
           <h1 className="text-4xl md:text-6xl font-black text-white font-display tracking-tighter leading-none">
             IA Análisis
           </h1>
-          
+
           <p className="text-lg md:text-xl text-white/80 font-medium max-w-xl leading-relaxed">
             Descubre patrones ocultos y obtén predicciones personalizadas sobre tu salud cardiovascular basadas en tu historial.
           </p>
-          
+
           <div className="pt-4">
-            <button 
+            <button
               onClick={() => useAppStore.getState().setActiveTab('ai')}
               className="group whitespace-nowrap flex items-center gap-3 bg-white text-primary px-8 py-4 rounded-full font-black font-display text-sm tracking-widest transition-all hover:scale-105 hover:shadow-xl active:scale-95"
             >
@@ -1580,11 +1587,11 @@ export function Dashboard() {
             <div className="absolute inset-0 bg-white/5 rounded-full ethereal-blur border border-white/10 animate-pulse" />
             <div className="absolute inset-6 sm:inset-8 bg-white/10 rounded-full ethereal-blur border border-white/20" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <motion.img 
-                src="/IA-thinking-process.png" 
-                alt="Pensamiento IA" 
+              <motion.img
+                src="/IA-thinking-process.png"
+                alt="Pensamiento IA"
                 className="w-32 h-32 md:w-48 md:h-48 drop-shadow-2xl object-contain z-20"
-                animate={{ 
+                animate={{
                   scale: [1, 1.05, 1],
                   filter: [
                     "drop-shadow(0 0 15px rgba(103,80,165,0.1))",
@@ -1592,7 +1599,7 @@ export function Dashboard() {
                     "drop-shadow(0 0 15px rgba(103,80,165,0.1))"
                   ]
                 }}
-                transition={{ 
+                transition={{
                   duration: 4,
                   repeat: Infinity,
                   ease: "easeInOut"
@@ -1603,40 +1610,40 @@ export function Dashboard() {
 
             {/* Intersection Reaction: Shockwave Ripple - Slower & Synced with Head (4s cycle) */}
             {[0, 1].map((index) => (
-              <motion.div 
+              <motion.div
                 key={index}
                 className="absolute inset-0 rounded-full border-2 border-primary/30 pointer-events-none"
-                animate={{ 
+                animate={{
                   scale: [1, 1.3, 1.5],
                   opacity: [0, 0.3, 0],
                   borderWidth: ["1px", "4px", "1px"]
                 }}
-                transition={{ 
-                  duration: 8, 
-                  repeat: Infinity, 
+                transition={{
+                  duration: 8,
+                  repeat: Infinity,
                   ease: "easeOut",
                   delay: index * 4 // Pulsing every 4 seconds, matching the head's float cycle
                 }}
               />
             ))}
-            
+
             {/* Subtle central core heartbeat - Synced with Head */}
-            <motion.div 
+            <motion.div
               className="absolute inset-0 rounded-full bg-primary/10 pointer-events-none shadow-[0_0_50px_rgba(103,80,165,0.3)]"
-              animate={{ 
+              animate={{
                 scale: [0.95, 1.05, 0.95],
                 opacity: [0.2, 0.5, 0.2]
               }}
-              transition={{ 
+              transition={{
                 duration: 4, // Matching the head's float duration
-                repeat: Infinity, 
-                ease: "easeInOut" 
+                repeat: Infinity,
+                ease: "easeInOut"
               }}
             />
-            
+
             {/* Orbiting floating chips */}
             {/* Orbit 1: Stethoscope (Outer Lane - Clockwise) */}
-            <motion.div 
+            <motion.div
               className="absolute inset-0 pointer-events-none rounded-full"
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 43, repeat: Infinity, ease: "linear" }}
@@ -1644,12 +1651,12 @@ export function Dashboard() {
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
                 <motion.div
                   className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full border border-white/30 shadow-lg"
-                  animate={{ 
+                  animate={{
                     rotate: [0, -360],
                     scale: [1, 1.1, 1],
                     backgroundColor: ["rgba(255,255,255,0.2)", "rgba(103,80,165,0.3)", "rgba(255,255,255,0.2)"]
                   }}
-                  transition={{ 
+                  transition={{
                     rotate: { duration: 43, repeat: Infinity, ease: "linear" },
                     scale: { duration: 7, repeat: Infinity, ease: "easeInOut" },
                     backgroundColor: { duration: 7, repeat: Infinity, ease: "easeInOut" }
@@ -1659,9 +1666,9 @@ export function Dashboard() {
                 </motion.div>
               </div>
             </motion.div>
-            
+
             {/* Orbit 2: Activity (Outer Lane - Counter-Clockwise) */}
-            <motion.div 
+            <motion.div
               className="absolute inset-0 pointer-events-none rounded-full"
               animate={{ rotate: [360, 0] }}
               transition={{ duration: 59, repeat: Infinity, ease: "linear" }}
@@ -1669,12 +1676,12 @@ export function Dashboard() {
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-auto">
                 <motion.div
                   className="bg-white/20 backdrop-blur-md p-3 md:p-4 rounded-full border border-white/30 shadow-lg"
-                  animate={{ 
+                  animate={{
                     rotate: [-360, 0],
                     scale: [1, 1.15, 1],
                     backgroundColor: ["rgba(255,255,255,0.2)", "rgba(103,80,165,0.3)", "rgba(255,255,255,0.2)"]
                   }}
-                  transition={{ 
+                  transition={{
                     rotate: { duration: 59, repeat: Infinity, ease: "linear" },
                     scale: { duration: 9, repeat: Infinity, ease: "easeInOut" },
                     backgroundColor: { duration: 9, repeat: Infinity, ease: "easeInOut" }
@@ -1686,7 +1693,7 @@ export function Dashboard() {
             </motion.div>
 
             {/* Orbit 3: Heart (Inner ring - Counter-Clockwise) */}
-            <motion.div 
+            <motion.div
               className="absolute inset-6 sm:inset-8 pointer-events-none rounded-full"
               animate={{ rotate: [360, 0] }}
               transition={{ duration: 31, repeat: Infinity, ease: "linear" }}
@@ -1694,12 +1701,12 @@ export function Dashboard() {
               <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
                 <motion.div
                   className="bg-white/20 backdrop-blur-md p-1.5 md:p-2 rounded-full border border-white/30 shadow-lg"
-                  animate={{ 
+                  animate={{
                     rotate: [-360, 0],
                     scale: [1, 1.25, 1],
                     boxShadow: ["0 0 0px rgba(103,80,165,0)", "0 0 15px rgba(103,80,165,0.4)", "0 0 0px rgba(103,80,165,0)"]
                   }}
-                  transition={{ 
+                  transition={{
                     rotate: { duration: 31, repeat: Infinity, ease: "linear" },
                     scale: { duration: 5, repeat: Infinity, ease: "easeInOut" },
                     boxShadow: { duration: 5, repeat: Infinity, ease: "easeInOut" }
@@ -1724,7 +1731,7 @@ export function Dashboard() {
                     <CardDescription className="text-primary">PROGRESIÓN CLÍNICA</CardDescription>
                     <CardTitle className="text-2xl font-black text-foreground">Evolución de Tensión</CardTitle>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     {/* Filter Toggle */}
                     <div className="flex bg-surface-low p-1 rounded-full border border-border/50">
@@ -1732,8 +1739,8 @@ export function Dashboard() {
                         onClick={() => setChartFilter('both')}
                         className={cn(
                           "px-4 py-1.5 text-[10px] uppercase tracking-widest font-black rounded-full transition-all duration-300",
-                          chartFilter === 'both' 
-                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                          chartFilter === 'both'
+                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
                             : "text-on-surface-variant hover:text-primary"
                         )}
                       >
@@ -1743,8 +1750,8 @@ export function Dashboard() {
                         onClick={() => setChartFilter('pas')}
                         className={cn(
                           "px-4 py-1.5 text-[10px] uppercase tracking-widest font-black rounded-full transition-all duration-300",
-                          chartFilter === 'pas' 
-                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                          chartFilter === 'pas'
+                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
                             : "text-on-surface-variant hover:text-primary"
                         )}
                       >
@@ -1754,8 +1761,8 @@ export function Dashboard() {
                         onClick={() => setChartFilter('pad')}
                         className={cn(
                           "px-4 py-1.5 text-[10px] uppercase tracking-widest font-black rounded-full transition-all duration-300",
-                          chartFilter === 'pad' 
-                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                          chartFilter === 'pad'
+                            ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
                              : "text-on-surface-variant hover:text-primary"
                         )}
                       >
@@ -1805,39 +1812,39 @@ export function Dashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#ffffff05' : '#00000005'} />
-                      <XAxis 
-                        dataKey="tooltipLabel" 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <XAxis
+                        dataKey="tooltipLabel"
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10, fontWeight: 700 }}
                       />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10 }} 
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10 }}
                         domain={['auto', 'auto']}
                       />
-                      <Tooltip 
+                      <Tooltip
                         cursor={{ stroke: isDarkMode ? '#ffffff10' : '#34313A10', strokeWidth: 2 }}
                         content={<CustomTooltip />}
                       />
-                      
+
                       {(chartFilter === 'both' || chartFilter === 'pas') && (
-                        <Area 
-                          type="monotone" 
-                          dataKey="pas" 
-                          stroke="var(--primary)" 
-                          strokeWidth={4} 
+                        <Area
+                          type="monotone"
+                          dataKey="pas"
+                          stroke="var(--primary)"
+                          strokeWidth={4}
                           fill="url(#trendGradient)"
                           animationDuration={1500}
                         />
                       )}
                       {(chartFilter === 'both' || chartFilter === 'pad') && (
-                        <Area 
-                          type="monotone" 
-                          dataKey="pad" 
-                          stroke="rgba(103, 80, 165, 0.4)" 
-                          strokeWidth={2} 
+                        <Area
+                          type="monotone"
+                          dataKey="pad"
+                          stroke="rgba(103, 80, 165, 0.4)"
+                          strokeWidth={2}
                           fill="transparent"
                           animationDuration={2000}
                         />
@@ -1845,7 +1852,7 @@ export function Dashboard() {
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-                
+
                 {/* Complementary Metrics Footer (Fills empty space) */}
                 {trendData.data.length > 0 && (
                   <div className="mt-4 pt-6 flex flex-col md:flex-row flex-wrap gap-4 items-center justify-between border-t border-border/50">
@@ -1880,7 +1887,7 @@ export function Dashboard() {
             </Card>
           </div>
           <div className="xl:col-span-1">
-            <AnalysisCard 
+            <AnalysisCard
               title="Análisis de Tensión"
               subtitle="Diagnósticos predictivos basados en tendencias de presión."
               customImageUrl="/tension.png"
@@ -1945,30 +1952,30 @@ export function Dashboard() {
                       margin={{ top: 20, right: 10, left: -20, bottom: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#ffffff05' : '#00000005'} />
-                      <XAxis 
-                        dataKey="tooltipLabel" 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <XAxis
+                        dataKey="tooltipLabel"
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10, fontWeight: 700 }}
                         dy={10}
                       />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10 }} 
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: isDarkMode ? '#ffffff40' : '#34313A40', fontSize: 10 }}
                         domain={[40, 140]}
                       />
-                      <Tooltip 
+                      <Tooltip
                         cursor={{ stroke: isDarkMode ? '#ffffff10' : '#34313A10', strokeWidth: 2 }}
                         content={<CustomTooltip />}
                       />
-                      
-                      <Line 
-                        type="monotone" 
-                        dataKey="fc" 
-                        name="Frecuencia Cardíaca" 
-                        stroke="var(--primary)" 
-                        strokeWidth={4} 
+
+                      <Line
+                        type="monotone"
+                        dataKey="fc"
+                        name="Frecuencia Cardíaca"
+                        stroke="var(--primary)"
+                        strokeWidth={4}
                         dot={{ r: 4, fill: 'var(--primary)', strokeWidth: 0 }}
                         activeDot={{ r: 6, fill: 'var(--primary)', stroke: 'white', strokeWidth: 2 }}
                       />
@@ -2013,7 +2020,7 @@ export function Dashboard() {
             </Card>
           </div>
           <div className="xl:col-span-1">
-            <AnalysisCard 
+            <AnalysisCard
               title="Análisis de Pulso"
               subtitle="Diagnósticos predictivos basados en tendencias de frecuencia cardíaca."
               customImageUrl="/pulso.png"

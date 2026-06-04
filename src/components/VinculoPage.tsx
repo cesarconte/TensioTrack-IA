@@ -25,7 +25,7 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
     }
 
     setIsUploadingAvatar(true);
-    
+
     try {
       const reader = new FileReader();
       const uploadPromise = new Promise<string>((resolve, reject) => {
@@ -50,7 +50,7 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
                 height = MAX_HEIGHT;
               }
             }
-            
+
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
@@ -86,30 +86,30 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
 
       {/* Identity & Credential Redesign */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        
+
         {/* Left Section: Identity Card */}
         <div className="lg:col-span-7 xl:col-span-8 group">
           <div className="h-full relative overflow-hidden bg-surface-low rounded-[3.5rem] p-10 sm:p-12 border border-surface-highest/5 shadow-sm transition-all duration-500 hover:shadow-xl hover:border-primary/10">
             <div className="relative flex flex-col md:flex-row items-center md:items-start gap-10">
-              
+
               {/* Avatar Section */}
               <div className="relative shrink-0">
                 <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-primary/30 to-primary/5 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full bg-white dark:bg-card p-1.5 shadow-2xl">
                   <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-surface-high relative border-4 border-background">
                     {user?.photoURL ? (
-                      <img 
-                        src={user.photoURL} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover" 
-                        referrerPolicy="no-referrer" 
+                      <img
+                        src={user.photoURL}
+                        alt={`Foto de perfil de ${user?.displayName || 'Usuario'}`}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
                       />
                     ) : (
                       <span className="text-6xl font-display font-black text-primary/20">
                         {user?.displayName?.charAt(0).toUpperCase() || (isDoctor ? 'D' : 'P')}
                       </span>
                     )}
-                    
+
                     {isUploadingAvatar && (
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
                         <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
@@ -118,14 +118,15 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
                   </div>
                 </div>
 
-                <button 
+                <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingAvatar}
+                  aria-label="Subir nueva foto de perfil"
                   className="absolute bottom-2 right-2 w-12 h-12 bg-white dark:bg-card rounded-2xl shadow-xl flex items-center justify-center text-on-surface hover:text-primary transition-all active:scale-90 border border-border/50 group/cam"
                 >
                   <Camera size={20} strokeWidth={2.5} className="group-hover/cam:scale-110 transition-transform" />
                 </button>
-                <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/*" />
+                <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/*" aria-label="Seleccionar foto de perfil para avatar" />
               </div>
 
               {/* Info */}
@@ -138,10 +139,10 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
                     {user?.displayName || (isDoctor ? 'Médico' : 'Paciente')}
                   </h2>
                 </div>
-                
+
                 <p className="max-w-xl text-lg text-on-surface-variant font-medium leading-relaxed opacity-70 mx-auto md:mx-0">
-                  {isDoctor 
-                    ? 'Establece vínculos de confianza con tus pacientes compartiendo tu credencial digital autorizada.' 
+                  {isDoctor
+                    ? 'Establece vínculos de confianza con tus pacientes compartiendo tu credencial digital autorizada.'
                     : 'Personaliza tu perfil de salud para optimizar los reportes analíticos de nuestra IA.'}
                 </p>
 
@@ -169,14 +170,18 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                  <Zap size={120} className="text-primary" />
               </div>
-              
+
               <div className="text-center space-y-1">
                 <span className="text-[10px] font-black text-primary/50 uppercase tracking-[0.4em]">CREDENCIAL DIGITAL</span>
               </div>
-              
-              <div className="bg-white p-5 rounded-3xl shadow-inner relative z-10 group-hover/qr:scale-105 transition-transform duration-700 ring-1 ring-primary/5">
+
+              <div
+                role="img"
+                aria-label="Código QR que contiene tu identificador único profesional para vinculación médica"
+                className="bg-white p-5 rounded-3xl shadow-inner relative z-10 group-hover/qr:scale-105 transition-transform duration-700 ring-1 ring-primary/5"
+              >
                 {user?.uid && (
-                  <QRCodeCanvas 
+                  <QRCodeCanvas
                     value={user.uid}
                     size={180}
                     level="H"
@@ -223,7 +228,7 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
-                <button 
+                <button
                   onClick={() => {
                     const shareText = `Haz clic en el enlace para vincularme como tu médico en TensioTrack: ${window.location.origin}/?add_doctor=${user?.uid}`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
@@ -239,7 +244,7 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
                   </div>
                 </button>
 
-                <button 
+                <button
                   onClick={() => {
                     const shareText = `Haz clic en el enlace para vincularme como tu médico en TensioTrack: ${window.location.origin}/?add_doctor=${user?.uid}`;
                     window.location.href = `sms:?body=${encodeURIComponent(shareText)}`;
@@ -255,7 +260,7 @@ export function VinculoPage({ isStandalone = true }: { isStandalone?: boolean })
                   </div>
                 </button>
 
-                <button 
+                <button
                   onClick={() => {
                     const shareText = `Haz clic en el enlace para vincularme como tu médico en TensioTrack:\n\n${window.location.origin}/?add_doctor=${user?.uid}`;
                     window.location.href = `mailto:?subject=Vincular Médico - TensioTrack&body=${encodeURIComponent(shareText)}`;

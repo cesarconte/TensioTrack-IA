@@ -202,6 +202,7 @@ export function AdminPanel() {
                      <select 
                        value={u.role || ''}
                        onChange={(e) => handleRoleChange(u.id, u.role || '', e.target.value)}
+                       aria-label={`Cambiar rol de ${u.displayName || 'usuario'}`}
                        className={cn(
                          "border text-sm rounded-xl px-3 py-2 outline-none shadow-sm transition-colors",
                          !u.role 

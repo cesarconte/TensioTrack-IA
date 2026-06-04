@@ -20,7 +20,7 @@ export function History() {
   });
   const [isFilterModalOpen, setIsFilterModalOpen] = React.useState(false);
   const { data: availablePeriods = [] } = useAvailablePeriods();
-  
+
   // Convert quickSelector to dateFrom/dateTo if needed
   const queryFilters = React.useMemo(() => {
     let dateFrom = activeFilters.dateFrom;
@@ -99,7 +99,7 @@ export function History() {
 
   const { data: readings, isLoading } = useReadings(queryFilters);
   const { isDarkMode, setReadingFormOpen, setEditingReading, setActiveTab, user, activePatientId, activePatientName } = useAppStore();
-  
+
   const isDoctor = user?.role === 'doctor';
   const isViewingPatient = isDoctor && !!activePatientId;
   const [expandedReadingId, setExpandedReadingId] = React.useState<string | null>(null);
@@ -109,13 +109,13 @@ export function History() {
 
   const groupedByDate = React.useMemo(() => {
     if (!readings) return [];
-    
+
     const groups: Record<string, Reading[]> = {};
     readings.forEach(r => {
       if (!groups[r.date]) groups[r.date] = [];
       groups[r.date].push(r);
     });
-    
+
     return Object.entries(groups)
       .sort((a, b) => b[0].localeCompare(a[0]))
       .map(([date, dayReadings]) => ({
@@ -151,9 +151,9 @@ export function History() {
   // Calculate dynamic data for bottom cards based on the active filters
   const analyzedData = React.useMemo(() => {
     if (!readings) return { readings: [], label: 'los últimos 7 días', noun: 'semanal', expectedToComplete: 42 };
-    
+
     // Si hay un periodo seleccionado, usamos todos los datos de ese periodo para el análisis
-    const filteredReadings = activeFilters.periodId 
+    const filteredReadings = activeFilters.periodId
       ? readings.filter(r => Number(r.periodId) === Number(activeFilters.periodId))
       : readings;
 
@@ -238,8 +238,8 @@ export function History() {
     };
   }, [readings, activeFilters]);
 
-  const completionRate = analyzedData.expectedToComplete > 0 
-    ? Math.round((analyzedData.readings.length / analyzedData.expectedToComplete) * 100) 
+  const completionRate = analyzedData.expectedToComplete > 0
+    ? Math.round((analyzedData.readings.length / analyzedData.expectedToComplete) * 100)
     : 0;
   const displayRate = completionRate > 100 ? 100 : completionRate;
 
@@ -273,7 +273,7 @@ export function History() {
     // Usamos split('-') para evitar desfases de zona horaria con new Date(string)
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(year, month - 1, day);
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
@@ -292,20 +292,20 @@ export function History() {
   const renderReading = (reading: Reading) => {
     const isExpanded = expandedReadingId === reading.id;
     const status = getReadingStatus(reading.systolic, reading.diastolic);
-    
+
     // Para la hora usamos recordedAt
     const timeObj = new Date(reading.recordedAt);
     const timeString = timeObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
-    
+
     // Para la fecha usamos el campo 'date' del registro
     const [year, month, day] = reading.date.split('-').map(Number);
     const dateStr = new Date(year, month - 1, day).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     const relativeDateString = formatRelativeDate(reading.date);
     const isMorning = reading.slot === 'morning';
-    
+
     if (isExpanded) {
       return (
-        <motion.div 
+        <motion.div
           key={reading.id}
           layout
           className="flex flex-col lg:flex-row bg-surface-low rounded-[3rem] shadow-none overflow-hidden relative border-none"
@@ -366,7 +366,7 @@ export function History() {
             </div>
             {!isDoctor && (
             <div className="flex flex-col gap-3 mt-auto">
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditingReading(reading);
@@ -377,7 +377,7 @@ export function History() {
                 <Edit3 className="text-[18px]" />
                 Editar Registro
               </button>
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete(reading.id);
@@ -389,7 +389,7 @@ export function History() {
               </button>
             </div>
             )}
-            <button 
+            <button
               onClick={() => setExpandedReadingId(null)}
               className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface-high text-on-surface-variant hover:bg-surface-highest lg:hidden"
             >
@@ -401,10 +401,20 @@ export function History() {
     }
 
     return (
-      <motion.div 
+      <motion.div
         key={reading.id}
         layout
         onClick={() => setExpandedReadingId(reading.id)}
+        tabIndex={0}
+        role="button"
+        aria-expanded={isExpanded}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpandedReadingId(reading.id);
+          }
+        }}
+        aria-label={`Lectura del ${relativeDateString} a las ${timeString}. Presión ${reading.systolic} sobre ${reading.diastolic} mmHg. Pulso ${reading.heartRate || '--'} ppm. Estado ${status.label}. Pulse para expandir.`}
         className="flex flex-col sm:flex-row sm:items-center justify-between bg-surface-low rounded-[2.5rem] p-5 sm:p-6 hover:bg-surface-high transition-all cursor-pointer gap-4 sm:gap-6 border-none"
       >
         <div className="flex items-center gap-4 sm:w-1/3">
@@ -423,7 +433,7 @@ export function History() {
             </span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-8 sm:gap-12 sm:w-1/3">
           <div>
             <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">PRESIÓN</span>
@@ -456,15 +466,15 @@ export function History() {
       {/* Consultation Mode Banner (Doctor viewing Patient) */}
       <AnimatePresence>
         {isViewingPatient && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-6 mb-2 flex items-center justify-between gap-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-5 sm:p-6 mb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
                   <Stethoscope className="w-6 h-6" />
                 </div>
                 <div>
@@ -472,10 +482,10 @@ export function History() {
                   <p className="text-sm font-medium text-on-surface-variant">Revisando historial de <span className="text-primary font-bold">{activePatientName}</span></p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5"
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5 w-full sm:w-auto shrink-0"
                 onClick={() => useAppStore.getState().setActivePatientId(null, null)}
               >
                 Cerrar Sesión
@@ -494,10 +504,10 @@ export function History() {
             {isViewingPatient ? `Registros médicos de ${activePatientName}` : "Revisa y gestiona tus registros diarios de vitales."}
           </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onClick={() => setIsFilterModalOpen(true)}
             className="bg-surface-high hover:bg-surface-highest text-foreground rounded-full px-6 py-4 sm:py-2 flex items-center justify-center gap-2 font-bold relative"
           >
@@ -508,7 +518,7 @@ export function History() {
             )}
           </Button>
           {!isDoctor && (
-          <Button 
+          <Button
             onClick={() => setReadingFormOpen(true)}
             className="bg-primary hover:bg-primary/90 text-white rounded-full px-6 py-4 sm:py-2 flex items-center justify-center gap-2 font-bold shadow-md shadow-primary/20"
           >
@@ -526,12 +536,16 @@ export function History() {
             <SlidersHorizontal className="text-primary text-lg" />
             <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Filtros Activos</span>
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
             {activeFilters.periodId && (
               <Badge className="bg-surface-lowest text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
                 Período {activeFilters.periodId}
-                <button onClick={() => setActiveFilters(prev => ({ ...prev, periodId: undefined }))} className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none">
+                <button
+                  onClick={() => setActiveFilters(prev => ({ ...prev, periodId: undefined }))}
+                  className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none cursor-pointer"
+                  aria-label="Eliminar filtro de período"
+                >
                   <X className="text-[16px]" />
                 </button>
               </Badge>
@@ -541,7 +555,11 @@ export function History() {
               <Badge className="bg-surface-lowest text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
                 <Calendar className="text-[14px]" />
                 {activeFilters.dateFrom || '?'} — {activeFilters.dateTo || '?'}
-                <button onClick={() => setActiveFilters(prev => ({ ...prev, dateFrom: undefined, dateTo: undefined }))} className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none">
+                <button
+                  onClick={() => setActiveFilters(prev => ({ ...prev, dateFrom: undefined, dateTo: undefined }))}
+                  className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none cursor-pointer"
+                  aria-label="Eliminar filtro de rango de fechas"
+                >
                   <X className="text-[16px]" />
                 </button>
               </Badge>
@@ -551,7 +569,11 @@ export function History() {
               <Badge className="bg-surface-lowest text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
                 <Activity className="text-[14px]" />
                 {activeFilters.quickSelector}
-                <button onClick={() => setActiveFilters(prev => ({ ...prev, quickSelector: '1 semana' }))} className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none">
+                <button
+                  onClick={() => setActiveFilters(prev => ({ ...prev, quickSelector: '1 semana' }))}
+                  className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none cursor-pointer"
+                  aria-label={`Eliminar filtro de rango rápido ${activeFilters.quickSelector}`}
+                >
                   <X className="text-[16px]" />
                 </button>
               </Badge>
@@ -561,7 +583,11 @@ export function History() {
               <Badge className="bg-surface-lowest text-primary px-4 py-2 rounded-full text-xs font-bold border-none flex items-center gap-2 shadow-sm">
                 {activeFilters.slot === 'morning' ? <Sun className="text-[14px]" /> : <Moon className="text-[14px]" />}
                 {activeFilters.slot === 'morning' ? 'MAÑANA' : 'NOCHE'}
-                <button onClick={() => setActiveFilters(prev => ({ ...prev, slot: 'all' }))} className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none">
+                <button
+                  onClick={() => setActiveFilters(prev => ({ ...prev, slot: 'all' }))}
+                  className="hover:bg-primary/10 p-0.5 rounded-full transition-colors leading-none cursor-pointer"
+                  aria-label="Eliminar filtro de sesión"
+                >
                   <X className="text-[16px]" />
                 </button>
               </Badge>
@@ -574,7 +600,7 @@ export function History() {
             )}
           </div>
 
-          <button 
+          <button
             onClick={() => setActiveFilters({ quickSelector: '1 semana', slot: 'all' })}
             className="text-[10px] font-black tracking-widest text-primary hover:text-primary/80 ml-auto px-4 py-2 uppercase transition-all"
           >
@@ -604,15 +630,16 @@ export function History() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-6 sm:space-y-12">
             {/* Pagination Header */}
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-surface-low p-3 sm:p-4 rounded-full border-none shadow-none gap-4">
                 <div className="flex items-center gap-4">
-                  <button 
+                  <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                     className="w-12 h-12 rounded-full bg-surface-high flex items-center justify-center text-on-surface-variant hover:bg-surface-highest transition-colors disabled:opacity-50"
+                    aria-label="Página anterior"
                   >
                     <ChevronLeft className="" />
                   </button>
@@ -625,10 +652,11 @@ export function History() {
                       {currentDaysData.length > 1 && ` - ${new Date(currentDaysData[currentDaysData.length - 1].date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`}
                     </span>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                     className="w-12 h-12 rounded-full bg-surface-high flex items-center justify-center text-on-surface-variant hover:bg-surface-highest transition-colors disabled:opacity-50"
+                    aria-label="Página siguiente"
                   >
                     <ChevronRight className="" />
                   </button>
@@ -639,7 +667,7 @@ export function History() {
               </div>
             )}
 
-            <div className="space-y-16">
+            <div className="space-y-8 sm:space-y-16">
               {(() => {
                 if (activeFilters.quickSelector === '15 días' && activeFilters.viewMode15Days === 'A') {
                   const periods = new Map<number, typeof currentDaysData>();
@@ -649,10 +677,10 @@ export function History() {
                     periods.get(pid)!.push(day);
                   });
                   return Array.from(periods.entries()).map(([pid, days]) => (
-                    <div key={`period-${pid}`} className="space-y-8 bg-surface-low/30 p-6 rounded-[2rem] border border-border">
+                    <div key={`period-${pid}`} className="space-y-8 bg-surface-low/30 p-6 rounded-[2rem] border border-border" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 450px' } as React.CSSProperties}>
                       <h2 className="text-2xl font-display font-black text-primary">PERÍODO {pid}</h2>
                       {days.map((dayData) => (
-                        <div key={dayData.date} className="space-y-8">
+                        <div key={dayData.date} className="space-y-4 sm:space-y-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 220px' } as React.CSSProperties}>
                           {/* Date Header for the Day */}
                           <div className="flex items-center gap-4 pb-4 border-b border-border">
                             <div className="w-12 h-12 rounded-full bg-surface-low flex items-center justify-center text-primary shrink-0">
@@ -744,7 +772,7 @@ export function History() {
 
                 // Default rendering (Mode C or other filters)
                 return currentDaysData.map((dayData, index) => (
-                  <div key={dayData.date} className="space-y-8">
+                  <div key={dayData.date} className="space-y-4 sm:space-y-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 220px' } as React.CSSProperties}>
                     {/* Date Header for the Day */}
                     <div className="flex items-center gap-4 pb-4 border-b border-border">
                       <div className="w-12 h-12 rounded-full bg-surface-low flex items-center justify-center text-primary shrink-0">
@@ -795,10 +823,14 @@ export function History() {
             {/* Bottom Pagination Controls (for long lists) */}
             {totalPages > 1 && currentDaysData.length > 0 && (
               <div className="flex items-center justify-center gap-4 pt-4 pb-8">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setCurrentPage(p => Math.max(1, p - 1));
+                    const container = document.getElementById('main-scroll-container');
+                    if (container) {
+                      container.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   disabled={currentPage === 1}
@@ -809,10 +841,14 @@ export function History() {
                 <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
                   {currentPage} / {totalPages}
                 </span>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setCurrentPage(p => Math.min(totalPages, p + 1));
+                    const container = document.getElementById('main-scroll-container');
+                    if (container) {
+                      container.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   disabled={currentPage === totalPages}
@@ -837,7 +873,7 @@ export function History() {
               {trendDesc}
             </p>
           </div>
-          <button 
+          <button
             onClick={() => setActiveTab('report')}
             className="bg-white/20 hover:bg-white/30 text-white rounded-full py-3.5 px-8 text-sm font-bold w-fit transition-colors flex items-center justify-center"
           >
@@ -858,11 +894,11 @@ export function History() {
           </div>
         </Card>
       </div>
-      
+
       <AnimatePresence>
         {isFilterModalOpen && (
-          <HistoryFilterModal 
-            onClose={() => setIsFilterModalOpen(false)} 
+          <HistoryFilterModal
+            onClose={() => setIsFilterModalOpen(false)}
             onApply={(filters) => setActiveFilters(filters)}
             initialFilters={activeFilters}
             availablePeriods={availablePeriods}

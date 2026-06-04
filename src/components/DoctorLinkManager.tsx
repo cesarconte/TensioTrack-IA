@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "../store/useAppStore";
 import { QRCodeSVG } from "qrcode.react";
 import { QRScanner } from "./QRScanner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 
 interface AuthDoc {
   id: string;
@@ -36,9 +37,9 @@ export function DoctorLinkManager() {
         where('patientId', '==', auth.currentUser?.uid)
       );
       const snap = await getDocs(q);
-      
+
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AuthDoc));
-      
+
       // Fetch doctor profiles
       for (const d of docs) {
         try {
@@ -59,10 +60,10 @@ export function DoctorLinkManager() {
   const linkMutation = useMutation({
     mutationFn: async (doctorId: string) => {
       if (!auth.currentUser) throw new Error("No autenticado");
-      
+
       const authId = `${doctorId}_${auth.currentUser.uid}`;
       const authDocRef = doc(db, 'authorizations', authId);
-      
+
       // Check if already linked using getDoc (more efficient with our rules)
       const authSnap = await getDoc(authDocRef);
       if (authSnap.exists()) {
@@ -202,11 +203,15 @@ export function DoctorLinkManager() {
              <Stethoscope className="w-48 h-48" />
           </div>
           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
-            
+
             {/* QR Code Container */}
-            <div className="bg-white p-4 rounded-3xl shadow-sm border border-border/50 shrink-0 mx-auto md:mx-0">
-              <QRCodeSVG 
-                value={shareLinkUrl} 
+            <div
+              role="img"
+              aria-label="Código QR con el enlace de invitación para vincular pacientes"
+              className="bg-white p-4 rounded-3xl shadow-sm border border-border/50 shrink-0 mx-auto md:mx-0"
+            >
+              <QRCodeSVG
+                value={shareLinkUrl}
                 size={160}
                 level="Q"
                 includeMargin={false}
@@ -221,9 +226,9 @@ export function DoctorLinkManager() {
                   Muestra este código QR a tus pacientes para que lo escaneen, o envíales el enlace de invitación para que se conecten directamente contigo.
                 </p>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row items-center gap-3">
-                <Button 
+                <Button
                   onClick={handleShare}
                   size="lg"
                   className="w-full sm:w-auto rounded-full font-bold px-8 shadow-md"
@@ -232,7 +237,7 @@ export function DoctorLinkManager() {
                   Compartir Enlace
                 </Button>
 
-                <Button 
+                <Button
                   onClick={() => {
                     navigator.clipboard.writeText(auth.currentUser?.uid || "");
                     toast.success("Código copiado");
@@ -257,10 +262,10 @@ export function DoctorLinkManager() {
             <p className="text-sm text-on-surface-variant mt-1 mb-6 max-w-lg">
               Para otorgar acceso a tu médico, puedes escanear el código QR que él te mostrará en su pantalla, o introducir su Código (ID) manualmente.
             </p>
-            
+
             <div className="space-y-4">
-              <Button 
-                onClick={() => setIsScanning(true)} 
+              <Button
+                onClick={() => setIsScanning(true)}
                 className="w-full sm:w-auto h-14 px-8 rounded-2xl gap-3 font-bold bg-foreground text-background hover:bg-foreground/90 shadow-lg text-sm transition-all"
               >
                 <QrCode className="text-[20px]" />
@@ -269,20 +274,21 @@ export function DoctorLinkManager() {
 
               <div className="flex items-center gap-4 py-2">
                 <div className="h-px bg-border flex-1"></div>
-                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">O Introduce el ID</span>
+                <label htmlFor="doctor-id-input" className="text-xs font-bold text-on-surface-variant uppercase tracking-widest cursor-pointer">O Introduce el ID</label>
                 <div className="h-px bg-border flex-1"></div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <input 
-                  type="text" 
+                <input
+                  id="doctor-id-input"
+                  type="text"
                   value={doctorIdInput}
                   onChange={e => setDoctorIdInput(e.target.value)}
                   placeholder="Ej. wXyZ123..."
                   className="flex-1 bg-surface-lowest h-14 rounded-2xl px-5 border-none outline-none focus:ring-2 focus:ring-primary shadow-sm text-foreground font-mono text-sm"
                 />
-                <Button 
-                  onClick={handleLink} 
+                <Button
+                  onClick={handleLink}
                   isLoading={linkMutation.isPending}
                   disabled={!doctorIdInput.trim()}
                   className="h-14 sm:w-auto px-8 gap-2 font-bold rounded-2xl"
@@ -299,7 +305,7 @@ export function DoctorLinkManager() {
       {user?.role !== 'doctor' && (
         <div className="space-y-4">
           <h5 className="text-sm font-bold text-foreground px-2">Médicos con Acceso</h5>
-          
+
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               <div className="h-20 bg-surface rounded-2xl"></div>
@@ -323,18 +329,23 @@ export function DoctorLinkManager() {
                       <p className="text-xs text-on-surface-variant truncate font-mono mt-0.5" title={a.doctorId}>ID: {a.doctorId.substring(0, 8)}...</p>
                     </div>
                   </div>
-                  
-                  <button 
-                    onClick={() => {
-                      if(confirm("¿Estás seguro de que deseas revocar el acceso a este médico?")) {
-                        unlinkMutation.mutate(a.id);
-                      }
-                    }}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
-                    title="Revocar Acceso"
-                  >
-                    <Trash2 className="text-[18px]" />
-                  </button>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          if(confirm("¿Estás seguro de que deseas revocar el acceso a este médico?")) {
+                            unlinkMutation.mutate(a.id);
+                          }
+                        }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0 cursor-pointer"
+                        aria-label={`Revocar acceso al médico ${a.doctorName || 'Vinculado'}`}
+                      >
+                        <Trash2 className="text-[18px]" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Revocar Acceso</TooltipContent>
+                  </Tooltip>
                 </div>
               ))}
             </div>

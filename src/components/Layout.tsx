@@ -9,18 +9,18 @@ import { Footer } from "./Footer";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/Tooltip";
 import { Toaster } from "sonner";
 
-import { User, Moon, Sun, Settings, LogOut, LayoutDashboard, History, FileText, Sparkles, Plus, Users, Shield, Brain, Fingerprint } from "lucide-react";
+import { User, Moon, Sun, Settings, LogOut, LayoutDashboard, History, FileText, Sparkles, Plus, Users, Shield, Brain, Fingerprint, ArrowUp } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { 
-    user, 
-    isDarkMode, 
-    toggleDarkMode, 
-    activeTab, 
+  const {
+    user,
+    isDarkMode,
+    toggleDarkMode,
+    activeTab,
     setActiveTab,
     setReadingFormOpen,
     activeSettingsSection,
@@ -34,6 +34,16 @@ export function Layout({ children }: LayoutProps) {
   const isViewingPatient = isDoctor && !!activePatientId;
 
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
+  const [showScrollTop, setShowScrollTop] = React.useState(false);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const mainEl = document.getElementById('main-scroll-container');
+    if (mainEl) {
+      mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const userMenuRef = React.useRef<HTMLDivElement>(null);
   const mobileUserMenuRef = React.useRef<HTMLDivElement>(null);
   const setScrollingDown = useAppStore(s => s.setScrollingDown);
@@ -42,7 +52,7 @@ export function Layout({ children }: LayoutProps) {
     const handleClickOutside = (event: MouseEvent) => {
       const isOutsideDesktop = userMenuRef.current && !userMenuRef.current.contains(event.target as Node);
       const isOutsideMobile = mobileUserMenuRef.current && !mobileUserMenuRef.current.contains(event.target as Node);
-      
+
       if (isOutsideDesktop && isOutsideMobile) {
         setIsUserMenuOpen(false);
       }
@@ -54,30 +64,42 @@ export function Layout({ children }: LayoutProps) {
   React.useEffect(() => {
     const mainEl = document.getElementById('main-scroll-container');
     if (!mainEl) return;
-    
-    let lastScroll = mainEl.scrollTop;
+
+    let lastScroll = Math.max(
+      window.scrollY || window.pageYOffset || document.documentElement.scrollTop,
+      mainEl.scrollTop
+    );
     let ticking = false;
 
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          const currentScroll = mainEl.scrollTop;
-          
+          const currentScroll = Math.max(
+            window.scrollY || window.pageYOffset || document.documentElement.scrollTop,
+            mainEl.scrollTop
+          );
+
           if (currentScroll > lastScroll && currentScroll > 100) {
             setScrollingDown(true);
           } else if (currentScroll < lastScroll || currentScroll <= 50) {
             setScrollingDown(false);
           }
-          
+
+          setShowScrollTop(currentScroll > 300);
+
           lastScroll = currentScroll;
           ticking = false;
         });
         ticking = true;
       }
     };
-    
+
     mainEl.addEventListener('scroll', handleScroll, { passive: true });
-    return () => mainEl.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      mainEl.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [setScrollingDown]);
 
   const handleLogout = () => signOut(auth);
@@ -112,24 +134,25 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const renderUserMenu = (containerRef: React.RefObject<HTMLDivElement>, isMobile: boolean) => (
-    <div className="relative" ref={containerRef}>
-      <button 
+    <div className="relative shrink-0" ref={containerRef}>
+      <button
         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
         className={cn(
-          "flex items-center rounded-full bg-white dark:bg-card shadow-sm border border-border hover:border-primary/50 transition-all active:scale-95",
+          "flex items-center rounded-full bg-white dark:bg-card shadow-sm border border-border hover:border-primary/50 transition-all active:scale-95 shrink-0",
           isMobile ? "w-12 h-12 justify-center p-0" : "p-1.5 pr-5 gap-3"
         )}
         aria-expanded={isUserMenuOpen}
         aria-haspopup="true"
+        aria-label="Menú de usuario"
       >
         <div className={cn(
           "rounded-full bg-primary/10 text-primary flex items-center justify-center font-black overflow-hidden bg-cover bg-center shrink-0",
           isMobile ? "w-9 h-9" : "w-9 h-9"
         )}>
           {user?.photoURL ? (
-            <img 
-              src={user.photoURL} 
-              alt="Avatar" 
+            <img
+              src={user.photoURL}
+              alt="Avatar"
               className="w-full h-full object-cover rounded-full"
               referrerPolicy="no-referrer"
             />
@@ -166,7 +189,7 @@ export function Layout({ children }: LayoutProps) {
                 ) : 'Invitado'}
               </p>
             </div>
-            
+
             <button
               onClick={() => {
                 setActiveTab('settings');
@@ -177,7 +200,7 @@ export function Layout({ children }: LayoutProps) {
               <Settings className="w-4 h-4 text-on-surface-variant" />
               Ajustes
             </button>
-            
+
             <button
               onClick={handleLogout}
               className="w-full text-left px-5 py-2.5 text-sm font-bold text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-3 mt-1"
@@ -195,8 +218,14 @@ export function Layout({ children }: LayoutProps) {
     <div className={cn(
       "min-h-screen transition-colors duration-500 bg-background text-foreground flex"
     )}>
+      <a
+        href="#main-scroll-container"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-xl focus:shadow-lg focus:font-bold focus:outline-none"
+      >
+        Saltar al contenido principal
+      </a>
       <Toaster position="top-center" expand={false} richColors />
-      
+
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex flex-col w-72 bg-[#0B0E14] border-r border-white/5 h-screen sticky top-0 shrink-0">
         <div className="p-10">
@@ -223,8 +252,8 @@ export function Layout({ children }: LayoutProps) {
                   }}
                   className={cn(
                     "w-full flex items-center gap-4 py-3 px-4 rounded-[1.2rem] transition-all duration-300 group relative",
-                    isActive 
-                      ? "bg-white/5 text-white" 
+                    isActive
+                      ? "bg-white/5 text-white"
                       : "text-[#636C8B] hover:text-white"
                   )}
                 >
@@ -239,7 +268,7 @@ export function Layout({ children }: LayoutProps) {
 
         {!isDoctor && (
         <div className="mt-auto p-10">
-          <Button 
+          <Button
             className="w-full bg-primary hover:bg-primary/90 text-white rounded-full h-14 font-black text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
             onClick={() => setReadingFormOpen(true)}
           >
@@ -252,22 +281,27 @@ export function Layout({ children }: LayoutProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
-        <header className="lg:hidden sticky top-0 z-40 w-full bg-card/60 ethereal-blur border-b border-border shadow-sm">
+        <header className="lg:hidden sticky top-0 z-40 w-full bg-card/95 ethereal-blur border-b border-border/85 shadow-sm">
           <div className="px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               <img src="/logo-tensiotrack.svg" alt="Logo" className="w-8 h-8" />
-              <h1 className="text-lg font-black tracking-tight text-foreground">TensioTrack</h1>
+              <h1 className="text-[17px] font-black tracking-tight text-foreground whitespace-nowrap">TensioTrack</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {user && (
                 <>
-                  <button 
-                    onClick={() => toggleDarkMode()}
-                    className="w-12 h-12 flex items-center justify-center rounded-full bg-surface-low text-on-surface-variant hover:text-primary transition-all active:scale-95"
-                    aria-label="Alternar tema"
-                  >
-                    {isDarkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => toggleDarkMode()}
+                        className="w-12 h-12 flex items-center justify-center rounded-full bg-surface-low text-on-surface-variant hover:text-primary transition-all active:scale-95 cursor-pointer shrink-0"
+                        aria-label="Alternar tema"
+                      >
+                        {isDarkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isDarkMode ? "Alternar tema claro" : "Alternar tema oscuro"}</TooltipContent>
+                  </Tooltip>
                   {renderUserMenu(mobileUserMenuRef, true)}
                 </>
               )}
@@ -282,18 +316,23 @@ export function Layout({ children }: LayoutProps) {
             <div className="hidden lg:flex items-center justify-between mb-12 relative z-30">
               <div className="flex items-center gap-4">
                 {isViewingPatient && (
-                  <button 
-                    onClick={handleBackToPatients}
-                    className="w-10 h-10 rounded-full bg-surface-low border-none flex items-center justify-center hover:bg-surface-high transition-colors mr-2 active:scale-90"
-                    title="Volver a pacientes"
-                  >
-                    <Users className="w-5 h-5 text-on-surface-variant" />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleBackToPatients}
+                        className="w-10 h-10 rounded-full bg-surface-low border-none flex items-center justify-center hover:bg-surface-high transition-colors mr-2 active:scale-90 cursor-pointer"
+                        aria-label="Volver a pacientes"
+                      >
+                        <Users className="w-5 h-5 text-on-surface-variant" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Volver a pacientes</TooltipContent>
+                  </Tooltip>
                 )}
                 <h2 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-3">
                   {(() => {
                     const activeItem = navItems.find(item => item.id === activeTab);
-                    
+
                     if (isViewingPatient && activeTab !== 'patients' && activeTab !== 'settings') {
                       return (
                         <>
@@ -325,15 +364,20 @@ export function Layout({ children }: LayoutProps) {
                   })()}
                 </h2>
               </div>
-              
+
               <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => toggleDarkMode()}
-                  className="w-12 h-12 rounded-full bg-white dark:bg-card shadow-sm border border-border flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-                  aria-label="Alternar tema"
-                >
-                  {isDarkMode ? <Sun className="w-5 h-5 text-primary" /> : <Moon className="w-5 h-5 text-on-surface" />}
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => toggleDarkMode()}
+                      className="w-12 h-12 rounded-full bg-white dark:bg-card shadow-sm border border-border flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                      aria-label="Alternar tema"
+                    >
+                      {isDarkMode ? <Sun className="w-5 h-5 text-primary" /> : <Moon className="w-5 h-5 text-on-surface" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isDarkMode ? "Alternar tema claro" : "Alternar tema oscuro"}</TooltipContent>
+                </Tooltip>
 
                 {user && renderUserMenu(userMenuRef, false)}
               </div>
@@ -345,12 +389,32 @@ export function Layout({ children }: LayoutProps) {
         </main>
       </div>
 
+      {/* Scroll to Top Button - MD3/Google Style */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.8, opacity: 0, y: 20 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 lg:bottom-10 z-40 transition-all duration-300"
+          >
+            <button
+              onClick={scrollToTop}
+              className="w-10 h-10 rounded-full shadow-lg bg-surface-highest/90 dark:bg-slate-800/90 backdrop-blur-md border border-primary/20 text-foreground flex items-center justify-center hover:bg-surface-highest dark:hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
+              aria-label="Volver arriba"
+            >
+              <ArrowUp className="w-4 h-4 shrink-0 text-primary" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mobile & Tablet Floating Action Button (FAB) - MD3 Style */}
       {!isDoctor && (
-      <motion.div 
+      <motion.div
         initial={{ scale: 0, opacity: 0 }}
-        animate={{ 
-          scale: isScrollingDown ? 0 : 1, 
+        animate={{
+          scale: isScrollingDown ? 0 : 1,
           opacity: isScrollingDown ? 0 : 1,
           y: isScrollingDown ? 30 : 0
         }}
@@ -361,7 +425,7 @@ export function Layout({ children }: LayoutProps) {
           isScrollingDown && "pointer-events-none"
         )}
       >
-        <Button 
+        <Button
           onClick={() => setReadingFormOpen(true)}
           className="w-14 h-14 sm:w-16 sm:h-16 p-0 rounded-[1.75rem] sm:rounded-[2rem] shadow-2xl shadow-primary/40 dark:shadow-primary/20 flex items-center justify-center shrink-0 bg-primary text-white"
           aria-label="Nueva Lectura"
@@ -372,10 +436,24 @@ export function Layout({ children }: LayoutProps) {
       )}
 
       {/* Mobile Footer Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/70 backdrop-blur-3xl lg:hidden border-t border-border/50 h-20 flex items-center justify-around px-4">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-3xl lg:hidden border-t border-border/50 h-20 flex items-center justify-around px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+
+          // MD3/Google style: Use short labels on mobile to avoid overcrowding
+          const mobileLabels: Record<string, string> = {
+            dashboard: "Inicio",
+            history: "Historial",
+            report: "Informe",
+            ai: "IA",
+            admin: "Admin",
+            settings: "Ajustes",
+            patients: "Pacientes",
+            vinculo: "Vínculo"
+          };
+          const shortLabel = mobileLabels[item.id] || item.label;
+
           return (
             <button
               key={item.id}
@@ -386,12 +464,12 @@ export function Layout({ children }: LayoutProps) {
                 }
               }}
               className={cn(
-                "flex flex-col items-center gap-1 transition-all",
-                isActive ? "text-primary scale-110" : "text-on-surface-variant opacity-60"
+                "flex flex-col items-center justify-center gap-1 flex-1 min-w-0 transition-all py-1",
+                isActive ? "text-primary" : "text-on-surface-variant opacity-60"
               )}
             >
-              <Icon className="w-6 h-6" />
-              <span className="text-[9px] font-black uppercase tracking-tighter">{item.label}</span>
+              <Icon className={cn("w-[22px] h-[22px] transition-transform duration-200", isActive && "scale-110")} />
+              <span className="text-[8.5px] font-black tracking-tighter truncate w-full text-center px-0.5">{shortLabel}</span>
             </button>
           );
         })}

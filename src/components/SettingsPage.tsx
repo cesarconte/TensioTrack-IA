@@ -16,15 +16,15 @@ import { kgToLb, lbToKg, cmToIn, inToCm, calculateBMI, getBMICategory } from "..
 import { LogOut, ArrowLeft, Upload, Trash2, Camera, User, Cake, Scale, TrendingUp, Ruler, Activity, ChevronDown, History, Heart, Clock, Save, Download, Globe, AlertTriangle, FlaskConical, Server, ShieldCheck, CheckCircle2, Lock, Shield, Fingerprint, Flag, Gavel, Pill, Ambulance, Database, Info, FileText, Zap, Users } from "lucide-react";
 
 const PDFIcon = ({ size = 18, className = "" }: { size?: number, className?: string }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2.5" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
   >
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -41,8 +41,8 @@ import { DoctorLinkManager } from "./DoctorLinkManager";
 import { VinculoPage } from "./VinculoPage";
 
 export function SettingsPage() {
-  const { 
-    user, 
+  const {
+    user,
     setActiveTab,
     unitSystem,
     setUnitSystem,
@@ -57,7 +57,7 @@ export function SettingsPage() {
   } = useAppStore();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false);
-  
+
   const handleLogout = () => signOut(auth);
 
   const sections = (user?.role === 'doctor' || user?.role === 'admin' ? [
@@ -135,7 +135,7 @@ export function SettingsPage() {
   const [shareEmergency, setShareEmergency] = React.useState(true);
   const [shareReports, setShareReports] = React.useState(false);
 
-  const isDirty = 
+  const isDirty =
     age !== (user?.age?.toString() || '') ||
     weight !== (user?.weight?.toString() || '') ||
     height !== (user?.height?.toString() || '') ||
@@ -155,7 +155,7 @@ export function SettingsPage() {
 
   const getFormattedUpdateDate = () => {
     if (!user?.updatedAt) return 'Sin actualizar';
-    
+
     let date: Date;
     if (user.updatedAt?.toDate) {
       date = user.updatedAt.toDate();
@@ -219,17 +219,17 @@ export function SettingsPage() {
     }
 
     setIsUploadingAvatar(true);
-    
+
     try {
       // Usamos Base64 para evitar la dependencia de Firebase Storage
       const reader = new FileReader();
-      
+
       const uploadPromise = new Promise<string>((resolve, reject) => {
         reader.onload = async (event) => {
           try {
             const img = new Image();
             img.src = event.target?.result as string;
-            
+
             img.onload = () => {
               const canvas = document.createElement('canvas');
               const MAX_WIDTH = 256;
@@ -248,16 +248,16 @@ export function SettingsPage() {
                   height = MAX_HEIGHT;
                 }
               }
-              
+
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx?.drawImage(img, 0, 0, width, height);
-              
+
               const base64ImageUrl = canvas.toDataURL('image/jpeg', 0.8);
               resolve(base64ImageUrl);
             };
-            
+
             img.onerror = () => reject(new Error("Error al procesar la imagen"));
           } catch (err) {
             reject(err);
@@ -281,7 +281,7 @@ export function SettingsPage() {
 
   const handleAvatarDelete = async () => {
     if (!user?.photoURL) return;
-    
+
     setIsUploadingAvatar(true);
     try {
       await updateUserProfile.mutateAsync({ photoURL: null });
@@ -357,13 +357,13 @@ export function SettingsPage() {
       // Table Rows (limit to recent readings for basic PDF implementation)
       let y = 78;
       const recentReadings = [...readings].sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()).slice(0, 25);
-      
+
       recentReadings.forEach((r, i) => {
         if (y > 270) {
           pdf.addPage();
           y = 20;
         }
-        
+
         pdf.setFontSize(9);
         const date = new Date(r.recordedAt).toLocaleDateString('es-ES');
         pdf.text(date, 25, y);
@@ -371,7 +371,7 @@ export function SettingsPage() {
         pdf.text(`${r.diastolic} mmHg`, 95, y);
         pdf.text(`${r.heartRate} PPM`, 125, y);
         pdf.text(r.slot === 'morning' ? 'Mañana' : 'Noche', 155, y);
-        
+
         y += 8;
       });
 
@@ -404,7 +404,7 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6 md:gap-8 min-h-[calc(100vh-12rem)] animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
+
       {/* Top Navigation Tabs (Desktop/Tablet & Mobile) - Adaptive MD3 Rail-style Header */}
       <TooltipProvider delayDuration={0}>
         <div className="flex items-center justify-between w-full border-b border-surface-highest/10 pt-1 pb-4 px-2 md:px-4 gap-2">
@@ -412,7 +412,7 @@ export function SettingsPage() {
           <div className="flex items-center">
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
+                <button
                   onClick={() => setActiveTab('dashboard')}
                   className="flex items-center justify-center gap-2 px-3 md:px-4 h-12 rounded-full text-sm font-black text-on-surface-variant hover:bg-surface-high transition-all active:scale-95 group"
                   aria-label="Volver al Panel Principal"
@@ -431,10 +431,10 @@ export function SettingsPage() {
               const isActive = activeSection === section.id;
               const Icon = section.icon;
               // Very short labels for cramped spaces
-              const shortLabel = section.id === 'profile' 
-                ? (isDoctor ? 'Vínculo' : 'Salud') 
+              const shortLabel = section.id === 'profile'
+                ? (isDoctor ? 'Vínculo' : 'Salud')
                 : section.id === 'about' ? 'Info' : section.label;
-              
+
               return (
                 <Tooltip key={section.id}>
                   <TooltipTrigger asChild>
@@ -442,18 +442,18 @@ export function SettingsPage() {
                       onClick={() => setActiveSection(section.id as any)}
                       className={cn(
                         "flex items-center justify-center transition-all duration-300 relative h-12 rounded-full active:scale-95 snap-center shrink-0",
-                        isActive 
-                          ? "bg-primary text-white shadow-md shadow-primary/20 px-4 md:px-6 ring-2 ring-primary/20" 
+                        isActive
+                          ? "bg-primary text-white shadow-md shadow-primary/20 px-4 md:px-6 ring-2 ring-primary/20"
                           : "text-on-surface-variant hover:bg-surface-high px-3 md:px-4"
                       )}
                       aria-label={section.label}
                     >
                       <Icon className={cn("text-[20px] transition-transform", isActive ? "scale-105" : "scale-100")} strokeWidth={isActive ? 2.5 : 2} />
-                      
+
                       {/* MD3 Logic: Active item always shows text on tablet/desktop. Others show text only on larger screens. On mobile, all items show text if space allows, but rely on horizontal scroll. */}
                       <span className={cn(
                         "whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out",
-                        isActive 
+                        isActive
                           ? "ml-1.5 md:ml-2 opacity-100 max-w-[120px] font-bold text-[11px] sm:text-xs md:text-sm" // Fully visible when active
                           : "ml-0 opacity-0 max-w-0 sm:ml-2 sm:opacity-100 sm:max-w-[120px] lg:max-w-none text-[11px] sm:text-xs md:text-sm" // Hidden on mobile unless active, visible on sm (tablet) and desktop
                       )}>
@@ -473,7 +473,7 @@ export function SettingsPage() {
               );
             })}
           </div>
-          
+
           {/* Right: Exit Action */}
           <div className="flex items-center">
             <Tooltip>
@@ -507,7 +507,7 @@ export function SettingsPage() {
               className="space-y-8"
             >
               {/* Back button for mobile portrait */}
-              <button 
+              <button
                 onClick={() => setActiveTab('dashboard')}
                 className="sm:hidden flex items-center gap-2 text-on-surface-variant font-bold text-sm mb-4 active:scale-95 transition-all"
                 aria-label="Volver al Panel Principal"
@@ -519,12 +519,13 @@ export function SettingsPage() {
               <VinculoPage isStandalone={false} />
 
               <div className="hidden">
-                 <input 
-                   type="file" 
-                   ref={fileInputRef} 
-                   onChange={handleAvatarUpload} 
-                   className="hidden" 
+                 <input
+                   type="file"
+                   ref={fileInputRef}
+                   onChange={handleAvatarUpload}
+                   className="hidden"
                    accept="image/*"
+                   aria-label="Seleccionar foto de perfil para avatar"
                  />
               </div>
 
@@ -536,16 +537,17 @@ export function SettingsPage() {
                   <p className="text-on-surface-variant text-lg">Personaliza y gestiona tus métricas biométricas esenciales para un seguimiento preciso.</p>
                 </div>
               </header>
-              
+
               <div className="bg-surface-low rounded-[2.5rem] p-8 sm:p-10 space-y-10 shadow-sm">
                 <div className="flex flex-col gap-6">
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Nombre Completo</label>
+                    <label htmlFor="display-name-input" className="text-sm font-bold text-on-surface-variant ml-1 cursor-pointer">Nombre Completo</label>
                     <div className="relative">
                       <User className="absolute left-5 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant bg-surface-low p-1 rounded-lg" />
-                      <input 
-                        type="text" 
-                        value={user?.displayName || ''} 
+                      <input
+                        id="display-name-input"
+                        type="text"
+                        value={user?.displayName || ''}
                         readOnly
                         className="w-full h-16 pl-14 pr-6 bg-surface rounded-2xl text-lg font-bold text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
                       />
@@ -553,16 +555,22 @@ export function SettingsPage() {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Sexo Biológico</label>
-                    <div className="flex bg-surface-high p-1 rounded-full max-w-md">
+                    <label id="sex-label" className="text-sm font-bold text-on-surface-variant ml-1">Sexo Biológico</label>
+                    <div
+                      role="radiogroup"
+                      aria-labelledby="sex-label"
+                      className="flex bg-surface-high p-1 rounded-full max-w-md"
+                    >
                       {(['male', 'female', 'other'] as const).map((s) => (
                         <button
                           key={s}
                           onClick={() => setSex(s)}
+                          role="radio"
+                          aria-checked={sex === s}
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                            sex === s 
-                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                            sex === s
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary"
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -584,10 +592,13 @@ export function SettingsPage() {
                       <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40">VERIFICADO</span>
                     </div>
                     <div>
-                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">Edad</h3>
+                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">
+                        <label htmlFor="settings-age-input" className="cursor-pointer">Edad</label>
+                      </h3>
                       <div className="flex items-baseline gap-1.5 min-w-0">
-                        <input 
-                          type="number" 
+                        <input
+                          id="settings-age-input"
+                          type="number"
                           value={age}
                           onChange={(e) => setAge(e.target.value)}
                           className="w-[1.8em] bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none transition-all"
@@ -610,10 +621,13 @@ export function SettingsPage() {
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">Peso Actual</h3>
+                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">
+                        <label htmlFor="settings-weight-input" className="cursor-pointer">Peso Actual</label>
+                      </h3>
                       <div className="flex items-baseline gap-1.5 min-w-0">
-                        <input 
-                          type="text" 
+                        <input
+                          id="settings-weight-input"
+                          type="text"
                           value={weight}
                           onChange={(e) => setWeight(e.target.value)}
                           className="w-[2.2em] bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none transition-all"
@@ -632,10 +646,13 @@ export function SettingsPage() {
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">Altura</h3>
+                      <h3 className="text-on-surface-variant font-bold text-sm mb-1">
+                        <label htmlFor="settings-height-input" className="cursor-pointer">Altura</label>
+                      </h3>
                       <div className="flex items-baseline gap-1.5 min-w-0">
-                        <input 
-                          type="text" 
+                        <input
+                          id="settings-height-input"
+                          type="text"
                           value={height}
                           onChange={(e) => setHeight(e.target.value)}
                           className="w-[2.2em] bg-transparent text-4xl sm:text-5xl font-black font-display text-on-surface outline-none p-0 border-none focus:ring-0 leading-none transition-all"
@@ -677,16 +694,22 @@ export function SettingsPage() {
                 {/* Activity Level and Other Factors */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Nivel de Actividad</label>
-                    <div className="flex bg-surface-high p-1 rounded-full">
+                    <label id="activity-label" className="text-sm font-bold text-on-surface-variant ml-1">Nivel de Actividad</label>
+                    <div
+                      role="radiogroup"
+                      aria-labelledby="activity-label"
+                      className="flex bg-surface-high p-1 rounded-full"
+                    >
                       {(['sedentary', 'moderate', 'active'] as const).map((level) => (
                         <button
                           key={level}
                           onClick={() => setActivityLevel(level)}
+                          role="radio"
+                          aria-checked={activityLevel === level}
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                            activityLevel === level 
-                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                            activityLevel === level
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary"
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -697,16 +720,22 @@ export function SettingsPage() {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Consumo de Alcohol</label>
-                    <div className="flex bg-surface-high p-1 rounded-full">
+                    <label id="alcohol-label" className="text-sm font-bold text-on-surface-variant ml-1">Consumo de Alcohol</label>
+                    <div
+                      role="radiogroup"
+                      aria-labelledby="alcohol-label"
+                      className="flex bg-surface-high p-1 rounded-full"
+                    >
                       {(['none', 'occasional', 'frequent'] as const).map((level) => (
                         <button
                           key={level}
                           onClick={() => setAlcoholConsumption(level)}
+                          role="radio"
+                          aria-checked={alcoholConsumption === level}
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                            alcoholConsumption === level 
-                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                            alcoholConsumption === level
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary"
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -719,16 +748,22 @@ export function SettingsPage() {
 
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Consumo de Sal</label>
-                    <div className="flex bg-surface-high p-1 rounded-full">
+                    <label id="salt-label" className="text-sm font-bold text-on-surface-variant ml-1">Consumo de Sal</label>
+                    <div
+                      role="radiogroup"
+                      aria-labelledby="salt-label"
+                      className="flex bg-surface-high p-1 rounded-full"
+                    >
                       {(['low', 'normal', 'high'] as const).map((level) => (
                         <button
                           key={level}
                           onClick={() => setSaltIntake(level)}
+                          role="radio"
+                          aria-checked={saltIntake === level}
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                            saltIntake === level 
-                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                            saltIntake === level
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary"
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -739,16 +774,22 @@ export function SettingsPage() {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Nivel de Estrés</label>
-                    <div className="flex bg-surface-high p-1 rounded-full">
+                    <label id="stress-label" className="text-sm font-bold text-on-surface-variant ml-1">Nivel de Estrés</label>
+                    <div
+                      role="radiogroup"
+                      aria-labelledby="stress-label"
+                      className="flex bg-surface-high p-1 rounded-full"
+                    >
                       {(['low', 'moderate', 'high'] as const).map((level) => (
                         <button
                           key={level}
                           onClick={() => setStressLevel(level)}
+                          role="radio"
+                          aria-checked={stressLevel === level}
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                            stressLevel === level 
-                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                            stressLevel === level
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary"
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -761,16 +802,22 @@ export function SettingsPage() {
 
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Calidad del Sueño</label>
-                    <div className="flex bg-surface-high p-1 rounded-full">
+                    <label id="sleep-label" className="text-sm font-bold text-on-surface-variant ml-1">Calidad del Sueño</label>
+                    <div
+                      role="radiogroup"
+                      aria-labelledby="sleep-label"
+                      className="flex bg-surface-high p-1 rounded-full"
+                    >
                       {(['good', 'average', 'poor'] as const).map((level) => (
                         <button
                           key={level}
                           onClick={() => setSleepQuality(level)}
+                          role="radio"
+                          aria-checked={sleepQuality === level}
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                            sleepQuality === level 
-                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                            sleepQuality === level
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary"
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -781,16 +828,22 @@ export function SettingsPage() {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Consumo de Cafeína</label>
-                    <div className="flex bg-surface-high p-1 rounded-full">
+                    <label id="caffeine-label" className="text-sm font-bold text-on-surface-variant ml-1">Consumo de Cafeína</label>
+                    <div
+                      role="radiogroup"
+                      aria-labelledby="caffeine-label"
+                      className="flex bg-surface-high p-1 rounded-full"
+                    >
                       {(['none', 'low', 'moderate', 'high'] as const).map((level) => (
                         <button
                           key={level}
                           onClick={() => setCaffeineIntake(level)}
+                          role="radio"
+                          aria-checked={caffeineIntake === level}
                           className={cn(
                             "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                            caffeineIntake === level 
-                              ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                            caffeineIntake === level
+                              ? "bg-surface-lowest shadow-sm font-bold text-primary"
                               : "font-medium text-on-surface-variant"
                           )}
                         >
@@ -810,13 +863,15 @@ export function SettingsPage() {
                     { id: 'hasHighCholesterol', label: 'Colesterol Alto', state: hasHighCholesterol, setState: setHasHighCholesterol },
                     { id: 'hasKidneyDisease', label: 'Enf. Renal', state: hasKidneyDisease, setState: setHasKidneyDisease },
                   ].map((item) => (
-                    <button 
+                    <button
                       key={item.id}
                       onClick={() => item.setState(!item.state)}
+                      role="checkbox"
+                      aria-checked={item.state}
                       className={cn(
                         "flex items-center justify-center gap-3 p-5 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest border hover:scale-[1.02] active:scale-[0.97]",
-                        item.state 
-                          ? "bg-primary text-white shadow-lg shadow-primary/20 border-primary" 
+                        item.state
+                          ? "bg-primary text-white shadow-lg shadow-primary/20 border-primary"
                           : "bg-surface border-border/40 text-on-surface-variant hover:border-primary/30"
                       )}
                     >
@@ -841,16 +896,22 @@ export function SettingsPage() {
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-12 gap-y-8">
                     {/* Measurement System */}
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-on-surface-variant ml-1">Sistema de Medida</label>
-                      <div className="flex bg-surface-high p-1 rounded-full">
+                      <label id="unit-label" className="text-sm font-bold text-on-surface-variant ml-1">Sistema de Medida</label>
+                      <div
+                        role="radiogroup"
+                        aria-labelledby="unit-label"
+                        className="flex bg-surface-high p-1 rounded-full"
+                      >
                         {['metric', 'imperial'].map((sys) => (
                           <button
                             key={sys}
                             onClick={() => toggleUnitSystem(sys as 'metric' | 'imperial')}
+                            role="radio"
+                            aria-checked={unitSystem === sys}
                             className={cn(
                               "flex-1 py-2 px-4 rounded-full text-sm transition-all hover:scale-[1.02] active:scale-[0.97]",
-                              unitSystem === sys 
-                                ? "bg-surface-lowest shadow-sm font-bold text-primary" 
+                              unitSystem === sys
+                                ? "bg-surface-lowest shadow-sm font-bold text-primary"
                                 : "font-medium text-on-surface-variant"
                             )}
                           >
@@ -862,9 +923,10 @@ export function SettingsPage() {
 
                     {/* Measurement Frequency */}
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-on-surface-variant ml-1">Frecuencia de Medición</label>
+                      <label htmlFor="frequency-select" className="text-sm font-bold text-on-surface-variant ml-1">Frecuencia de Medición</label>
                       <div className="relative group">
-                        <select 
+                        <select
+                          id="frequency-select"
                           value={measurementFrequency}
                           onChange={(e) => setMeasurementFrequency(e.target.value as any)}
                           className="w-full bg-surface-high border-none rounded-xl py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 appearance-none transition-all outline-none"
@@ -889,11 +951,12 @@ export function SettingsPage() {
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={autoBmi}
                           onChange={() => setAutoBmi(!autoBmi)}
                           className="sr-only peer"
+                          aria-label="Cálculo de IMC Automático"
                         />
                         <div className="w-11 h-6 bg-surface-highest/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                       </label>
@@ -911,11 +974,12 @@ export function SettingsPage() {
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={showTrends}
                           onChange={() => setShowTrends(!showTrends)}
                           className="sr-only peer"
+                          aria-label="Mostrar historial de tendencias en tarjetas"
                         />
                         <div className="w-11 h-6 bg-surface-highest/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                       </label>
@@ -927,7 +991,7 @@ export function SettingsPage() {
 
             {/* Bottom Actions */}
             <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-8">
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => isDoctor ? setActiveTab('patients') : setActiveTab('dashboard')}
                 className="w-full sm:w-auto flex items-center justify-center gap-2"
@@ -936,7 +1000,7 @@ export function SettingsPage() {
                 <span>{isDoctor ? 'Volver a Pacientes' : 'Cancelar y Volver al Panel'}</span>
               </Button>
               {!isDoctor && (
-                <Button 
+                <Button
                   onClick={handleSaveHealthData}
                   disabled={!isDirty || updateUserProfile.isPending}
                   isLoading={updateUserProfile.isPending}
@@ -962,7 +1026,7 @@ export function SettingsPage() {
                   <div className="max-w-3xl min-w-0">
                     <h3 className="text-2xl sm:text-3xl font-display font-black text-foreground break-words">Gestión de Datos</h3>
                     <p className="text-on-surface-variant mt-3 sm:mt-4 text-base sm:text-lg leading-relaxed break-words">
-                      Administra tu historial médico y la seguridad de tu información. 
+                      Administra tu historial médico y la seguridad de tu información.
                       Tus datos se sincronizan de forma segura para garantizar acceso y protección total.
                     </p>
                   </div>
@@ -971,7 +1035,7 @@ export function SettingsPage() {
                     <span className="text-xs font-black text-success uppercase tracking-widest">Sincronizado con la Nube</span>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 gap-6">
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                     {/* Export Card */}
@@ -985,14 +1049,14 @@ export function SettingsPage() {
                           Genera un informe clínico completo en formato PDF con tus lecturas recientes para compartir con tu especialista.
                         </p>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 px-4 py-2 bg-surface-low rounded-xl text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
                           <ShieldCheck className="text-[12px]" />
                           Generación via SSL/TLS 1.3
                         </div>
-                        <Button 
-                          variant="secondary" 
+                        <Button
+                          variant="secondary"
                           onClick={() => setShowExportConfirm(true)}
                           size="lg"
                           className="w-full flex items-center justify-center gap-2"
@@ -1014,15 +1078,15 @@ export function SettingsPage() {
                           Ésta acción es irreversible. Gestiona la eliminación de tu historial médico o la baja definitiva del sistema.
                         </p>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 px-4 py-2 bg-destructive/10 rounded-xl text-[10px] font-black text-destructive uppercase tracking-widest">
                           <AlertTriangle className="text-[12px]" />
                           Acción Crítica e Irreversible
                         </div>
 
-                        <Button 
-                          variant="secondary" 
+                        <Button
+                          variant="secondary"
                           onClick={() => setShowClearConfirm(true)}
                           size="lg"
                           className="w-full flex items-center justify-center gap-2"
@@ -1031,8 +1095,8 @@ export function SettingsPage() {
                           Limpiar Historial de Lecturas
                         </Button>
 
-                        <Button 
-                          variant="danger" 
+                        <Button
+                          variant="danger"
                           onClick={() => setShowDeleteAccountConfirm(true)}
                           size="lg"
                           className="w-full flex items-center justify-center gap-2"
@@ -1056,7 +1120,7 @@ export function SettingsPage() {
                       </p>
                     </div>
                     <div>
-                      <Button 
+                      <Button
                         onClick={handleSeedData}
                         disabled={isSeeding}
                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/20 rounded-full py-6 flex items-center justify-center gap-3 font-black tracking-widest uppercase text-xs"
@@ -1069,12 +1133,12 @@ export function SettingsPage() {
                   {/* Military Grade Infrastructure Section */}
                   <div className="mt-8 p-3 sm:p-12 rounded-[2.5rem] bg-card relative overflow-hidden w-full">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-48 -mt-48 blur-3xl" />
-                    
+
                     <div className="relative flex flex-col lg:flex-row gap-8 lg:gap-12 items-center w-full">
                       <div className="w-full sm:max-w-sm lg:w-1/3 aspect-[3/4] rounded-[2.5rem] bg-foreground/90 overflow-hidden shadow-2xl relative group shrink-0 mx-auto lg:mx-0">
-                        <img 
-                          src="/health-data-security-ecosystem-portrait.png" 
-                          alt="Ecosistema de Seguridad" 
+                        <img
+                          src="/health-data-security-ecosystem-portrait.png"
+                          alt="Ecosistema de Seguridad"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
                           referrerPolicy="no-referrer"
                         />
@@ -1088,7 +1152,7 @@ export function SettingsPage() {
                           </div>
                           <h4 className="text-xl sm:text-2xl font-display font-black text-foreground break-words overflow-wrap-anywhere">Infraestructura de Grado Militar</h4>
                         </div>
-                        
+
                         <p className="text-sm sm:text-base text-on-surface-variant leading-relaxed break-words">
                           Todos sus datos se almacenan en buckets regionales de Google Cloud con cifrado **AES-256** en reposo. Implementamos protocolos de seguridad avanzados para garantizar la máxima privacidad de su información médica.
                         </p>
@@ -1116,11 +1180,11 @@ export function SettingsPage() {
               {/* Confirmation Overlays */}
             <AnimatePresence>
               {showExportConfirm && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md"
                 >
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
                     className="bg-card p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center space-y-6 border border-border"
                   >
@@ -1140,11 +1204,11 @@ export function SettingsPage() {
               )}
 
               {showClearConfirm && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md"
                 >
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
                     className="bg-card p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center space-y-6 border border-border"
                   >
@@ -1164,11 +1228,11 @@ export function SettingsPage() {
               )}
 
               {showDeleteAccountConfirm && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md"
                 >
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
                     className="bg-card p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center space-y-6 border border-border"
                   >
@@ -1203,7 +1267,7 @@ export function SettingsPage() {
                   {isDoctor ? 'Motor de Análisis Clínico' : 'Energía IA'}
                 </h3>
                 <p className="text-on-surface-variant">
-                  {isDoctor 
+                  {isDoctor
                     ? 'Gestiona la capacidad de procesamiento de nuestra arquitectura de Inteligencia Artificial para el análisis de expedientes y generación de reportes clínicos avanzados.'
                     : 'Consulta cuánta energía de Inteligencia Artificial tienes disponible este mes. Cada vez que generas un análisis o le hablas al asistente, se consume energía.'
                   }
@@ -1214,9 +1278,9 @@ export function SettingsPage() {
                 <div className="absolute top-0 right-0 p-8 opacity-5">
                   <Zap size={160} />
                 </div>
-                
+
                 <h4 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
-                  <Activity size={20} className="text-primary-base" /> 
+                  <Activity size={20} className="text-primary-base" />
                   {isDoctor ? 'Estado del Servicio Analítico' : 'Consumo Mensual'}
                 </h4>
 
@@ -1224,14 +1288,14 @@ export function SettingsPage() {
                   const used = user?.aiUsage?.tokensUsed || 0;
                   const limit = user?.aiUsage?.limit || 50000;
                   const percent = Math.min(100, Math.max(0, (used / limit) * 100));
-                  
+
                   let barColor = 'bg-primary-base';
                   if (percent > 75) barColor = 'bg-amber-500';
                   if (percent > 90) barColor = 'bg-red-500';
 
                   const fUsed = used.toLocaleString('es-ES');
                   const fLimit = limit.toLocaleString('es-ES');
-                  const resetStr = user?.aiUsage?.resetDate 
+                  const resetStr = user?.aiUsage?.resetDate
                     ? new Date(user.aiUsage.resetDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
                     : '1 del próximo mes';
 
@@ -1253,7 +1317,7 @@ export function SettingsPage() {
                       </div>
 
                       <div className="h-4 w-full bg-surface-high rounded-full overflow-hidden flex">
-                        <motion.div 
+                        <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${percent}%` }}
                           transition={{ duration: 1, ease: "easeOut" }}
@@ -1285,7 +1349,7 @@ export function SettingsPage() {
                   {isDoctor ? 'Seguridad y Confidencialidad' : 'Centro de Control de Privacidad'}
                 </h3>
                 <p className="text-on-surface-variant">
-                  {isDoctor 
+                  {isDoctor
                     ? 'Supervise los protocolos de cifrado que protegen su identidad profesional y la integridad de los reportes clínicos gestionados en la plataforma.'
                     : 'Gestione cómo se protegen sus datos y quién puede acceder a sus registros históricos. El cifrado de alta seguridad está activo por defecto.'
                   }
@@ -1310,7 +1374,7 @@ export function SettingsPage() {
                     </div>
                   </div>
                   <p className="text-on-surface-variant leading-relaxed font-medium">
-                    {isDoctor 
+                    {isDoctor
                       ? 'TensioTrack implementa estándares internacionales de seguridad (cifrado AES-256) para asegurar que la interacción médico-paciente permanezca estrictamente confidencial e inalterable.'
                       : 'Sus registros están protegidos con tecnología de seguridad avanzada y cifrado automático. Esto garantiza que su información de salud sea privada y que nadie más que usted pueda verla.'
                     }
@@ -1325,7 +1389,7 @@ export function SettingsPage() {
                 <div className="bg-surface-low rounded-[2.5rem] p-8 space-y-8 shadow-sm">
                   <h4 className="text-xl font-display font-black text-foreground">Seguridad del Acceso</h4>
                   <p className="text-xs text-on-surface-variant font-medium">Su identidad profesional está validada por los sistemas de Google Cloud.</p>
-                  
+
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -1372,8 +1436,8 @@ export function SettingsPage() {
                     ].map((item) => {
                       const IconComponent = item.icon;
                       return (
-                        <div 
-                          key={item.id} 
+                        <div
+                          key={item.id}
                           className="p-5 sm:p-8 rounded-[2.5rem] bg-surface flex items-center justify-between gap-4 sm:gap-6 hover:bg-surface-high/30 transition-all duration-300 group"
                         >
                           <div className="flex items-center gap-3 sm:gap-5 min-w-0">
@@ -1385,7 +1449,7 @@ export function SettingsPage() {
                               <p className="text-[10px] sm:text-xs text-on-surface-variant leading-tight sm:leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">{item.desc}</p>
                             </div>
                           </div>
-                          <button 
+                          <button
                             onClick={() => item.setState(!item.state)}
                             className={cn(
                               "w-10 h-5 sm:w-12 sm:h-6 rounded-full transition-all relative shrink-0 active:scale-90",
@@ -1452,7 +1516,7 @@ export function SettingsPage() {
                   <h4 className="text-lg sm:text-2xl font-display font-black text-foreground leading-tight w-full text-center sm:text-left">Misión</h4>
                 </div>
                 <p className="text-on-surface-variant leading-relaxed font-medium text-sm sm:text-base w-full text-center sm:text-left">
-                  {isDoctor 
+                  {isDoctor
                     ? 'Ofrecer a los profesionales de la salud una infraestructura robusta y analítica para el seguimiento remoto de pacientes mediante el protocolo AMPA, optimizando la precisión diagnóstica y la comunicación clínica.'
                     : 'TensioTrack ha sido creado para ayudarle a cuidar de su salud de forma sencilla y segura. Nuestra misión es hacer que llevar el control de su tensión sea una tarea fácil, permitiéndole guardar sus registros a lo largo del tiempo para que usted y su médico tengan siempre una información clara y precisa sobre su bienestar.'
                   }
@@ -1468,7 +1532,7 @@ export function SettingsPage() {
                   <h4 className="text-[17px] sm:text-2xl font-display font-black text-foreground leading-tight w-full text-center sm:text-left tracking-tight">Descargo de Responsabilidad Clínica</h4>
                 </div>
                 <p className="text-on-surface-variant leading-relaxed italic font-medium text-sm sm:text-base w-full text-center sm:text-left">
-                  {isDoctor 
+                  {isDoctor
                     ? 'Esta plataforma es una herramienta de soporte analítico y gestión de datos. No sustituye el criterio clínico final del facultativo responsable. El procesamiento de IA debe ser validado por el profesional en base al historial completo del paciente.'
                     : 'Esta aplicación es una herramienta de registro y no sustituye el diagnóstico médico profesional. Consulte siempre con su médico antes de realizar cambios en su tratamiento o si presenta síntomas inusuales. Los datos archivados son para propósitos informativos.'
                   }

@@ -78,15 +78,15 @@ const CircularProgress = ({ status, className }: { status: ReturnType<typeof get
 };
 
 const PDFIcon = ({ size = 18, className = "" }: { size?: number, className?: string }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2.5" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
   >
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -107,11 +107,11 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
   const [cycleIndex, setCycleIndex] = React.useState(0);
-  
+
   const handleDownloadPDF = async () => {
     const input = document.getElementById('medical-report-content');
     if (!input) return;
-    
+
     setIsDownloading(true);
     try {
       const width = input.scrollWidth;
@@ -143,20 +143,20 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
           return true;
         }
       });
-      
+
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
-      
+
       const margin = 15;
       const maxPdfWidth = pdf.internal.pageSize.getWidth();
       const pdfWidth = maxPdfWidth - (margin * 2);
-      
+
       const imgProps = pdf.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
+
       pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth, pdfHeight);
       pdf.save(`informe_medico_tensiotrack_${new Date().toISOString().slice(0, 10)}.pdf`);
       toast.success("Informe descargado con éxito");
@@ -167,7 +167,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
       setIsDownloading(false);
     }
   };
-  
+
   const allCycles = React.useMemo(() => {
     if (!dashboard) return [];
     const current: Cycle = {
@@ -201,7 +201,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
   // Aggregate clinical findings for the period
   const insights = React.useMemo(() => {
     if (!activeCycle || !allReadings) return null;
-    
+
     // Filter readings for this specific period using date strings (robust)
     const periodReadings = allReadings.filter(r => {
       return r.date >= activeCycle.startDate && r.date <= activeCycle.endDate;
@@ -214,7 +214,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
       .filter(r => r.notes && r.notes.trim() !== "")
       .map(r => ({ note: r.notes!, date: r.recordedAt, slot: r.slot }))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
+
     // Stability: % of optimal/normal readings
     // We recalculate status to be 100% sure of the logic
     const stableCount = periodReadings.filter(r => {
@@ -244,12 +244,12 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   };
 
-  const periodLabel = activeCycle 
+  const periodLabel = activeCycle
     ? `Período ${allCycles.length - cycleIndex}: ${formatDateShort(activeCycle.startDate)} — ${formatDateShort(activeCycle.endDate)}`
     : 'Cargando período...';
 
   // Styles based on status
-  const globalStatus = activeCycle?.finalAverage 
+  const globalStatus = activeCycle?.finalAverage
     ? getBloodPressureStatus(activeCycle.finalAverage.systolic, activeCycle.finalAverage.diastolic)
     : 'normal';
   const globalStyle = getBloodPressureStyle(globalStatus);
@@ -266,19 +266,19 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
 
   return (
     <div id="medical-report-content" className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
+
       {/* Consultation Mode Banner (Doctor viewing Patient) */}
       <AnimatePresence>
         {isViewingPatient && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden px-4 sm:px-0"
           >
-            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-6 mb-2 flex items-center justify-between gap-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-5 sm:p-6 mb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
                   <Stethoscope className="w-6 h-6" />
                 </div>
                 <div>
@@ -286,10 +286,10 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
                   <p className="text-sm font-medium text-on-surface-variant">Generando informe para <span className="text-primary font-bold">{activePatientName}</span></p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5"
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full font-bold px-6 border-primary/20 text-primary hover:bg-primary/5 w-full sm:w-auto shrink-0"
                 onClick={() => useAppStore.getState().setActivePatientId(null, null)}
               >
                 Cerrar Sesión
@@ -308,8 +308,8 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6 sm:gap-4 mt-2 lg:mt-0">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6 sm:gap-4 flex-grow sm:flex-grow-0">
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               size="md"
               isLoading={isDownloading}
               onClick={handleDownloadPDF}
@@ -319,8 +319,8 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
               {isDownloading ? 'Generando...' : 'Descargar PDF'}
             </Button>
 
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               size="md"
               onClick={() => setIsShareModalOpen(true)}
               className="rounded-full px-8 bg-[#E9E6F0] text-[#1A1A1A] transition-all font-black tracking-widest text-[10px] uppercase flex items-center justify-center shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-[0.98] border-none min-h-[44px] py-3"
@@ -329,10 +329,10 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
               Compartir con Doctor
             </Button>
           </div>
-        
+
           <div className="flex items-center bg-surface-low/50 rounded-full shadow-inner border border-border/20 px-1 h-11 self-center sm:self-auto">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="rounded-full w-9 h-9 p-0 text-on-surface hover:bg-surface-low transition-all active:scale-90"
               onClick={() => setCycleIndex(Math.min(allCycles.length - 1, cycleIndex + 1))}
               disabled={cycleIndex === allCycles.length - 1}
@@ -341,7 +341,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
             >
               <ChevronLeft size={20} />
             </Button>
-            
+
             <div className="px-4 flex flex-col items-center justify-center min-w-max shrink-0">
               <span className="text-[9px] font-black uppercase tracking-[0.15em] text-on-surface-variant/40 leading-none mb-1 whitespace-nowrap">Periodo</span>
               <span className="text-[11px] font-black tabular-nums tracking-tighter text-on-surface leading-none whitespace-nowrap shrink-0 flex items-center justify-center">
@@ -349,8 +349,8 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
               </span>
             </div>
 
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="rounded-full w-9 h-9 p-0 text-on-surface hover:bg-surface-low transition-all active:scale-90"
               onClick={() => setCycleIndex(Math.max(0, cycleIndex - 1))}
               disabled={cycleIndex === 0}
@@ -377,7 +377,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
                 </p>
              </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-6 lg:gap-10">
             <div className="space-y-1">
                <p className="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">Edad</p>
@@ -408,7 +408,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
 
       {/* 3. GRID: Resumen Global (Full Width) */}
       <div className="grid grid-cols-1 gap-6 lg:gap-8 items-stretch">
-        
+
         {/* Resumen Global (Full width) */}
         <Card className="@container bg-surface-low border-none shadow-none rounded-[3rem] p-8 lg:p-10 flex flex-col justify-center overflow-hidden">
           <div className="flex items-center gap-3 mb-8">
@@ -429,12 +429,12 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
                     {activeCycle?.finalAverage ? `${activeCycle.finalAverage.systolic}/${activeCycle.finalAverage.diastolic}` : '--/--'}
                   </span>
                   <span className="text-xs sm:text-sm font-bold text-on-surface-variant/40 tracking-widest uppercase mb-2 shrink-0">mmHg</span>
-                  
+
                   {trends && (
                     <div className={cn(
                       "absolute -top-6 -right-2 sm:left-0 sm:-top-8 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-black shadow-sm border bg-background",
-                      trends.systolic > 0 
-                        ? "text-destructive border-destructive/20" 
+                      trends.systolic > 0
+                        ? "text-destructive border-destructive/20"
                         : "text-success border-success/20"
                     )}>
                       {trends.systolic > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -455,12 +455,12 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
                     {activeCycle?.finalAverage?.heartRate || '--'}
                   </span>
                   <span className="text-xs sm:text-sm font-bold text-on-surface-variant/40 tracking-widest uppercase mb-2 shrink-0">PPM</span>
-                  
+
                   {trends && (
                     <div className={cn(
                       "absolute -top-6 -right-2 sm:left-0 sm:-top-8 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-black shadow-sm border bg-background",
-                      trends.heartRate > 0 
-                        ? "text-warning border-warning/20" 
+                      trends.heartRate > 0
+                        ? "text-warning border-warning/20"
                         : "text-success border-success/20"
                     )}>
                       {trends.heartRate > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -482,7 +482,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
           {/* Promedio Mañana */}
           <Card className="bg-surface-low border-none shadow-none rounded-[3rem] p-6 flex flex-col justify-between min-h-[160px]">
-             <div className="flex items-start justify-between mb-4">
+             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                  <div className="flex items-center gap-2 shrink-0">
                   <Sun size={20} className="text-warning shrink-0" />
                   <span className="text-sm font-bold text-foreground whitespace-nowrap shrink-0">Promedio Mañana</span>
@@ -509,7 +509,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
 
            {/* Promedio Noche */}
            <Card className="bg-surface-low border-none shadow-none rounded-[3rem] p-6 flex flex-col justify-between min-h-[160px]">
-             <div className="flex items-start justify-between mb-4">
+             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <div className="flex items-center gap-2 shrink-0">
                   <Moon size={20} className="text-primary shrink-0" />
                   <span className="text-sm font-bold text-foreground whitespace-nowrap shrink-0">Promedio Noche</span>
@@ -554,7 +554,7 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
                   </Badge>
                 </div>
              </div>
-             
+
              <div className="flex-1 flex flex-col justify-center items-center py-4">
                 <div className="text-6xl font-black font-display text-primary tracking-tighter">
                   {insights.stabilityPercent}%
@@ -650,19 +650,19 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
                  // Format Date
                  const d = new Date(day.date);
                  const formattedDate = d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' });
-                 
+
                  // Calc Daily Average to determine Status Badge
                  let totalSys = 0, totalDia = 0, count = 0, avgHr = 0, countHr = 0;
                  if (day.morningAvg) { totalSys += day.morningAvg.systolic; totalDia += day.morningAvg.diastolic; count++; if (day.morningAvg.heartRate) { avgHr += day.morningAvg.heartRate; countHr++; } }
                  if (day.eveningAvg) { totalSys += day.eveningAvg.systolic; totalDia += day.eveningAvg.diastolic; count++; if (day.eveningAvg.heartRate) { avgHr += day.eveningAvg.heartRate; countHr++; } }
-                 
+
                  let dayStatusLabel: ReturnType<typeof getBloodPressureStyle> | null = null;
                  if (count > 0) {
                    const avgDaySys = Math.round(totalSys / count);
                    const avgDayDia = Math.round(totalDia / count);
                    dayStatusLabel = getBloodPressureStyle(getBloodPressureStatus(avgDaySys, avgDayDia));
                  }
-                 
+
                  const finalHr = countHr > 0 ? Math.round(avgHr / countHr) : '--';
 
                  return (
@@ -701,10 +701,10 @@ export function MedicalReport({ dashboard, allReadings, userProfile }: MedicalRe
         </div>
       </Card>
 
-      <ShareModal 
-        isOpen={isShareModalOpen} 
-        onClose={() => setIsShareModalOpen(false)} 
-        url={window.location.origin} 
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        url={`${window.location.origin}/?patientId=${activePatientId || user?.uid || ''}&tab=report`}
       />
     </div>
   );

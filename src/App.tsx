@@ -22,46 +22,51 @@ import { Toaster, toast } from 'sonner';
 import { TooltipProvider } from './components/ui/Tooltip';
 import { db, auth, collection, doc, writeBatch, Timestamp } from './firebase';
 import { RefreshCw } from "lucide-react";
+import { MotionConfig } from "motion/react";
 
 // Helper to seed test data
 if (typeof window !== 'undefined') {
+  (window as any).useAppStore = useAppStore;
   (window as any).seedTensioTrack = async () => {
-    if (!auth.currentUser) {
+    const mockUserStr = window.localStorage.getItem('mock_user');
+    const mockUser = mockUserStr ? JSON.parse(mockUserStr) : null;
+
+    if (!auth.currentUser && !mockUser) {
       console.error('Debes estar autenticado para sembrar datos.');
       toast.error('Debes estar autenticado para sembrar datos.');
       return;
     }
 
-    const userId = auth.currentUser.uid;
+    const userId = auth.currentUser?.uid || mockUser.uid;
     const readingsRef = collection(db, 'users', userId, 'readings');
-    
+
     // Generaremos 30 días de datos (6 periodos de 5 días cada uno)
     // El periodo 6 será el actual (que incluye hoy 2026-04-16)
     const totalDays = 30;
     // Forzamos fecha base en UTC para evitar desfases
-    const today = new Date(Date.UTC(2026, 3, 16)); 
-    
+    const today = new Date();
+
     toast.loading('Generando 30 días de datos médicos...', { id: 'seeding' });
 
     try {
       console.log(`Iniciando sembrado para el usuario: ${userId}`);
       const allReadings = [];
-      
+
       for (let dayOffset = totalDays - 1; dayOffset >= 0; dayOffset--) {
         const currentDate = new Date(today);
         currentDate.setUTCDate(currentDate.getUTCDate() - dayOffset);
-        
+
         // Componentes para la fecha
         const y = currentDate.getUTCFullYear();
         const m = currentDate.getUTCMonth();
         const d_val = currentDate.getUTCDate();
-        
+
         // dateString para el campo 'date' (formato YYYY-MM-DD)
         const dateString = currentDate.toISOString().split('T')[0];
-        
+
         // Calcular periodId (cada 5 días cambia)
         const periodId = Math.floor((totalDays - 1 - dayOffset) / 5) + 1;
-        
+
         // Calcular weekId (ISO Week)
         const d_iso = new Date(currentDate);
         d_iso.setUTCHours(0, 0, 0, 0);
@@ -100,7 +105,7 @@ if (typeof window !== 'undefined') {
             const noise = Math.floor(Math.random() * 7) - 3;
             const hour = slot === 'morning' ? 8 : 20;
             const minute = order * 2;
-            
+
             // Construcción robusta del objeto Date usando los componentes extraídos arriba
             const finalDate = new Date(Date.UTC(y, m, d_val, hour, minute));
 
@@ -120,6 +125,19 @@ if (typeof window !== 'undefined') {
             });
           }
         }
+      }
+
+      if (typeof window !== 'undefined' && window.localStorage.getItem('mock_user')) {
+        const mockReadings = allReadings.map((r, i) => ({
+          id: `mock-seeded-${i}`,
+          ...r,
+          recordedAt: r.recordedAt.toDate().toISOString()
+        }));
+        window.localStorage.setItem('mock_readings', JSON.stringify(mockReadings));
+        console.log(`Sembrado completado: ${mockReadings.length} lecturas generadas.`);
+        toast.success(`Datos generados con éxito: ${mockReadings.length} lecturas.`, { id: 'seeding' });
+        setTimeout(() => window.location.reload(), 2000);
+        return;
       }
 
       // Firestore Batch limit is 500. 30 days * 6 readings = 180. Fits in one batch.
@@ -150,9 +168,9 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  const { 
-    user, 
-    isAuthReady, 
+  const {
+    user,
+    isAuthReady,
     activeTab,
     setActiveTab,
     isReadingFormOpen,
@@ -161,8 +179,28 @@ function AppContent() {
     setInfoModalOpen,
     isDarkMode,
     activePatientId,
-    activePatientName
+    activePatientName,
+    setActivePatientId
   } = useAppStore();
+
+  // Deep-linking URL parameters parsing for doctors
+  React.useEffect(() => {
+    if (!isAuthReady || !user || user.role !== 'doctor') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const patientId = params.get('patientId');
+    const tab = params.get('tab');
+
+    if (patientId) {
+      setActivePatientId(patientId, activePatientName || "Paciente");
+      if (tab) {
+        const validTabs = ['dashboard', 'history', 'report', 'ai', 'settings'];
+        if (validTabs.includes(tab)) {
+          setActiveTab(tab as any);
+        }
+      }
+    }
+  }, [isAuthReady, user, setActivePatientId, setActiveTab]);
 
   // Handle Tab transitions and access control
   React.useEffect(() => {
@@ -203,6 +241,15 @@ function AppContent() {
   const { data: readings, isLoading: isReadingsLoading } = useReadings();
   const { data: patientProfile } = usePatientProfile(activePatientId);
 
+  // Synchronize dynamic patient name when Firestore profile loads
+  React.useEffect(() => {
+    if (patientProfile && patientProfile.displayName && activePatientId) {
+      if (patientProfile.displayName !== activePatientName) {
+        setActivePatientId(activePatientId, patientProfile.displayName);
+      }
+    }
+  }, [patientProfile, activePatientId, activePatientName, setActivePatientId]);
+
   const effectiveProfile = activePatientId ? (patientProfile || { displayName: activePatientName, role: 'patient' }) : user;
 
   if (!isAuthReady) {
@@ -222,20 +269,20 @@ function AppContent() {
       {activeTab === 'dashboard' && <Dashboard />}
       {activeTab === 'history' && <History />}
       {activeTab === 'report' && (
-        <MedicalReport 
-          dashboard={dashboard || null} 
+        <MedicalReport
+          dashboard={dashboard || null}
           allReadings={readings || null}
           userProfile={effectiveProfile}
         />
       )}
       {activeTab === 'ai' && (
-        <AIPredictions 
+        <AIPredictions
           isLoadingData={isDashboardLoading}
-          dashboard={dashboard || { 
+          dashboard={dashboard || {
             today: null,
-            recentReadings: [], 
+            recentReadings: [],
             recentDailyAverages: [],
-            stats: { 
+            stats: {
               periodAverages: { morning: null, evening: null },
               finalAverage: null,
               periodDays: [],
@@ -243,7 +290,7 @@ function AppContent() {
               isComplete: false,
               historicalCycles: []
             }
-          }} 
+          }}
           userProfile={effectiveProfile}
         />
       )}
@@ -256,7 +303,7 @@ function AppContent() {
       {isReadingFormOpen && <ReadingForm onClose={() => setReadingFormOpen(false)} />}
       {isInfoModalOpen && <InfoModal onClose={() => setInfoModalOpen(false)} />}
       <AddDoctorLinkModal />
-      
+
       <ChatAssistant readings={readings || []} userProfile={effectiveProfile} />
     </Layout>
   );
@@ -266,8 +313,10 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={300}>
-        <AppContent />
-        <Toaster position="top-center" richColors />
+        <MotionConfig reducedMotion="user">
+          <AppContent />
+          <Toaster position="top-center" richColors />
+        </MotionConfig>
       </TooltipProvider>
     </QueryClientProvider>
   );
